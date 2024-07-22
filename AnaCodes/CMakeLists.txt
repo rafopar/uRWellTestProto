@@ -32,13 +32,19 @@ add_executable(DrawHVDependencePlots.exe DrawHVDependencePlots.cc)
 target_link_libraries(DrawHVDependencePlots.exe uRWellLib ${ROOT_LIBRARIES} )
 #################################################################################################
 
+############################  DrawHVDependencePlots.cc  #########################################
+add_executable(DrawNoise_Vs_StripCoorelations.exe DrawNoise_Vs_StripCoorelations.cc)
+target_link_libraries(DrawNoise_Vs_StripCoorelations.exe uRWellLib ${ROOT_LIBRARIES} )
+#################################################################################################
+
 
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe
+DrawNoise_Vs_StripCoorelations.exe
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc
+install( FILES DrawPedestals.cc 
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################

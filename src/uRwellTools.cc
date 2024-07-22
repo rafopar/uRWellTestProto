@@ -64,10 +64,40 @@ int uRwellTools::getURwellSlot(int ch) {
 
 }
 
+double uRwellTools::getStripLength(int ch) {
+
+    if (ch < 1 || ch > nMaxUStrip) {
+        cout << "Channel " << ch << " is outside of the range from 1 to " << nMaxUStrip << endl;
+        cout << "Exiting." << endl;
+        exit(1);
+    }
+
+    /*
+     *  see https://jeffersonlab-my.sharepoint.com/:x:/g/personal/rafopar_jlab_org/EXSTTdqkWClJl9J0J-0IayUBFrx2ZroRYswHxBfEYwc3fg?e=MHDlDT
+     */
+
+    if (ch <= 253) {
+        return -0.144385 + ch * 5.41734;
+    } else if (ch <= 529) {
+        return 1609.32 - ch * 0.934112;
+    } else {
+        return 4476.99 - ch * 6.35164;
+    }
+}
+
+double uRwellTools::getStripArea(int ch, int view){
+    
+    double l = uRwellTools::getStripLength( ch);
+    int slot = uRwellTools::getURwellSlot( 1000*view + ch );
+    double width = uRwellTools::m_StripWidth.at(slot)/1000.; // 1./1000 is for converting to mm
+    
+    return l*width;
+}
+
 int uRwellTools::slot_Offset[uRwellTools::nSlot] = {0, 64, 192, 1448, 320, 1576, 1000, 1064, 1192, 448, 1320, 576, 0, 128, 1000, 1128};
 
 uRwellTools::ADC_Distribution uRwellTools::CalcMPVandMean(TH1D* h_in) {
-    
+
     TF1 *f_Landau = new TF1("f_Landau", "[0]*TMath::Landau(x, [1], [2])", 0., 1000.);
     f_Landau->SetNpx(4500);
 
@@ -80,9 +110,9 @@ uRwellTools::ADC_Distribution uRwellTools::CalcMPVandMean(TH1D* h_in) {
     distr.errMPV = f_Landau->GetParError(1);
     distr.Mean = h_in->GetMean();
     distr.errMean = h_in->GetMeanError();
-        
+
     delete f_Landau;
-    
+
     return distr;
 }
 
@@ -303,9 +333,9 @@ namespace uRwellTools {
             ADCSum = ADCSum + curHit.adc;
         }
 
-        fPeakADC = MaxADC;                      // ADC of the strip w/ highest ADC
-        fAvgStrip = WeightedSum / ADCSum;       // The weighted average strip number of the cluster
-        fPeakTime = time;                       // Time of the highest energy strip
+        fPeakADC = MaxADC; // ADC of the strip w/ highest ADC
+        fAvgStrip = WeightedSum / ADCSum; // The weighted average strip number of the cluster
+        fPeakTime = time; // Time of the highest energy strip
     }
 
     uRwellCross::uRwellCross() {

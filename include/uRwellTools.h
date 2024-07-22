@@ -43,9 +43,61 @@ namespace uRwellTools {
         {9, 650},
         {10, 355}};
 
+
+    /*
+     *  The Key of the map is the uRwell slot
+     */
+    const std::map<int, double> m_StripWidth{
+        {0, 350},  // U strip
+        {1, 262},  // U strip
+        {2, 262},  // U strip
+        {3, 355},  // V strip
+        {4, 350},  // U strip
+        {5, 355},  // V strip
+        {6, 650},  // V strip
+        {7, 500},  // V strip
+        {8, 500},  // V strip
+        {9, 175},  // U strip
+        {10, 650}, // V strip
+        {11, 175}, // U strip
+    };
+
+    /*
+     *  The Key of the map is the slot, and the value is the view 0=U, 1=V
+     */
+    const std::map<int, int> m_uRwellView{
+        {0, 0},   // U
+        {1, 0},   // U
+        {2, 0},   // U
+        {3, 1},   // V
+        {4, 0},   // U
+        {5, 1},   // V
+        {6, 1},   // V
+        {7, 1},   // V
+        {8, 1},   // V
+        {9, 0},   // U
+        {10, 1},  // V
+        {11, 0}   // U
+    };
+    
     // ======= Boundaries of groups of strips with the given strip width =======
     const std::vector<double> gr_UBounderies = {0.5, 64.5, 320.5, 448.5, 704.5};
     const std::vector<double> gr_VBounderies = {0.5, 64.5, 320.5, 448.5, 704.5};
+
+    /*
+     * This function returns the strip length in [mm] of the given channel.
+     * The argument ranges from 1 to 704.
+     * The function is the same for both U and V strips, so there is no need to
+     * specify the View.
+     */
+    double getStripLength(int ch);
+    
+    /*
+     *  This method returns the area = strip_Length * strip_width
+     *  * ch = channel number
+     *  * view is the strip view, 0 = U, 1 = V
+     */
+    double getStripArea(int ch, int view);
 
     class uRwellException : public std::exception {
     private:
@@ -194,10 +246,10 @@ namespace uRwellTools {
             fnStrips = fv_Hits.size();
         }
 
-        const double getEnergy(){
+        const double getEnergy() {
             return fEnergy;
         }
-        
+
         const double getPeakADC() {
             return fPeakADC;
         }
