@@ -81,6 +81,7 @@ int main(int argc, char** argv) {
     const int nMaxGroup = 11;
     const int n_ts = 9;
     const int n_MaxClusters = 5; // If the number of clusters is more than this number, then the entire event will be dropped
+    const double highADCCut = 800; //
 
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
@@ -129,6 +130,7 @@ int main(int argc, char** argv) {
     TH2D h_Cross_YXc_Max2("h_Cross_YXc_Max2", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max3("h_Cross_YXc_Max3", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max4("h_Cross_YXc_Max4", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_Max5("h_Cross_YXc_Max5", "", 1000, -900., 900., 200, -500., 500.);
 
     TH2D h_Cross_YXc_Max_Weighted1("h_Cross_YXc_Max_Weighted1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max_Weighted_ADC_U1("h_Cross_YXc_Max_Weighted_ADC_U1", "", 1000, -900., 900., 200, -500., 500.);
@@ -420,6 +422,11 @@ int main(int argc, char** argv) {
 
                 h_ADC_vs_U_Max2.Fill(Max_UCluster.getAvgStrip(), Max_UCluster.getPeakADC());
                 h_ADC_vs_V_Max2.Fill(Max_VCluster.getAvgStrip(), Max_VCluster.getPeakADC());
+
+
+                if (cl_ADC_U > highADCCut && cl_ADC_V > highADCCut) {
+                    h_Cross_YXc_Max5.Fill(curCrs_MaxADC.getX(), curCrs_MaxADC.getY());
+                }
 
                 int group_ID = curCrs_MaxADC.getGroupID();
 
