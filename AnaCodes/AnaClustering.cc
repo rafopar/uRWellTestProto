@@ -33,6 +33,7 @@ int main(int argc, char** argv) {
 
     options.add_options()
             ("r,Run", "Run number", cxxopts::value<int>())
+            ("f,FileNo", "File number", cxxopts::value<int>())
             ("t,Threshold", "Hit Threshold in terms of sigma", cxxopts::value<double>()->default_value("5"))
             ("m,MinHits", "Number of minimum hits in the cluster", cxxopts::value<int>()->default_value("1"))
             //("f,File", "File number of the given run", cxxopts::value<int>())
@@ -46,12 +47,17 @@ int main(int argc, char** argv) {
 
     if (parsed_options.count("Run")) {
         run = parsed_options["Run"].as<int>();
-        sprintf(inputFile, "Skim_ZeroSuppr_%d_All.hipo", run);
     } else {
         cout << "The run number is nor provided. Exiting..." << endl;
         exit(1);
     }
 
+    if (parsed_options.count("FileNo")) {
+        fnum = parsed_options["FileNo"].as<int>();
+    } else {
+        cout << "The file number is nor provided. Exiting..." << endl;
+        exit(1);
+    }
 
     const double HitThr = parsed_options["Threshold"].as<double>();
     if (!parsed_options.count("Threshold")) {
@@ -66,6 +72,12 @@ int main(int argc, char** argv) {
     cout << "The hit threshold is " << HitThr << "\\sigma" << endl;
     cout << "The Minimum cluster size is " << MinClSize << "hits" << endl;
 
+    
+    /*
+     *  Here is the input file
+     */
+    sprintf(inputFile, "Skim_ZeroSuppr_%d_%d.hipo", run, fnum);
+    
     hipo::reader reader;
     reader.open(inputFile);
 
@@ -97,7 +109,7 @@ int main(int argc, char** argv) {
     hipo::bank bRAWADc(factory.getSchema("RAW::adc"));
     hipo::bank bRunConf(factory.getSchema("RUN::config"));
 
-    TFile *file_out = new TFile(Form("AnaClustering_%d_Thr_%1.1f_MinHits_%d.root", run, HitThr, MinClSize), "Recreate");
+    TFile *file_out = new TFile(Form("AnaClustering_%d_Thr_%1.1f_MinHits_%d_File_%d.root", run, HitThr, MinClSize, fnum), "Recreate");
     TH2D h_n_GEM_vs_uRwellHits("h_n_GEM_vs_uRwellHits", "", 31, -0.5, 30, 31, -0.5, 30);
     TH2D h_n_GEM_Y_vs_X_Clusters1("h_n_GEM_Y_vs_X_Clusters1", "", 11, -0.5, 10.5, 11, -0.5, 10.5);
     TH2D h_n_V_vs_U_hits1("h_n_V_vs_U_hits1", "", 26, -0.5, 25.5, 26, -0.5, 25.5);
