@@ -96,6 +96,7 @@ int main(int argc, char **argv) {
     mv_runs[19] = {2092, 2095, 2096, 2099};
     mv_runs[20] = {2100, 2101, 2103, 2104, 2105, 2106, 2108, 2110, 2111, 2112, 2119};
     mv_runs[21] = {2119, 2130, 2139, 2145};
+    mv_runs[22] = {/*2191,*/ 2193, 2199, 2201, 2203, 2205, 2207, 2219, 2232, 2234, 2236};
     std::map<int, double> m_MESH_HV; // The key is the run number, the value is the MESH_HV
     std::map<int, double> m_Cathode_HV; // The key is the run number, the value is the Cathode_HV
     std::map<int, double> m_Drift_HV; // The key is the run number, the value is the Drift_HV = Hathode_HV - MESH_HV
@@ -121,6 +122,7 @@ int main(int argc, char **argv) {
     m_HVType[19] = "DRIFT";
     m_HVType[20] = "DRIFT";
     m_HVType[21] = "MESH";
+    m_HVType[22] = "MESH";
 
     std::map<int, std::string> m_XTitle;
 
@@ -142,6 +144,7 @@ int main(int argc, char **argv) {
     m_XTitle[19] = "DRIFT HV [V]";
     m_XTitle[20] = "DRIFT HV [V]";
     m_XTitle[21] = "MESH HV [V]";
+    m_XTitle[22] = "MESH HV [V]";
     
     TCanvas *c1 = new TCanvas("c1", "", 950, 950);
     c1->SetTopMargin(0.02);
@@ -195,6 +198,23 @@ int main(int argc, char **argv) {
     gr_ADC_GEM_Y->SetMarkerColor(7);
     gr_ADC_GEM_Y->SetMarkerSize(2);
 
+    TGraphErrors *gr_tU_RMS = new TGraphErrors();
+    gr_tU_RMS->SetMarkerStyle(20);
+    gr_tU_RMS->SetMarkerColor(2);
+    gr_tU_RMS->SetMarkerSize(2);
+    TGraphErrors *gr_tV_RMS = new TGraphErrors();
+    gr_tV_RMS->SetMarkerStyle(21);
+    gr_tV_RMS->SetMarkerColor(4);
+    gr_tV_RMS->SetMarkerSize(2);
+    
+    TGraphErrors *gr_clU_Size = new TGraphErrors();
+    gr_clU_Size->SetMarkerStyle(20);
+    gr_clU_Size->SetMarkerColor(2);
+    gr_clU_Size->SetMarkerSize(2);
+    TGraphErrors *gr_clV_Size = new TGraphErrors();
+    gr_clV_Size->SetMarkerStyle(21);
+    gr_clV_Size->SetMarkerColor(4);
+    gr_clV_Size->SetMarkerSize(2);
 
     std::string hvTablefileName = Form("HV_Table_%d.dat", series);
     ifstream inp_HVTable(hvTablefileName.c_str());
@@ -298,6 +318,18 @@ int main(int argc, char **argv) {
         uRwellTools::ADC_Distribution distr_GEM_X = uRwellTools::CalcMPVandMean(h_MaxADC_GEM_X1);
         uRwellTools::ADC_Distribution distr_GEM_Y = uRwellTools::CalcMPVandMean(h_MaxADC_GEM_Y1);
 
+        TH2D *h_t_V_vs_U_Max1 = (TH2D*)file_in->Get("h_t_V_vs_U_Max1");
+        double tU_RMS = h_t_V_vs_U_Max1->GetRMS(1);
+        double tU_RMS_Err = h_t_V_vs_U_Max1->GetRMSError(1);
+        double tV_RMS = h_t_V_vs_U_Max1->GetRMS(2);
+        double tV_RMS_Err = h_t_V_vs_U_Max1->GetRMSError(2);
+        
+        TH2D *h_clV_clU_size1 = (TH2D*)file_in->Get("h_clV_clU_size1");
+        double cl_U_Size = h_clV_clU_size1->GetMean(1);
+        double cl_U_SizeErr = h_clV_clU_size1->GetMeanError(1);
+        double cl_V_Size = h_clV_clU_size1->GetMean(2);
+        double cl_V_SizeErr = h_clV_clU_size1->GetMeanError(2);
+        
         gr_ADC_MPV_U->SetPoint(i, HV_Value, distr_U.MPV);
         gr_ADC_MPV_U->SetPointError(i, 0, distr_U.errMPV);
         gr_ADC_MPV_V->SetPoint(i, HV_Value, distr_V.MPV);
@@ -307,13 +339,24 @@ int main(int argc, char **argv) {
         gr_ADC_GEM_Y->SetPoint(i, HV_Value, distr_GEM_Y.MPV);
         gr_ADC_GEM_Y->SetPointError(i, 0, distr_GEM_Y.errMPV);
 
+        gr_tU_RMS->SetPoint(i, HV_Value, tU_RMS);
+        gr_tU_RMS->SetPointError(i, 0, tU_RMS_Err);
+        gr_tV_RMS->SetPoint(i, HV_Value, tV_RMS);
+        gr_tV_RMS->SetPointError(i, 0, tV_RMS_Err);
 
+        gr_clU_Size->SetPoint(i, HV_Value, cl_U_Size);
+        gr_clU_Size->SetPointError(i, 0, cl_U_SizeErr);
+        gr_clV_Size->SetPoint(i, HV_Value, cl_V_Size);
+        gr_clV_Size->SetPointError(i, 0, cl_V_SizeErr);
+        
         delete h_Cross_YXc2;
         delete h_n_uRwell_V_vs_U_MultiHitCl;
         delete h_U_PeakADC_MultiCl1;
         delete h_V_PeakADC_MultiCl1;
         delete h_MaxADC_GEM_X1;
         delete h_MaxADC_GEM_Y1;
+        delete h_t_V_vs_U_Max1;
+        delete h_clV_clU_size1;
         delete file_in;
     }
 
@@ -354,8 +397,8 @@ int main(int argc, char **argv) {
     leg2->SetBorderSize(0);
     leg2->AddEntry(gr_ADC_MPV_U, "U Strips");
     leg2->AddEntry(gr_ADC_MPV_V, "V Strips");
-    leg2->AddEntry(gr_ADC_GEM_X, "GEM X");
-    leg2->AddEntry(gr_ADC_GEM_Y, "GEM Y");
+//    leg2->AddEntry(gr_ADC_GEM_X, "GEM X");
+//    leg2->AddEntry(gr_ADC_GEM_Y, "GEM Y");
 
     TMultiGraph *mtgr_ADC_MPV = new TMultiGraph();
     mtgr_ADC_MPV->Add(gr_ADC_MPV_U);
@@ -364,13 +407,40 @@ int main(int argc, char **argv) {
 //    mtgr_ADC_MPV->Add(gr_ADC_GEM_Y);
     mtgr_ADC_MPV->Draw("APL");
     mtgr_ADC_MPV->SetTitle(Form("; %s; MPV [ADC]", m_XTitle[series].c_str()));
-    mtgr_ADC_MPV->SetMaximum(100);
+    //mtgr_ADC_MPV->SetMaximum(100);
     mtgr_ADC_MPV->SetMinimum(30);
     leg2->Draw();
     c1->Print(Form("Figs/HV_MPV_Dependence_Thr_%1.1f_MinHits_%d_Series_%d.pdf", threshold, MinHits, series));
     c1->Print(Form("Figs/HV_MPV_Dependence_Thr_%1.1f_MinHits_%d_Series_%d.png", threshold, MinHits, series));
     c1->Print(Form("Figs/HV_MPV_Dependence_Thr_%1.1f_MinHits_%d_Series_%d.root", threshold, MinHits, series));
 
-
+    TLegend *leg3 = new TLegend(0.55, 0.85, 0.92, 0.97);
+    leg3->SetBorderSize(0);
+    leg3->AddEntry(gr_tU_RMS, "U strip time");
+    leg3->AddEntry(gr_tV_RMS, "V strip time");
+    TMultiGraph *mtgr_timeRMS = new TMultiGraph();
+    mtgr_timeRMS->Add(gr_tU_RMS);
+    mtgr_timeRMS->Add(gr_tV_RMS);
+    mtgr_timeRMS->Draw("AP");
+    mtgr_timeRMS->SetTitle("; MESH HV [V]; peak time sample RMS");
+    leg3->Draw();
+    c1->Print(Form("Figs/HV_peakTime_RMS_Thr_%1.1f_MinHits_%d_Series_%d.pdf", threshold, MinHits, series));
+    c1->Print(Form("Figs/HV_peakTime_RMS_Thr_%1.1f_MinHits_%d_Series_%d.png", threshold, MinHits, series));
+    c1->Print(Form("Figs/HV_peakTime_RMS_Thr_%1.1f_MinHits_%d_Series_%d.root", threshold, MinHits, series));
+  
+    TLegend *leg4 = new TLegend(0.15, 0.85, 0.42, 0.97);
+    leg4->SetBorderSize(0);
+    leg4->AddEntry(gr_clU_Size, "U cluster size");
+    leg4->AddEntry(gr_clU_Size, "V cluster size");
+    TMultiGraph *mtgr_clSize = new TMultiGraph();
+    mtgr_clSize->Add(gr_clU_Size);
+    mtgr_clSize->Add(gr_clV_Size);
+    mtgr_clSize->Draw("AP");
+    mtgr_clSize->SetTitle("; MESH HV [V]; Cluster Size");
+    leg3->Draw();
+    c1->Print(Form("Figs/HV_clSize_Thr_%1.1f_MinHits_%d_Series_%d.pdf", threshold, MinHits, series));
+    c1->Print(Form("Figs/HV_clSize_Thr_%1.1f_MinHits_%d_Series_%d.png", threshold, MinHits, series));
+    c1->Print(Form("Figs/HV_clSize_Thr_%1.1f_MinHits_%d_Series_%d.root", threshold, MinHits, series));
+    
     return 0;
 }

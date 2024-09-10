@@ -8,7 +8,9 @@
 \textwidth = 18.5cm
 \textheight = 26.5cm
 
-\def \RUN{2099}
+\def \RUN{2119}
+%\def \RUN{2099}
+%\def \RUN{1789}
 \def \THR{4.0}
 \def \MinHits{1}
 \def \grinp{\includegraphics}
@@ -21,10 +23,129 @@
 
  \begin{figure}[!htb]
   \centering
-   \grinp[width=0.95\tw]{Figs/Cross_YXc_Max1_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.95\tw]{Figs/Cross_YXc_Max1_\RUN_t\THR_m\MinHits.pdf}
    \caption{Cross $Y$ vs $X$ distribution. Events are not weighted.}
    \label{fig:crs_YXC1}
+ \end{figure}
 
+ \newpage
+  \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_TotADC_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by ADC = ADC\_{U} + ADC\_{V}.}
+   \label{fig:crs_YXC_TotADC1}
+ \end{figure}
+
+   \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_ADC_U_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by ADC\_{U} .}
+   \label{fig:crs_YXC_ADC_U1}
+ \end{figure}
+
+    \begin{figure}[!htb]
+  \centering
+  \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_ADC_V_\RUN_t\THR_m\MinHits.pdf}
+  \caption{Cross $Y$ vs $X$ distribution. Events are weighted by ADC\_{V}.}
+   \label{fig:crs_YXC_ADC_V1}
+ \end{figure}
+
+ \newpage
+  \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_TotEnergy_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by Energy = E\_{U} + E\_{V}.}
+   \label{fig:crs_YXC_TotE1}
+ \end{figure}
+
+ \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_Energy_U_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by E\_{U}.}
+   \label{fig:crs_YXC_E_U1}
+ \end{figure}
+
+  \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_Energy_V_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by E\_{V}.}
+   \label{fig:crs_YXC_E_V1}
+ \end{figure}
+ \newpage
+
+
+ \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_tU_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by U cluster peak time t\_{U}.}
+   \label{fig:crs_YXC_tU1}
+ \end{figure}
+
+  \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_tV_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by V cluster peak time t\_{V}.}
+   \label{fig:crs_YXC_tV1}
+ \end{figure}
+
+   \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.3\tw]{Figs/Time_V_vs_Time_U_Max_\RUN_t\THR_m\MinHits.pdf}
+   \grinp[width=0.3\tw]{Figs/Time_U_Max_\RUN_t\THR_m\MinHits.pdf}
+   \grinp[width=0.3\tw]{Figs/Time_V_Max_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Peak time distributions: Left: "V vs U" cluster peak time, middle: U cluster peak time, and the right is the V cluster peak time. }
+   \label{fig:crs_tVU1}
+ \end{figure}
+
+ \newpage
+ \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_clU_Size_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by U cluster size.}
+   \label{fig:crs_YXC_clU_size}
+ \end{figure}
+
+  \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.65\tw]{Figs/Cross_YXc_Max1_Weighted_clV_Size_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cross $Y$ vs $X$ distribution. Events are weighted by V cluster size.}
+   \label{fig:crs_YXC_clU_size}
+ \end{figure}
+
+   \begin{figure}[!htb]
+  \centering
+   \grinp[width=0.3\tw]{Figs/cl_V_vs_U_Size_\RUN_t\THR_m\MinHits.pdf}
+   \grinp[width=0.3\tw]{Figs/Ucl_size1_\RUN_t\THR_m\MinHits.pdf}
+   \grinp[width=0.3\tw]{Figs/Vcl_size1_\RUN_t\THR_m\MinHits.pdf}
+   \caption{Cluster size distributions: Left: "V vs U" cluster sizes, middle: U cluster size, and the right is the V cluster.}
+   \label{fig:crs_tVU1}
+ \end{figure}
+
+ \newpage
+
+ \begin{figure}
+  \centering
+  \grinp[width=0.3\tw]{Figs/GEM_Peak_time_Y_vs_X_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_Peak_time_X_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_Peak_time_Y_\RUN_t\THR_m\MinHits.pdf}
+  \caption{GEM cluster peak time distributions. Left ``Y vs X'' cluster times, middle GEM X cluster peak time, and the right represents GEM Y cluster peak time distribution.}
+  \label{fig:GEM_times1}
+  \end{figure}
+
+  \begin{figure}
+  \centering
+  \grinp[width=0.3\tw]{Figs/GEM_ADC_YXC_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_ADC_X_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_ADC_Y_\RUN_t\THR_m\MinHits.pdf}
+  \caption{GEM ADC distributions. Left `` ADC Y vs ADC X'', middle ADC X distribution and the right represents ADC Y distribution}
+ \end{figure}
+
+  \begin{figure}
+  \centering
+  \grinp[width=0.3\tw]{Figs/GEM_cl_Size_Y_vs_X_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_cl_Size_X_\RUN_t\THR_m\MinHits.pdf}
+  \grinp[width=0.3\tw]{Figs/GEM_cl_Size_Y_\RUN_t\THR_m\MinHits.pdf}
+  \caption{GEM cluster size distributions. Left `` Y size vs X size'', middle X size distribution and the right represents Y size distribution}
  \end{figure}
 
 \end{document}

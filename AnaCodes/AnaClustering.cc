@@ -336,8 +336,6 @@ int main(int argc, char** argv) {
             int n_V_cl = v_V_Clusters.size();
             h_n_V_vs_U_Clusters1.Fill(n_U_cl, n_V_cl);
 
-
-
             int n_U_MultiHit_clusters = 0;
             int n_V_MultiHit_clusters = 0;
 
