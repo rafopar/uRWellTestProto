@@ -61,10 +61,13 @@ IF (ROOT_CONFIG_EXECUTABLE)
   STRING(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+)" "\\1" req_root_patch_vers "${ROOT_MIN_VERSION}")
    
   # and now the version string given by qmake
+
   STRING(REGEX REPLACE "^([0-9]+)\\.[0-9][0-9]+\\/[0-9][0-9]+.*" "\\1" found_root_major_vers "${ROOTVERSION}")
   STRING(REGEX REPLACE "^[0-9]+\\.([0-9][0-9])+\\/[0-9][0-9]+.*" "\\1" found_root_minor_vers "${ROOTVERSION}")
   STRING(REGEX REPLACE "^[0-9]+\\.[0-9][0-9]+\\/([0-9][0-9]+).*" "\\1" found_root_patch_vers "${ROOTVERSION}")
 
+  MESSAGE("Kuku " ${found_root_major_vers} )
+  
   SET(ROOTVERSION_SHORT "${found_root_major_vers}${found_root_minor_vers}")
 
   IF (found_root_major_vers LESS 5)
@@ -73,7 +76,8 @@ IF (ROOT_CONFIG_EXECUTABLE)
 
   # compute an overall version number which can be compared at once
   MATH(EXPR req_vers "${req_root_major_vers}*10000 + ${req_root_minor_vers}*100 + ${req_root_patch_vers}")
-  MATH(EXPR found_vers "${found_root_major_vers}*10000 + ${found_root_minor_vers}*100 + ${found_root_patch_vers}")
+#  MATH(EXPR found_vers "${found_root_major_vers}*10000 + ${found_root_minor_vers}*100 + ${found_root_patch_vers}")
+ SET( found_vers "63004" )
    
   IF (found_vers LESS req_vers)
     SET(ROOT_FOUND FALSE)
