@@ -360,7 +360,8 @@ int main(int argc, char **argv) {
         delete file_in;
     }
 
-    TLegend *leg1 = new TLegend(0.12, 0.85, 0.3, 0.97);
+    //TLegend *leg1 = new TLegend(0.12, 0.85, 0.3, 0.97);
+    TLegend *leg1 = new TLegend(0.55, 0.25, 0.93, 0.55);
     leg1->SetBorderSize(0);
     leg1->AddEntry(gr_Eff_U, "U Cluster");
     leg1->AddEntry(gr_Eff_V, "V Cluster");

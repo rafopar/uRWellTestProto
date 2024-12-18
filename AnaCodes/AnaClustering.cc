@@ -143,6 +143,7 @@ int main(int argc, char** argv) {
     TH2D h_Cross_YXc_Max3("h_Cross_YXc_Max3", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max4("h_Cross_YXc_Max4", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max5("h_Cross_YXc_Max5", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_Max_InsideDet1("h_Cross_YXc_Max_InsideDet1", "", 1000, -900., 900., 200, -500., 500.);
 
     TH2D h_Cross_YXc_Max_Weighted1("h_Cross_YXc_Max_Weighted1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_Max_Weighted_ADC_U1("h_Cross_YXc_Max_Weighted_ADC_U1", "", 1000, -900., 900., 200, -500., 500.);
@@ -407,6 +408,10 @@ int main(int argc, char** argv) {
                 // This cross represents the cross with Maximum U and Maximum V cluster
                 curCrs_MaxADC = uRwellCross(Max_UCluster.getAvgStrip(), Max_VCluster.getAvgStrip());
                 h_Cross_YXc_Max1.Fill(curCrs_MaxADC.getX(), curCrs_MaxADC.getY());
+                
+                if( uRwellTools::IsInsideDetector(curCrs_MaxADC.getX(), curCrs_MaxADC.getY()) ){
+                    h_Cross_YXc_Max_InsideDet1.Fill(curCrs_MaxADC.getX(), curCrs_MaxADC.getY());
+                }
 
                 if (n_U_cl > n_MaxClusters || n_V_cl > n_MaxClusters) {
                     h_Cross_YXc_Max4.Fill(curCrs_MaxADC.getX(), curCrs_MaxADC.getY());

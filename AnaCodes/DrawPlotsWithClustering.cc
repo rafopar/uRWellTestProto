@@ -256,8 +256,10 @@ int main(int argc, char **argv) {
     lat1->DrawLatex(0.15, 0.75, Form("Has U and V cluster = %d #rightarrow %1.2f %% ", counts_has_U_AND_V_Cluster, 100. * double(counts_has_U_AND_V_Cluster) / counts_integral));
 
     TCanvas *c2 = new TCanvas("c2", "", 1800., 1000.);
-    c2->SetTopMargin(0.02);
+    c2->SetTopMargin(0.03);
     c2->SetRightMargin(0.11);
+    c2->SetBottomMargin(0.13);
+    c2->SetLeftMargin(0.12);
 
     TH2D *h_Cross_YXc2 = (TH2D*) file_in->Get("h_Cross_YXc2");
     h_Cross_YXc2->SetStats(0);
@@ -411,8 +413,9 @@ int main(int argc, char **argv) {
     h_Cross_YXc_Max1->SetTitleOffset(0.9, "Y");
     h_Cross_YXc_Max1->SetTitleSize(0.05, "X");
     h_Cross_YXc_Max1->SetLabelSize(0.05, "X");
-    h_Cross_YXc_Max1->SetMaximum( 0.15 * h_Cross_YXc1->GetMaximum() );
-    h_Cross_YXc_Max1->SetMinimum(1.5);
+    //h_Cross_YXc_Max1->SetMaximum( 0.15 * h_Cross_YXc1->GetMaximum() );
+    h_Cross_YXc_Max1->SetMaximum( 0.5*h_Cross_YXc1->GetEntries()/( h_Cross_YXc1->GetNbinsX()*h_Cross_YXc1->GetNbinsY() ) );
+    h_Cross_YXc_Max1->SetMinimum(3.5);
     h_Cross_YXc_Max1->Draw("col");
     DrawActiveArea();
     uRwellTools::DrawGroupStripBiundaries();
@@ -420,6 +423,46 @@ int main(int argc, char **argv) {
     c2->Print(Form("Figs/Cross_YXc_Max1_%d_t%1.1f_m%d.png", run, threshold, MinClSize));
     c2->Print(Form("Figs/Cross_YXc_Max1_%d_t%1.1f_m%d.root", run, threshold, MinClSize));
 
+    
+    TH2D *h_Cross_YXc_Max_InsideDet1 = (TH2D*) file_in->Get("h_Cross_YXc_Max_InsideDet1");
+    h_Cross_YXc_Max_InsideDet1->SetStats(0);
+    h_Cross_YXc_Max_InsideDet1->SetTitle("; Cross X coordinate [mm]; Cross Y coordinate [mm]");
+    h_Cross_YXc_Max_InsideDet1->SetTitleSize(0.07, "Y");
+    h_Cross_YXc_Max_InsideDet1->SetLabelSize(0.07, "Y");
+    h_Cross_YXc_Max_InsideDet1->SetTitleOffset(0.9, "Y");
+    h_Cross_YXc_Max_InsideDet1->SetTitleSize(0.07, "X");
+    h_Cross_YXc_Max_InsideDet1->SetLabelSize(0.07, "X");
+    h_Cross_YXc_Max_InsideDet1->SetTitleOffset(0.9, "X");
+    //h_Cross_YXc_Max1->SetMaximum( 0.15 * h_Cross_YXc1->GetMaximum() );
+    h_Cross_YXc_Max_InsideDet1->SetMaximum( 0.5*h_Cross_YXc1->GetEntries()/( h_Cross_YXc1->GetNbinsX()*h_Cross_YXc1->GetNbinsY() ) );
+    h_Cross_YXc_Max_InsideDet1->SetMinimum(3.5);
+    h_Cross_YXc_Max_InsideDet1->Draw("col");
+    c2->Print(Form("Figs/Cross_YXc_Max_InsideDet1_%d_t%1.1f_m%d.pdf", run, threshold, MinClSize));
+    c2->Print(Form("Figs/Cross_YXc_Max_InsideDet1_%d_t%1.1f_m%d.png", run, threshold, MinClSize));
+    c2->Print(Form("Figs/Cross_YXc_Max_InsideDet1_%d_t%1.1f_m%d.root", run, threshold, MinClSize));
+
+    
+    
+    Y_bin2 = h_Cross_YXc3->GetYaxis()->FindBin(245);
+    Y_bin1 = h_Cross_YXc3->GetYaxis()->FindBin(-245);
+    TH1D *h_Cross_X_Max1 = (TH1D*) h_Cross_YXc_Max1->ProjectionX("h_Cross_X_Max1", Y_bin1, Y_bin2);
+    h_Cross_X_Max1->SetLineColor(95);
+    h_Cross_X_Max1->SetFillColor(95);
+    h_Cross_X_Max1->SetTitleSize(0.07, "Y");
+    h_Cross_X_Max1->SetLabelSize(0.07, "Y");
+    h_Cross_X_Max1->SetTitleOffset(0.9, "Y");
+    h_Cross_X_Max1->SetTitleSize(0.07, "X");
+    h_Cross_X_Max1->SetLabelSize(0.07, "X");
+    h_Cross_X_Max1->SetTitleOffset(0.9, "X");
+    h_Cross_X_Max1->SetAxisRange(-85, 85, "X");
+    h_Cross_X_Max1->Draw();
+
+    c2->Print(Form("Figs/Cross_X_Max1_%d_%1.1f_%d.pdf", run, threshold, MinClSize));
+    c2->Print(Form("Figs/Cross_X_Max1_%d_%1.1f_%d.png", run, threshold, MinClSize));
+    c2->Print(Form("Figs/Cross_X_Max1_%d_%1.1f_%d.root", run, threshold, MinClSize));
+    
+    
+    
     TH2D *h_Cross_YXc_Max2 = (TH2D*) file_in->Get("h_Cross_YXc_Max2");
     h_Cross_YXc_Max2->SetStats(0);
     h_Cross_YXc_Max2->SetTitle("; Cross X coordinate [mm]; Cross Y coordinate [mm]");
