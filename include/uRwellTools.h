@@ -186,6 +186,10 @@ namespace uRwellTools {
     const double uRWell_Y_min = -250.; // mm
     const double uRwell_XTop = 728.;
     const double uRwell_XBot = 510.;
+    
+    const int sec_TestProto = 6;
+    const int layer_U_TestProto = 1;
+    const int layer_V_TestProto = 2;
 
     /*
      * This function takes the h_in histogram, which is intended to be the ADC distributions that supposed to look
@@ -228,6 +232,8 @@ namespace uRwellTools {
 
     void DrawGroupStripBiundaries();
 
+    void DrawActiveArea();
+    
     class uRwellCluster {
     public:
         uRwellCluster();
