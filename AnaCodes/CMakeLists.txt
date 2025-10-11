@@ -44,7 +44,7 @@ DrawNoise_Vs_StripCoorelations.exe
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc Decode_Run.py
+install( FILES DrawPedestals.cc
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################

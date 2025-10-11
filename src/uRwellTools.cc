@@ -236,6 +236,17 @@ void uRwellTools::DrawGroupStripBiundaries() {
     }
 }
 
+void uRwellTools::DrawActiveArea() {
+
+    TLine *line1 = new TLine();
+    line1->SetLineColor(2);
+    line1->SetLineWidth(3);
+    line1->DrawLine(-723, 250., 723., 250.);
+    line1->DrawLine(-506.14, -250., 506.14, -250.);
+    line1->DrawLine(-506.14, -250., -723, 250.);
+    line1->DrawLine(506.14, -250., 723, 250.);
+}
+
 namespace uRwellTools {
 
     uRwellCluster getMaxAdcCluster(std::vector<uRwellCluster> &v_clusters, int MinHits) {
