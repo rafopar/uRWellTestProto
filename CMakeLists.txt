@@ -20,7 +20,7 @@ IF("${isSystemDir}" STREQUAL "-1")
    SET(CMAKE_INSTALL_RPATH "${CMAKE_SOURCE_DIR}/urwelllib")
 ENDIF("${isSystemDir}" STREQUAL "-1")
 
-include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIR})
+include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 set(uRWell_SOURCE_FILES
   "${PROJECT_SOURCE_DIR}/src/uRwellTools.cc" )
 set(uRWell_HEADERS
@@ -46,7 +46,7 @@ configure_file(uRWellLib.pc.in uRWellLib.pc @ONLY)
   
 install(FILES ${CMAKE_BINARY_DIR}/uRWellLib.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
-message("ROOT_INCLUDE_DIR is " ${ROOT_INCLUDE_DIR})
+message("ROOT_INCLUDE_DIR is " ${ROOT_INCLUDE_DIRS})
 
 # Add directories
 add_subdirectory(hipo/hipo4)

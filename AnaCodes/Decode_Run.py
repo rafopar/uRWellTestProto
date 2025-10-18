@@ -41,8 +41,9 @@ if __name__ == "__main__":
     
     #evio_DIR = "/cache/clas12/detectors/uRwell/2022_2023_EEL_Data/"
     #evio_DIR = "/cache/clas12/detectors/uRwell/2024_EEL_Data/"
-    evio_DIR = "/cache/clas12/detectors/uRwell/2024_EEL_Hodo_And_uRwell/"
-    
+    #evio_DIR = "/cache/clas12/detectors/uRwell/2024_EEL_Hodo_And_uRwell/"
+    evio_DIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
+
     DECODER = "/home/rafopar/work/git/clas12-offline-software/coatjava/bin/decoder"
     
     files = glob.glob("%s/urwell_maroc_00%d.evio*" %(evio_DIR, run));
