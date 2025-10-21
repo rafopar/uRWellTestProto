@@ -175,6 +175,7 @@ namespace uRwellTools {
 
     const int nMaxVStrip = 704; // U Strip number can not be larger than this number
     const int nMaxUStrip = 704; // V Strip number can not be larger than this number
+    const int nMaxUniqueChan = 1704; // When using unique channel, this variable can go max to this value
 
     const int n_grU = 4;
     const int n_grV = 4;
@@ -347,6 +348,11 @@ namespace uRwellTools {
     double getCrossX(double strip_U, double strip_V); // returns Cross UxV cross X coordinate
     double getCrossY(double strip_U, double strip_V); // returns Cross UxV cross Y coordinate
     uRwellCluster getMaxAdcCluster(std::vector<uRwellCluster> &, int);
+
+    // Not specific for uRwell, later maybe I will have another more global name
+    // for such type of functions
+    bool fileExists(const char* filename);
+
 
 }
 
