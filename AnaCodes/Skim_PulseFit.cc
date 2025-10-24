@@ -5,20 +5,20 @@
 #include <cstdlib>
 #include <fstream>
 
-
-#include <TH2D.h>
-#include <TH1D.h>
 #include <TMath.h>
 #include <TFile.h>
+
+#include <TSystem.h>
+#include <TGraphErrors.h>
 
 // ===== Hipo headers =====
 #include <reader.h>
 #include <writer.h>
 #include <dictionary.h>
-#include <TGraphErrors.h>
-#include <TStyle.h>
 
+// ===== Custom headers =====
 #include <uRwellTools.h>
+
 
 using namespace std;
 
@@ -46,14 +46,16 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
+    gSystem->RedirectOutput("/dev/null", "a"); // hides ROOT's own prints
+
     /**
      * Creating schema for uRwell::Hit
      * This is more of experimental study, that is why I want to keep many details, while later for established
      * analysis, just time (e.g. MPV) would be enough.
      */
-    hipo::schema sch("uRwell::Hit", 90, 1);
+    hipo::schema sch("uRwell::Pulse", 90, 1);
     sch.parse(
-        "sec/S,layer/S,strip/S,stripLocal/S,adc/F,adcRel/F,ts/S,slot/S,pulse_A0/F,pulse_MPV/F,pulse_Sigma/F,pulse_Chi2/F,pulse_NDF/S");
+        "sec/S,layer/S,strip/S,stripLocal/S,adc/F,adcRel/F,ts/S,slot/S,ped_rms/F,pulse_p0/F,pulse_A0/F,pulse_MPV/F,pulse_Sigma/F,pulse_Chi2/F,pulse_NDF/S,pulse_ADC0/F,pulse_ADC1/F,pulse_ADC2/F,pulse_ADC3/F,pulse_ADC4/F,pulse_ADC5/F,pulse_ADC6/F,pulse_ADC7/F,pulse_ADC8/F,pulse_ADC9/F,pulse_ADC10/F,pulse_ADC11/F,pulse_ADC12/F,pulse_ADC13/F,pulse_ADC14/F");
     sch.show();
 
     auto *f_bgrPlusLandau = new TF1("f_bgrPlusLandau", "[0] + [1]*TMath::Landau(x,[2],[3])", -10, 10.);
@@ -146,19 +148,17 @@ int main(int argc, char **argv) {
 
     cout << "The pedestal map is loaded." << endl;
 
-    TCanvas c1("c1", "", 1200, 800);
-    c1.Clear();
-    c1.Print("debugging.pdf[");
-
     try {
         while (reader.next() == true) {
             reader.read(event);
 
             evCounter = evCounter + 1;
 
-            if (evCounter > 200) { break; }
+            //if (evCounter > 200) { break; }
             if (evCounter % 1000 == 0) {
+                gSystem->RedirectOutput(0);
                 cout.flush() << "Processed " << evCounter << " events \r";
+                gSystem->RedirectOutput("/dev/null", "a"); // hides ROOT's own prints
             }
 
             event.getStructure(buRWellADC);
@@ -207,7 +207,7 @@ int main(int argc, char **argv) {
                 } else if (sector == sec_uRWell) {
                     m_ADC_uRWELL[uniqueChan] = m_ADC_uRWELL[uniqueChan] + double(ADC);
 
-                    gr_ADC_Waveforms_uRwell->AddPointError(ts, m_ped_mean[uniqueChan] - ADC, 0, m_ped_rms[uniqueChan]);
+                    gr_ADC_Waveforms_uRwell[uniqueChan].AddPointError(ts, m_ped_mean[uniqueChan] - ADC, 0, m_ped_rms[uniqueChan]);
 
                     if (m_ped_mean[uniqueChan] - ADC > m_MaxADC_uRWELL[uniqueChan]) {
                         m_MaxADC_uRWELL[uniqueChan] = m_ped_mean[uniqueChan] - ADC;
@@ -216,8 +216,7 @@ int main(int argc, char **argv) {
                 }
             }
 
-
-            vector<uRwellTools::uRwellHit> v_GEM_Hits;
+            vector<uRwellTools::APV25Pulse> v_GEM_Pulses;
             for (auto it = m_ADC_GEM.begin(); it != m_ADC_GEM.end(); ++it) {
                 int ch = it->first;
 
@@ -234,7 +233,8 @@ int main(int argc, char **argv) {
                     curHit.strip = ch % 1000;
                     curHit.stripLocal = ch - uRwellTools::slot_Offset[curHit.slot];
                     curHit.ts = m_ts_GEM[ch];
-                    v_GEM_Hits.push_back(curHit);
+
+                    uRwellTools::APV25Pulse curPulse;
 
                     f_bgrPlusLandau->FixParameter(0, 0.);
                     f_bgrPlusLandau->SetParameter(1, 4*(gr_ADC_Waveforms_GEM[ch].GetMaximum()-gr_ADC_Waveforms_GEM[ch].GetMinimum()) );
@@ -242,21 +242,151 @@ int main(int argc, char **argv) {
                     f_bgrPlusLandau->SetParameter(2, 3 );
                     f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
 
-                    gr_ADC_Waveforms_GEM[ch].SetMarkerStyle(20);
-                    gr_ADC_Waveforms_GEM[ch].GetXaxis()->SetLimits(-1., 9.);
-                    gr_ADC_Waveforms_GEM[ch].Draw("AP");
-                    gr_ADC_Waveforms_GEM[ch].Fit(f_bgrPlusLandau, "MeV", "", -1.1, 9.1);
+                    gr_ADC_Waveforms_GEM[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
                     //gr_ADC_Waveforms[ch].Fit(f_bgrPlusWaveform1, "MeV", "", -1.1, 9.1);
-                    c1.Print("debugging.pdf");
+
+                    curPulse.hit = curHit;
+                    curPulse.ped_rms = m_ped_GEM_rms[ch];
+                    curPulse.pulse_p0 = f_bgrPlusLandau->GetParameter(0);
+                    curPulse.pulse_A0 = f_bgrPlusLandau->GetParameter(1);
+                    curPulse.pulse_MPV = f_bgrPlusLandau->GetParameter(2);
+                    curPulse.pulse_Sigma = f_bgrPlusLandau->GetParameter(3);
+                    curPulse.pulse_Chi2 = f_bgrPlusLandau->GetChisquare();
+                    curPulse.pulse_NDF = f_bgrPlusLandau->GetNDF();
+
+                    for ( auto ts = 0; ts < n_ts; ++ts ) {
+                        curPulse.pulse_ADC[int(gr_ADC_Waveforms_GEM[ch].GetPointX(ts))] = gr_ADC_Waveforms_GEM[ch].GetPointY(ts);
+                    }
+
+                    v_GEM_Pulses.push_back(curPulse);
                 }
             }
 
+            vector <uRwellTools::APV25Pulse> v_uRwell_Pulses;
 
+            for (auto it = m_ADC_uRWELL.begin(); it != m_ADC_uRWELL.end(); ++it) {
+                int ch = it->first;
+                m_ADC_uRWELL[ch] = m_ped_mean[ch] - m_ADC_uRWELL[ch] / double(n_ts);
+                m_ADCRel_uRWELL[ch] = m_ADC_uRWELL[ch] / m_ped_rms[ch];
+
+                if (m_ADCRel_uRWELL[ch] > sigm_threshold) {
+                    uRwellTools::uRwellHit curHit;
+                    curHit.adc = m_ADC_uRWELL[ch];
+                    curHit.adcRel = m_ADCRel_uRWELL[ch];
+                    curHit.sector = sec_uRWell;
+                    curHit.layer = 1 + ch / 1000;
+                    curHit.slot = uRwellTools::getURwellSlot(ch);
+                    curHit.strip = ch % 1000;
+                    curHit.stripLocal = ch - uRwellTools::slot_Offset[curHit.slot];
+                    curHit.ts = m_ts_uRWELL[ch];
+
+                    uRwellTools::APV25Pulse curPulse;
+
+                    f_bgrPlusLandau->FixParameter(0, 0.);
+                    f_bgrPlusLandau->SetParameter(1, 4*(gr_ADC_Waveforms_uRwell[ch].GetMaximum()-gr_ADC_Waveforms_uRwell[ch].GetMinimum()) );
+                    f_bgrPlusLandau->SetParLimits(1, 0., 10000.);
+                    f_bgrPlusLandau->SetParameter(2, 3 );
+                    f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
+
+                    gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
+
+                    curPulse.hit = curHit;
+                    curPulse.ped_rms = m_ped_rms[ch];
+                    curPulse.pulse_p0 = f_bgrPlusLandau->GetParameter(0);
+                    curPulse.pulse_A0 = f_bgrPlusLandau->GetParameter(1);
+                    curPulse.pulse_MPV = f_bgrPlusLandau->GetParameter(2);
+                    curPulse.pulse_Sigma = f_bgrPlusLandau->GetParameter(3);
+                    curPulse.pulse_Chi2 = f_bgrPlusLandau->GetChisquare();
+                    curPulse.pulse_NDF = f_bgrPlusLandau->GetNDF();
+
+                    for ( auto ts = 0; ts < n_ts; ++ts ) {
+                        curPulse.pulse_ADC[int(gr_ADC_Waveforms_uRwell[ch].GetPointX(ts))] = gr_ADC_Waveforms_uRwell[ch].GetPointY(ts);
+                    }
+
+
+                    v_uRwell_Pulses.push_back(curPulse);
+                }
+            }
+
+            int n_TotHits = v_GEM_Pulses.size() + v_uRwell_Pulses.size();
+
+            if (n_TotHits == 0) {
+                continue;
+            }
+
+            hipo::bank buRwellPulses(sch, n_TotHits);
+            hipo::event outEvent;
+
+            int col = 0;
+            //     *********** Writing uRwell pulses above the threshold **********
+            // "sec/S,layer/S,strip/S,stripLocal/S,adc/F,adcRel/F,ts/S,slot/S,
+            // ped_rms/F,pulse_p0/F,pulse_A0/F,pulse_MPV/F,pulse_Sigma/F,pulse_Chi2/F,pulse_NDF/S,pulse_ADC0/F,pulse_ADC1/F,pulse_ADC2/F,pulse_ADC3/F,pulse_ADC4/F,
+            // pulse_ADC5/F,pulse_ADC6/F,pulse_ADC7/F,pulse_ADC8/F,pulse_ADC9/F,pulse_ADC10/F,pulse_ADC11/F,pulse_ADC12/F,pulse_ADC13/F,pulse_ADC14/F");
+            for (auto curPulse : v_uRwell_Pulses) {
+                buRwellPulses.putShort("sec", col, short(curPulse.hit.sector));
+                buRwellPulses.putShort("layer", col, short(curPulse.hit.layer));
+                buRwellPulses.putShort("strip", col, short(curPulse.hit.strip));
+                buRwellPulses.putShort("stripLocal", col, short(curPulse.hit.stripLocal));
+                buRwellPulses.putFloat("adc", col, float(curPulse.hit.adc));
+                buRwellPulses.putFloat("adcRel", col, float(curPulse.hit.adcRel));
+                buRwellPulses.putShort("ts", col, short(curPulse.hit.ts));
+                buRwellPulses.putShort("slot", col, short(curPulse.hit.slot));
+                buRwellPulses.putFloat("ped_rms", col, float(curPulse.ped_rms));
+                buRwellPulses.putFloat("pulse_p0", col, float(curPulse.pulse_p0));
+                buRwellPulses.putFloat("pulse_A0", col, float(curPulse.pulse_A0));
+                buRwellPulses.putFloat("pulse_MPV", col, float(curPulse.pulse_MPV));
+                buRwellPulses.putFloat("pulse_Sigma", col, float(curPulse.pulse_Sigma));
+                buRwellPulses.putFloat("pulse_Chi2", col, float(curPulse.pulse_Chi2));
+                buRwellPulses.putShort("pulse_NDF", col, short(curPulse.pulse_NDF));
+
+                for (int ts = 0; ts < n_ts; ++ts) {
+                    buRwellPulses.putFloat(Form("pulse_ADC%d", ts), col, float(curPulse.pulse_ADC[ts]));
+                }
+
+                col = col + 1;
+            }
+
+
+            for (auto curPulse : v_GEM_Pulses) {
+                buRwellPulses.putShort("sec", col, short(curPulse.hit.sector));
+                buRwellPulses.putShort("layer", col, short(curPulse.hit.layer));
+                buRwellPulses.putShort("strip", col, short(curPulse.hit.strip));
+                buRwellPulses.putShort("stripLocal", col, short(curPulse.hit.stripLocal));
+                buRwellPulses.putFloat("adc", col, float(curPulse.hit.adc));
+                buRwellPulses.putFloat("adcRel", col, float(curPulse.hit.adcRel));
+                buRwellPulses.putShort("ts", col, short(curPulse.hit.ts));
+                buRwellPulses.putShort("slot", col, short(curPulse.hit.slot));
+                buRwellPulses.putFloat("ped_rms", col, float(curPulse.ped_rms));
+                buRwellPulses.putFloat("pulse_p0", col, float(curPulse.pulse_p0));
+                buRwellPulses.putFloat("pulse_A0", col, float(curPulse.pulse_A0));
+                buRwellPulses.putFloat("pulse_MPV", col, float(curPulse.pulse_MPV));
+                buRwellPulses.putFloat("pulse_Sigma", col, float(curPulse.pulse_Sigma));
+                buRwellPulses.putFloat("pulse_Chi2", col, float(curPulse.pulse_Chi2));
+                buRwellPulses.putShort("pulse_NDF", col, short(curPulse.pulse_NDF));
+
+                for (int ts = 0; ts < n_ts; ++ts) {
+                    buRwellPulses.putFloat(Form("pulse_ADC%d", ts), col, float(curPulse.pulse_ADC[ts]));
+                }
+
+                col = col + 1;
+            }
+
+            outEvent.addStructure(bRAWADc);
+            outEvent.addStructure(bRunConf);
+            outEvent.addStructure(buRwellPulses);
+            // outEvent.addStructure(bXYHodo);
+            // outEvent.addStructure(bVMM3ADC);
+            writer.addEvent(outEvent);
 
         }
     } catch (exception &e) {
         cerr << e.what() << endl;
     }
-    c1.Print("debugging.pdf]");
+
+    //c1.Print("debugging.pdf]");
+
+    writer.close();
+    writer.showSummary();
+
     return 0;
 }

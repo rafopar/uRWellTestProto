@@ -124,6 +124,21 @@ namespace uRwellTools {
         int slot;
     };
 
+
+    struct APV25Pulse {
+
+        uRwellTools::uRwellHit hit;
+        double ped_rms;
+        double pulse_p0;        // the pedestal, although I plan to fix this parameter to 0
+        double pulse_A0;        // Amplitude of the Landau
+        double pulse_MPV;       // MPV of the Landau
+        double pulse_Sigma;     // Sigma of the Landau
+        double pulse_Chi2;      // Chi2 of the fit
+        int pulse_NDF;          // NDF of the fit
+        double pulse_ADC[15];   // ADCs of 15 time samples of the pulse
+    };
+
+
     /*
      * This object contains different uRwell related efficiencies, and associated uncertainties
      */
