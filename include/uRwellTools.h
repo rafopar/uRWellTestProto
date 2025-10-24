@@ -134,6 +134,7 @@ namespace uRwellTools {
         double pulse_MPV;       // MPV of the Landau
         double pulse_Sigma;     // Sigma of the Landau
         double pulse_Chi2;      // Chi2 of the fit
+        double pulse_Integral;  // Integral of the Landau function
         int pulse_NDF;          // NDF of the fit
         double pulse_ADC[15];   // ADCs of 15 time samples of the pulse
     };

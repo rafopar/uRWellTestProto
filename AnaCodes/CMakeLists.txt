@@ -41,10 +41,13 @@ add_executable(Skim_PulseFit Skim_PulseFit.cc)
 set_target_properties(Skim_PulseFit PROPERTIES OUTPUT_NAME "Skim_PilseFit.exe")
 target_link_libraries(Skim_PulseFit Hipo4 uRWellLib ${ROOT_LIBRARIES})
 
+add_executable(AnaPulseFits AnaPulseFits.cc)
+set_target_properties(AnaPulseFits PROPERTIES OUTPUT_NAME "AnaPulseFits.exe")
+target_link_libraries(AnaPulseFits Hipo4 uRWellLib ${ROOT_LIBRARIES})
 
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-DrawNoise_Vs_StripCoorelations.exe
+DrawNoise_Vs_StripCoorelations.exe AnaPulseFits
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
