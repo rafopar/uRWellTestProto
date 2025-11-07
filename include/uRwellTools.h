@@ -14,7 +14,6 @@
 #include <TCanvas.h>
 
 namespace uRwellTools {
-
     // There are 11 distinct geometric regions with different U over V width ratios.
     const int nGroups = 11;
 
@@ -29,7 +28,8 @@ namespace uRwellTools {
         {7, 350},
         {8, 175},
         {9, 175},
-        {10, 175}};
+        {10, 175}
+    };
     const std::map<int, double> m_VStripWidth{
         {0, 500},
         {1, 650},
@@ -41,23 +41,24 @@ namespace uRwellTools {
         {7, 355},
         {8, 500},
         {9, 650},
-        {10, 355}};
+        {10, 355}
+    };
 
 
     /*
      *  The Key of the map is the uRwell slot
      */
     const std::map<int, double> m_StripWidth{
-        {0, 350},  // U strip
-        {1, 262},  // U strip
-        {2, 262},  // U strip
-        {3, 355},  // V strip
-        {4, 350},  // U strip
-        {5, 355},  // V strip
-        {6, 650},  // V strip
-        {7, 500},  // V strip
-        {8, 500},  // V strip
-        {9, 175},  // U strip
+        {0, 350}, // U strip
+        {1, 262}, // U strip
+        {2, 262}, // U strip
+        {3, 355}, // V strip
+        {4, 350}, // U strip
+        {5, 355}, // V strip
+        {6, 650}, // V strip
+        {7, 500}, // V strip
+        {8, 500}, // V strip
+        {9, 175}, // U strip
         {10, 650}, // V strip
         {11, 175}, // U strip
     };
@@ -66,20 +67,20 @@ namespace uRwellTools {
      *  The Key of the map is the slot, and the value is the view 0=U, 1=V
      */
     const std::map<int, int> m_uRwellView{
-        {0, 0},   // U
-        {1, 0},   // U
-        {2, 0},   // U
-        {3, 1},   // V
-        {4, 0},   // U
-        {5, 1},   // V
-        {6, 1},   // V
-        {7, 1},   // V
-        {8, 1},   // V
-        {9, 0},   // U
-        {10, 1},  // V
-        {11, 0}   // U
+        {0, 0}, // U
+        {1, 0}, // U
+        {2, 0}, // U
+        {3, 1}, // V
+        {4, 0}, // U
+        {5, 1}, // V
+        {6, 1}, // V
+        {7, 1}, // V
+        {8, 1}, // V
+        {9, 0}, // U
+        {10, 1}, // V
+        {11, 0} // U
     };
-    
+
     // ======= Boundaries of groups of strips with the given strip width =======
     const std::vector<double> gr_UBounderies = {0.5, 64.5, 320.5, 448.5, 704.5};
     const std::vector<double> gr_VBounderies = {0.5, 64.5, 320.5, 448.5, 704.5};
@@ -91,7 +92,7 @@ namespace uRwellTools {
      * specify the View.
      */
     double getStripLength(int ch);
-    
+
     /*
      *  This method returns the area = strip_Length * strip_width
      *  * ch = channel number
@@ -101,14 +102,13 @@ namespace uRwellTools {
 
     class uRwellException : public std::exception {
     private:
-        char * message;
+        char *message;
 
     public:
-
-        uRwellException(char * msg) : message(msg) {
+        uRwellException(char *msg) : message(msg) {
         }
 
-        char * what() {
+        char *what() {
             return message;
         }
     };
@@ -126,17 +126,16 @@ namespace uRwellTools {
 
 
     struct APV25Pulse {
-
         uRwellTools::uRwellHit hit;
         double ped_rms;
-        double pulse_p0;        // the pedestal, although I plan to fix this parameter to 0
-        double pulse_A0;        // Amplitude of the Landau
-        double pulse_MPV;       // MPV of the Landau
-        double pulse_Sigma;     // Sigma of the Landau
-        double pulse_Chi2;      // Chi2 of the fit
-        double pulse_Integral;  // Integral of the Landau function
-        int pulse_NDF;          // NDF of the fit
-        double pulse_ADC[15];   // ADCs of 15 time samples of the pulse
+        double pulse_p0; // the pedestal, although I plan to fix this parameter to 0
+        double pulse_A0; // Amplitude of the Landau
+        double pulse_MPV; // MPV of the Landau
+        double pulse_Sigma; // Sigma of the Landau
+        double pulse_Chi2; // Chi2 of the fit
+        double pulse_Integral; // Integral of the Landau function
+        int pulse_NDF; // NDF of the fit
+        double pulse_ADC[15]; // ADCs of 15 time samples of the pulse
     };
 
 
@@ -173,9 +172,11 @@ namespace uRwellTools {
 
     const double OneSigma = 0.683;
 
-    const int clStripGap = 2; // The Max length of the gap in between strips with a given cluster 
+    const int clStripGap = 2; // The Max length of the gap in between strips with a given cluster
     int getURwellSlot(int ch);
+
     int getGEMSlot(int ch);
+
     const int nSlot = 16; // The test Prototype has only 12 slots
     extern int slot_Offset[nSlot]; // Gives the 1st strip channel (unique channel) for the given slot
 
@@ -185,7 +186,8 @@ namespace uRwellTools {
     const double X_bot_edge = 506.14;
 
     const double strip_alpha = 10. * 0.017453293; // The strip angle in radians
-    const double Y_0 = 250 + X_top_edge * tan(strip_alpha); // This is the Y coordinate of the 1st strip (U or V should be the same) when the X 0. In other words this is the offset of the 1st strip
+    const double Y_0 = 250 + X_top_edge * tan(strip_alpha);
+    // This is the Y coordinate of the 1st strip (U or V should be the same) when the X 0. In other words this is the offset of the 1st strip
     const double pitch = 1.; // mm
 
 
@@ -203,7 +205,7 @@ namespace uRwellTools {
     const double uRWell_Y_min = -250.; // mm
     const double uRwell_XTop = 728.;
     const double uRwell_XBot = 510.;
-    
+
     const int sec_TestProto = 6;
     const int layer_U_TestProto = 1;
     const int layer_V_TestProto = 2;
@@ -214,21 +216,21 @@ namespace uRwellTools {
      * It will fit this distribution with a Landau function, then return "ADC_Distribution" object which will contain
      * MPV and mean values of the distributions.
      */
-    ADC_Distribution CalcMPVandMean(TH1D*);
+    ADC_Distribution CalcMPVandMean(TH1D *);
 
     /*
-     * This function takes the h_in histogram as a first argument, and the 2nd argument is and addresses of uRwellEff 
+     * This function takes the h_in histogram as a first argument, and the 2nd argument is and addresses of uRwellEff
      * object. It will calculates these efficiencies and write to corresponding addresses.
      * the "h_in" histogram is just the "number of V vs number of U" clusters.
      */
-    void CalcEfficiencies(TH2* h_in, uRwellEff &eff);
+    void CalcEfficiencies(TH2 *h_in, uRwellEff &eff);
 
     /**
      * This function takes the h_in histogram as an input. It assumes the h_in histogram
      * is the cross "Y vs X" histogram. It projects it on "X" axis then fits with a Gaus + Pol4 function,
      * and calculates the number corresponding to the Gaussian.
      */
-    double getNofBgrSbtrCrosses(TH2* h_in);
+    double getNofBgrSbtrCrosses(TH2 *h_in);
 
     /*
      * This function take cross x and y coordiantes, and checks whether the cross is inside the detector.
@@ -250,7 +252,7 @@ namespace uRwellTools {
     void DrawGroupStripBiundaries();
 
     void DrawActiveArea();
-    
+
     class uRwellCluster {
     public:
         uRwellCluster();
@@ -261,7 +263,7 @@ namespace uRwellTools {
 
         void setHits(std::vector<uRwellHit>);
 
-        std::vector<uRwellHit>* getHits() {
+        std::vector<uRwellHit> *getHits() {
             return &fv_Hits;
         }
 
@@ -298,15 +300,55 @@ namespace uRwellTools {
         std::vector<uRwellHit> fv_Hits;
 
         void findPeakTime();
-        void findPeakEnergy();
-        void findAvgStrip();
 
+        void findPeakEnergy();
+
+        void findAvgStrip();
+    };
+
+    /*
+     * The class "PulseCluster" is similar to the uRwell Cluster. The difference is that
+     * it will be cluster based on "APV25Pulse"s, rather than uRwellHits.
+    */
+
+    class PulseCluster {
+    public:
+        PulseCluster();
+
+        void setPulses( std::vector<APV25Pulse> );
+
+
+        std::vector<APV25Pulse> *getPulses() {
+            return &fv_Pulses;
+        }
+
+        double getSeedMPV()const;                   // MPV of the Seed pulse
+        double getClusterMPV()const;                // Weighted average of all MPVs of the cluster
+        double getSeedSigma()const;                 // Sigma of the Seed pulse
+        double getClusterSigma()const;              // Weighted average of Sigmas of all pulses of the cluster
+        double getSeedPulseIntegral()const;         // ADC of the Seed pulse
+        double getClusterPulseIntegral()const;      // sum of pulse integrals of all pulses of the cluster
+
+        void FinalizeCluster();
+
+    private:
+        std::vector<APV25Pulse> fv_Pulses;
+        int fnStrips;
+        double fSeedMPV;
+        double fClusterMPV;
+        double fSeedSigma;
+        double fClusterSigma;
+        double fSeedPulseIntegral;
+        double fClusterPulseIntegral;
     };
 
     class uRwellCross {
     public:
         uRwellCross();
-        uRwellCross(double stripU, double stripV); // stripU and stripV are cluster centers in units of strip numbers, they don't have to be integer
+
+        uRwellCross(double stripU, double stripV);
+
+        // stripU and stripV are cluster centers in units of strip numbers, they don't have to be integer
 
         const double getStripU() {
             return fStripU;
@@ -361,15 +403,16 @@ namespace uRwellTools {
     };
 
     std::vector<uRwellCluster> getGlusters(std::vector<uRwellHit>);
+
+    std::vector<PulseCluster> getPulseClusters(std::vector<APV25Pulse>);
+
     double getCrossX(double strip_U, double strip_V); // returns Cross UxV cross X coordinate
     double getCrossY(double strip_U, double strip_V); // returns Cross UxV cross Y coordinate
     uRwellCluster getMaxAdcCluster(std::vector<uRwellCluster> &, int);
 
     // Not specific for uRwell, later maybe I will have another more global name
     // for such type of functions
-    bool fileExists(const char* filename);
-
-
+    bool fileExists(const char *filename);
 }
 
 #endif /* URWELLTOOLS_H */

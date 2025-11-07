@@ -341,6 +341,51 @@ namespace uRwellTools {
         fPeakTime = time; // Time of the highest energy strip
     }
 
+    PulseCluster::PulseCluster() : fnStrips(0), fSeedMPV(0), fClusterMPV(0), fSeedSigma(0), fClusterSigma(), fSeedPulseIntegral(), fClusterPulseIntegral(0) {
+
+    }
+
+    void PulseCluster::setPulses( std::vector<APV25Pulse> aPulses ) {
+        fv_Pulses = std::move(aPulses);
+
+        // New pulses are set for this cluster, so we will perform the FinalizeCluster() on it
+        FinalizeCluster();
+    }
+
+    void PulseCluster::FinalizeCluster() {
+        fnStrips = 0;
+        fSeedMPV = -10000;
+        fClusterMPV = -10000;
+        fSeedSigma = -10000;
+        fClusterSigma = -10000;
+        fSeedPulseIntegral = -10000;
+        fClusterPulseIntegral = -10000;
+
+        if ( fv_Pulses.size() == 0 ) {
+            return;
+        }
+        fnStrips = fv_Pulses.size();
+        fClusterPulseIntegral = 0;
+        fClusterMPV = 0;
+        fClusterSigma = 0;
+
+        for (auto curPulse : fv_Pulses) {
+            fClusterPulseIntegral = fClusterPulseIntegral + curPulse.pulse_Integral;
+
+            fClusterMPV = fClusterMPV + curPulse.pulse_Integral*curPulse.pulse_MPV;
+            fClusterSigma = fClusterSigma + curPulse.pulse_Integral*curPulse.pulse_Sigma;
+
+            if ( curPulse.pulse_Integral > fSeedPulseIntegral ) {
+                fSeedPulseIntegral = curPulse.pulse_Integral;
+                fSeedMPV = curPulse.pulse_MPV;
+                fSeedSigma = curPulse.pulse_Sigma;
+            }
+        }
+
+        fClusterMPV = fClusterMPV/fClusterPulseIntegral;
+        fClusterSigma = fClusterSigma/fClusterPulseIntegral;
+    }
+
     uRwellCross::uRwellCross() {
     }
 
@@ -412,7 +457,7 @@ namespace uRwellTools {
 
             /*
              * Since the v_Hits is sorted by Strip numbers, in the following if statement we
-             * don't need to chack fro absalute value for the curStrip - prev_Strip
+             * don't need to chack for the absolute value of the curStrip - prev_Strip
              */
             if ((curStrip - prev_Strip <= (clStripGap + 1)) || i == 0) {
                 clEnergy = clEnergy + curHitEnergy;
@@ -443,6 +488,56 @@ namespace uRwellTools {
 
         //cout<<"The size of the cluster is "<<v_Clusters.size()<<endl;
         return v_Clusters;
+    }
+
+
+    std::vector<PulseCluster> getPulseClusters(std::vector<APV25Pulse> v_Pulses) {
+        vector<PulseCluster> v_PulseClusters;
+
+        //
+        // Sorting Pulses by the strip number
+        //
+        sort(v_Pulses.begin(), v_Pulses.end(), [ ](const auto &lhs, const auto &rhs) {
+            return lhs.hit.strip < rhs.hit.strip;
+        });
+
+        int prev_Strip = -10000; // Some number that clearly is not a real strip number
+        //        vector<int> v_strips;
+        vector<APV25Pulse> v_ClPulses; // Vector of pulses of a cluster
+
+        for (int i = 0; i < v_Pulses.size(); i++) {
+            int curStrip = v_Pulses.at(i).hit.strip;
+
+            /*
+            * Since the v_Pulses is sorted by Strip numbers, in the following if statement we
+            * don't need to chack for the absolute value of the curStrip - prev_Strip
+            */
+
+            if ((curStrip - prev_Strip <= (clStripGap + 1)) || i == 0) {
+                v_ClPulses.push_back(v_Pulses.at(i));
+
+                if (i == v_Pulses.size() - 1) {
+                    PulseCluster curCluster;
+
+                    curCluster.setPulses(v_ClPulses);
+                    curCluster.FinalizeCluster();
+                    v_PulseClusters.push_back(curCluster);
+
+                }
+            } else {
+                PulseCluster curCluster;
+                curCluster.setPulses(v_ClPulses);
+                curCluster.FinalizeCluster();
+                v_PulseClusters.push_back(curCluster);
+
+                v_ClPulses.clear();
+                v_ClPulses.shrink_to_fit();
+                v_ClPulses.push_back(v_Pulses.at(i));
+            }
+            prev_Strip = curStrip;
+        }
+
+        return v_PulseClusters;
     }
 
     double getCrossX(double strip_U, double strip_V) {
