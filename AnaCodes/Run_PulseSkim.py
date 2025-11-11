@@ -76,7 +76,7 @@ if __name__ == "__main__":
     while stillRunning:
         nRunningProcess = 0
 
-        print("* Checking if Skim_PilseFit of all files is finished...")
+        print("* Checking if Skim_PulseFit of all files is finished...")
         for file_ind in proc_Skim:
 
             print( "Process Status for %d process is %s" %( proc_Skim[file_ind].pid, proc_Skim[file_ind].poll() ) )
@@ -93,5 +93,60 @@ if __name__ == "__main__":
             wait_sec = 30;
             print("Waiting for %d seconds" %(wait_sec))
             time.sleep(wait_sec)
+
+    print("Skimming is done")
+
+    proc_Ana = {}
+
+    file_counter = 0
+    for curFile in files:
+
+        splited_fname1 = curFile.split("_")
+        splited_fname2 = splited_fname1[2].split(".")
+        file_ind = int(splited_fname2[0])
+
+        cmd = "./AnaPulseFits.exe -r %d -f %d " %( run, file_ind )
+
+        proc_Ana[file_ind] = subprocess.Popen([cmd], shell = True)
+
+        file_counter = file_counter + 1
+
+
+    time.sleep(5)
+
+    stillRunning = True
+
+    while stillRunning:
+        nProcAna = check_NumberofProcesses(proc_Ana)
+
+        if( nProcAna >0 ):
+            print("* There are still %d Anaclustering processes are running"%(nProcAna))
+            time.sleep(2)
+        else:
+            stillRunning = False
+
+
+    print("All AnalPulseFits are done")
+
+    print(" \n\n\n\n * Adding all root files together")
+
+    cmd_hadd = "hadd -f AnaPulseFits_%d.root AnaPulseFits_%d_File_*.root"%( run, run )
+    proc_Hadd = subprocess.Popen([cmd_hadd], shell = True)
+
+    WaitWhileRunning(proc_Hadd, "Hadd")
+
+    print("\n\n\n * Cleanning all individual root files")
+    cmd_rmRoot = "rm -f AnaPulseFits_%d_File_*.root"%( run )
+    proc_rm = subprocess.Popen([cmd_rmRoot], shell = True)
+
+    WaitWhileRunning(proc_rm, "Cleaning root files")
+
+    # print("\n\n\n * Starting Drawing histograms")
+    #
+    # cmd_Draw = "./DrawPlotsWithClustering.exe -r %d -t %1.1f -m %d"%(run, threshold, clSize)
+    # proc_Draw = subprocess.Popen([cmd_Draw], shell = True)
+    #
+    # WaitWhileRunning(proc_rm, "Drawing plots")
+    # print("\n\n All done")
 
     print("All done.")
