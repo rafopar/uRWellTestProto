@@ -328,6 +328,7 @@ namespace uRwellTools {
         double getClusterSigma()const;              // Weighted average of Sigmas of all pulses of the cluster
         double getSeedPulseIntegral()const;         // ADC of the Seed pulse
         double getClusterPulseIntegral()const;      // sum of pulse integrals of all pulses of the cluster
+        double getClusterCenter()const;             // Center of the cluster (weighted average)
 
         void FinalizeCluster();
 
@@ -340,6 +341,7 @@ namespace uRwellTools {
         double fClusterSigma;
         double fSeedPulseIntegral;
         double fClusterPulseIntegral;
+        double fAvgStrip;
     };
 
     class uRwellCross {
@@ -409,6 +411,9 @@ namespace uRwellTools {
     double getCrossX(double strip_U, double strip_V); // returns Cross UxV cross X coordinate
     double getCrossY(double strip_U, double strip_V); // returns Cross UxV cross Y coordinate
     uRwellCluster getMaxAdcCluster(std::vector<uRwellCluster> &, int);
+
+    PulseCluster getMaxIntegralPulseCluster(std::vector<PulseCluster> &, int);
+
 
     // Not specific for uRwell, later maybe I will have another more global name
     // for such type of functions

@@ -275,6 +275,30 @@ namespace uRwellTools {
         }
     }
 
+    PulseCluster getMaxIntegralPulseCluster(std::vector<PulseCluster> &v_Pulseclusters, int MinHits) {
+        int ind_Max = 0;
+        double Integral_Max = 0;
+
+        for (int ind = 0; ind < v_Pulseclusters.size(); ind++) {
+            if (v_Pulseclusters.at(ind).getPulses()->size() < MinHits) {
+                continue;
+            }
+
+            if (v_Pulseclusters.at(ind).getClusterPulseIntegral() > Integral_Max ) {
+                Integral_Max = v_Pulseclusters.at(ind).getClusterPulseIntegral();
+                ind_Max = ind;
+            }
+        }
+
+        if (Integral_Max > 0) {
+            return v_Pulseclusters.at(ind_Max);
+        }else {
+            PulseCluster tmp;
+            return tmp;
+        }
+    }
+
+
     uRwellCluster::uRwellCluster() {
         fnStrips = 0;
         fEnergy = 0;
@@ -360,20 +384,24 @@ namespace uRwellTools {
         fClusterSigma = -10000;
         fSeedPulseIntegral = -10000;
         fClusterPulseIntegral = -10000;
+        fAvgStrip = -10000;
 
-        if ( fv_Pulses.size() == 0 ) {
+
+        if ( fv_Pulses.empty() ) {
             return;
         }
         fnStrips = fv_Pulses.size();
         fClusterPulseIntegral = 0;
         fClusterMPV = 0;
         fClusterSigma = 0;
+        fAvgStrip = 0;
 
         for (auto curPulse : fv_Pulses) {
             fClusterPulseIntegral = fClusterPulseIntegral + curPulse.pulse_Integral;
 
             fClusterMPV = fClusterMPV + curPulse.pulse_Integral*curPulse.pulse_MPV;
             fClusterSigma = fClusterSigma + curPulse.pulse_Integral*curPulse.pulse_Sigma;
+            fAvgStrip = fAvgStrip + curPulse.pulse_Integral*curPulse.hit.strip;
 
             if ( curPulse.pulse_Integral > fSeedPulseIntegral ) {
                 fSeedPulseIntegral = curPulse.pulse_Integral;
@@ -384,6 +412,30 @@ namespace uRwellTools {
 
         fClusterMPV = fClusterMPV/fClusterPulseIntegral;
         fClusterSigma = fClusterSigma/fClusterPulseIntegral;
+        fAvgStrip = fAvgStrip/fClusterPulseIntegral;
+    }
+
+    double PulseCluster::getSeedMPV() const {
+        return fSeedMPV;
+    }
+
+    double PulseCluster::getClusterMPV() const {
+        return fClusterMPV;
+    }
+    double PulseCluster::getSeedSigma() const {
+        return fSeedSigma;
+    }
+    double PulseCluster::getClusterSigma() const {
+        return fClusterSigma;
+    }
+    double PulseCluster::getSeedPulseIntegral() const {
+        return fSeedPulseIntegral;
+    }
+    double PulseCluster::getClusterPulseIntegral() const {
+        return fClusterPulseIntegral;
+    }
+    double PulseCluster::getClusterCenter() const {
+        return fAvgStrip;
     }
 
     uRwellCross::uRwellCross() {
