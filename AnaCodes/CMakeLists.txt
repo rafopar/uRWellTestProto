@@ -45,9 +45,13 @@ add_executable(AnaPulseFits AnaPulseFits.cc)
 set_target_properties(AnaPulseFits PROPERTIES OUTPUT_NAME "AnaPulseFits.exe")
 target_link_libraries(AnaPulseFits Hipo4 uRWellLib ${ROOT_LIBRARIES})
 
+add_executable(DrawPulseFitPlots DrawPulseFitPlots.cc)
+set_target_properties(DrawPulseFitPlots PROPERTIES OUTPUT_NAME "DrawPulseFitPlots.exe" )
+target_link_libraries(DrawPulseFitPlots uRWellLib ${ROOT_LIBRARIES})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-DrawNoise_Vs_StripCoorelations.exe AnaPulseFits
+DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
@@ -59,5 +63,6 @@ install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/PedFiles)
 install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Figs )
+
 
 
