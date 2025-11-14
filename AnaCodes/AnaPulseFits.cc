@@ -52,7 +52,7 @@ int main (int argc, char *argv[]) {
         exit(1);
     }
 
-    sprintf(inputFile, "Skim_PulseFit_2234_0.hipo", run, fnum);
+    sprintf(inputFile, "Skim_PulseFit_%d_%d.hipo", run, fnum);
 
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
