@@ -19,6 +19,8 @@
 #include <reader.h>
 #include <writer.h>
 #include <dictionary.h>
+#include <TGraphErrors.h>
+#include <TStyle.h>
 
 #include <uRwellTools.h>
 
@@ -46,6 +48,8 @@ int main(int argc, char** argv) {
     char outputFile[256];
     char inputFile[256];
 
+    //gStyle->SetOptFit(1);
+
     int run = 0;
     int fnum = -1;
     if (argc > 2) {
@@ -64,7 +68,7 @@ int main(int argc, char** argv) {
         }
 
     } else {
-        std::cout << " *** please provide a run number..." << std::endl;
+        std::cout << " *** please provide a run number and the file index..." << std::endl;
         exit(0);
     }
 
@@ -76,6 +80,11 @@ int main(int argc, char** argv) {
     sch.parse("sec/S,layer/S,strip/S,stripLocal/S,adc/F,adcRel/F,ts/S,slot/S");
     sch.show();
 
+    auto *f_bgrPlusLandau = new TF1("f_bgrPlusLandau", "[0] + [1]*TMath::Landau(x,[2],[3])", -10, 10.);
+    f_bgrPlusLandau->SetNpx(4500);
+
+    auto *f_bgrPlusWaveform1 = new TF1("f_bgrPlusWaveform1", "[0] + ([1]*(TMath::Exp(-(x - [2])/[3]) - TMath::Exp(-(x - [2])/[4]) ))*(x > [2])", -10., 10.);
+    f_bgrPlusWaveform1->SetNpx(4500);
 
     hipo::reader reader;
     reader.open(inputFile);
@@ -172,6 +181,10 @@ int main(int argc, char** argv) {
 
     cout << "The pedestal map is loaded." << endl;
 
+    TCanvas c1("c1", "", 1200, 800);
+    c1.Clear();
+    c1.Print("debugging.pdf[");
+
     try {
 
         while (reader.next() == true) {
@@ -179,15 +192,17 @@ int main(int argc, char** argv) {
 
             evCounter = evCounter + 1;
 
-            //if( evCounter > 200 ){break;}
+            if( evCounter > 200 ){break;}
             if (evCounter % 1000 == 0) {
                 cout.flush() << "Processed " << evCounter << " events \r";
             }
 
+            cout<<"Kuku0"<<endl;
             event.getStructure(buRWellADC);
+            cout<<"Kuku1"<<endl;
             event.getStructure(bRAWADc);
-            event.getStructure(bXYHodo);
-            event.getStructure(bVMM3ADC);
+            // event.getStructure(bXYHodo);
+            // event.getStructure(bVMM3ADC);
             event.getStructure(bRunConf);
 
 
@@ -212,6 +227,7 @@ int main(int argc, char** argv) {
             std::map<int, double> m_ADC_GEM;
             std::map<int, double> m_ADCRel_GEM;
 
+            TGraphErrors gr_ADC_Waveforms[uRwellTools::nMaxUniqueChan+1];
 
             for (int i = 0; i < n_uRwellADC; i++) {
                 int sector = buRWellADC.getInt(__bank_Sec_INDEX_, i);
@@ -243,6 +259,9 @@ int main(int argc, char** argv) {
                 } else if (sector == sec_uRWell) {
                     m_ADC_uRWELL[uniqueChan] = m_ADC_uRWELL[uniqueChan] + double(ADC);
 
+
+                    gr_ADC_Waveforms[uniqueChan].AddPoint(ts, m_ped_mean[uniqueChan] - ADC);
+                    gr_ADC_Waveforms[uniqueChan].SetPointError( gr_ADC_Waveforms[uniqueChan].GetN()-1, 0,  m_ped_rms[uniqueChan]);
                     //cout<<uniqueChan<<"   "<<ts<<"   "<<m_ped_mean[uniqueChan] - ADC<<"---";
                     
                     if ( m_ped_mean[uniqueChan] - ADC > m_MaxADC_uRWELL[uniqueChan]) {
@@ -310,7 +329,40 @@ int main(int argc, char** argv) {
                     curHit.stripLocal = ch - uRwellTools::slot_Offset[curHit.slot];
                     curHit.ts = m_ts_uRWELL[ch];
                     v_uRwell_Hits.push_back(curHit);
-                    //cout<<"*****"<<"ch "<<ch<<"   ADC = "<<m_ADC_uRWELL[ch]<<"    ts = "<<m_ts_uRWELL[ch]<<endl;
+
+                    if ( m_ADCRel_uRWELL[ch] > 10 ) {
+
+//                        f_bgrPlusLandau->SetParameter(0, gr_ADC_Waveforms[ch].GetMinimum() );
+                        f_bgrPlusLandau->FixParameter(0, 0.);
+                        f_bgrPlusLandau->SetParameter(1, 4*(gr_ADC_Waveforms[ch].GetMaximum()-gr_ADC_Waveforms[ch].GetMinimum()) );
+                        f_bgrPlusLandau->SetParLimits(1, 0., 10000.);
+                        f_bgrPlusLandau->SetParameter(2, 3 );
+                        f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
+
+                        //auto *f_bgrPlusWaveform1 = new TF1("f_bgrPlusWaveform1", "[0] + [1]*(TMath::Exp(-(x - [2])/[3]) - TMath::Exp(-(x - [2])/[4]) )", -10., 10.);
+                        //f_bgrPlusWaveform1->SetParameter(0, gr_ADC_Waveforms[ch].GetMinimum());
+                        // f_bgrPlusWaveform1->FixParameter(0, 0.);
+                        // f_bgrPlusWaveform1->SetParameter(1, gr_ADC_Waveforms[ch].GetMaximum()-gr_ADC_Waveforms[ch].GetMinimum());
+                        // f_bgrPlusWaveform1->SetParameter(2, 3);
+                        // f_bgrPlusWaveform1->SetParameter(3, 0);
+                        // f_bgrPlusWaveform1->SetParameter(4, 2);
+                        // f_bgrPlusWaveform1->SetParLimits(0, -80., 80.);
+                        // f_bgrPlusWaveform1->SetParLimits(1, 0., 20000.);
+                        // f_bgrPlusWaveform1->SetParLimits(2, -3, 10);
+                        // f_bgrPlusWaveform1->SetParLimits(3, 0.1, 5.);
+                        // f_bgrPlusWaveform1->SetParLimits(4, 0.1, 5.);
+
+                        gr_ADC_Waveforms[ch].SetMarkerStyle(20);
+                        gr_ADC_Waveforms[ch].GetXaxis()->SetLimits(-1., 9.);
+                        gr_ADC_Waveforms[ch].Draw("AP");
+                        gr_ADC_Waveforms[ch].Fit(f_bgrPlusLandau, "MeV", "", -1.1, 9.1);
+                        //gr_ADC_Waveforms[ch].Fit(f_bgrPlusWaveform1, "MeV", "", -1.1, 9.1);
+                        c1.Modified();
+                        c1.Update();
+                        c1.Print("debugging.pdf");
+                    }
+
+
                 }
             }
             //cout<<"            ************ GOING TO NEXT EVENT **************            "<<endl;
@@ -323,6 +375,8 @@ int main(int argc, char** argv) {
 
             hipo::bank buRwellHits(sch, n_TotHits);
             hipo::event outEvent;
+
+            cout<<"Before writing banks "<<endl;
 
             int col = 0;
             //     *********** Writing GEM hits above the threshold **********
@@ -357,8 +411,8 @@ int main(int argc, char** argv) {
             outEvent.addStructure(bRAWADc);
             outEvent.addStructure(bRunConf);
             outEvent.addStructure(buRwellHits);
-            outEvent.addStructure(bXYHodo);
-            outEvent.addStructure(bVMM3ADC);
+            // outEvent.addStructure(bXYHodo);
+            // outEvent.addStructure(bVMM3ADC);
             writer.addEvent(outEvent);
 
         }
@@ -366,6 +420,7 @@ int main(int argc, char** argv) {
         cerr << msg << endl;
     }
 
+    c1.Print("debugging.pdf]");
     writer.close();
     writer.showSummary();
 

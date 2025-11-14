@@ -37,14 +37,25 @@ add_executable(DrawNoise_Vs_StripCoorelations.exe DrawNoise_Vs_StripCoorelations
 target_link_libraries(DrawNoise_Vs_StripCoorelations.exe uRWellLib ${ROOT_LIBRARIES} )
 #################################################################################################
 
+add_executable(Skim_PulseFit Skim_PulseFit.cc)
+set_target_properties(Skim_PulseFit PROPERTIES OUTPUT_NAME "Skim_PilseFit.exe")
+target_link_libraries(Skim_PulseFit Hipo4 uRWellLib ${ROOT_LIBRARIES})
+
+add_executable(AnaPulseFits AnaPulseFits.cc)
+set_target_properties(AnaPulseFits PROPERTIES OUTPUT_NAME "AnaPulseFits.exe")
+target_link_libraries(AnaPulseFits Hipo4 uRWellLib ${ROOT_LIBRARIES})
+
+add_executable(DrawPulseFitPlots DrawPulseFitPlots.cc)
+set_target_properties(DrawPulseFitPlots PROPERTIES OUTPUT_NAME "DrawPulseFitPlots.exe" )
+target_link_libraries(DrawPulseFitPlots uRWellLib ${ROOT_LIBRARIES})
 
 ################################ Installing Executable targets #############################
-install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe
-DrawNoise_Vs_StripCoorelations.exe
+install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
+DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc
+install( FILES DrawPedestals.cc Run_PulseSkim.py
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################
@@ -52,5 +63,6 @@ install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/PedFiles)
 install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Figs )
+
 
 
