@@ -279,4 +279,32 @@ int main( int argc, char *argv[] ) {
     c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference1_%d.png", run));
     c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference1_%d.root", run));
 
+    c2->cd();
+    auto h_Cross_UCluster_Sgima_vs_Strip1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_UCluster_Sgima_vs_Strip1"));
+    h_Cross_UCluster_Sgima_vs_Strip1->SetTitle("; U Strip; Pulse #sigma [25 ns]");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetTitleSize(0.05, "X");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetLabelSize(0.05, "X");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetTitleSize(0.05, "Y");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetLabelSize(0.05, "Y");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetTitleOffset(0.9, "Y");
+    h_Cross_UCluster_Sgima_vs_Strip1->SetMaximum(0.3*h_Cross_UCluster_Sgima_vs_Strip1->GetMaximum());
+    h_Cross_UCluster_Sgima_vs_Strip1->Draw();
+    c2->Print(Form("Figs/Cross_UCluster_Sgima_vs_Strip1_%d.pdf", run));
+    c2->Print(Form("Figs/Cross_UCluster_Sgima_vs_Strip1_%d.png", run));
+    c2->Print(Form("Figs/Cross_UCluster_Sgima_vs_Strip1_%d.root", run));
+
+    auto h_Cross_VCluster_Sgima_vs_Strip1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_VCluster_Sgima_vs_Strip1"));
+    h_Cross_VCluster_Sgima_vs_Strip1->SetTitle("; V Strip; Pulse #sigma [25 ns]");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetTitleSize(0.05, "X");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetLabelSize(0.05, "X");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetTitleSize(0.05, "Y");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetLabelSize(0.05, "Y");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetTitleOffset(0.9, "Y");
+    h_Cross_VCluster_Sgima_vs_Strip1->SetMaximum(0.3*h_Cross_VCluster_Sgima_vs_Strip1->GetMaximum());
+    h_Cross_VCluster_Sgima_vs_Strip1->Draw();
+    c2->Print(Form("Figs/Cross_VCluster_Sgima_vs_Strip1_%d.pdf", run));
+    c2->Print(Form("Figs/Cross_VCluster_Sgima_vs_Strip1_%d.png", run));
+    c2->Print(Form("Figs/Cross_VCluster_Sgima_vs_Strip1_%d.root", run));
+
+
 }

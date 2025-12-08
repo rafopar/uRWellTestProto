@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.0)
+cmake_minimum_required (VERSION 3.5)
 
 # CMakeLists for tools
 project(uRWellTestProto VERSION 1.0.1 DESCRIPTION "Tools for analysing data from uRwell Test prototype")
