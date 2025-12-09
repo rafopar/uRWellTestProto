@@ -60,6 +60,7 @@ int main (int argc, char *argv[]) {
     const int layer_Y_GEM = 2;
     const int sec_uRwell = 6;
     const int sec_GEM = 8;
+    const double PulseSigmaMax = 5.2;
     const double PulseSigmaMin = 1.2;
 
     const int minHits = 3;
@@ -271,7 +272,7 @@ int main (int argc, char *argv[]) {
                 h_Cross_UCluster_Sgima_vs_Strip1.Fill(Max_U_PulseCluster.getClusterCenter(), U_ClusterSigma);
                 h_Cross_VCluster_Sigma_vs_Strip1.Fill(Max_V_Pulsecluster.getClusterCenter(), V_ClusterSigma);
 
-                bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin;
+                bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin && U_SeedSigma < PulseSigmaMax && V_SeedSigma < PulseSigmaMax;
 
                 if (goodpulseWidth) {
                     h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_UV);
