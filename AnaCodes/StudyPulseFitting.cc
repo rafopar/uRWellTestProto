@@ -330,17 +330,20 @@ int main(int argc, char *argv[]) {
                     f_U_SeedFitFunc->Draw("Same");
                     f_V_SeedFitFunc->Draw("Same");
 
+                    lat1->SetTextColor(4);
                     lat1->DrawLatex(0.01, 0.96, Form("MPV_U = %1.2f", v_Max_U_Pulses->at(ind_Seed_U).pulse_MPV));
                     lat1->DrawLatex(0.22, 0.96, Form("#sigma_U = %1.2f", v_Max_U_Pulses->at(ind_Seed_U).pulse_Sigma));
                     lat1->DrawLatex(0.39, 0.96, Form("#chi2_U/ndf_U = %1.1f", v_Max_U_Pulses->at(ind_Seed_U).pulse_Chi2 / v_Max_U_Pulses->at(ind_Seed_U).pulse_NDF));
                     lat1->DrawLatex(0.65, 0.96, Form("Str_U = %d", v_Max_U_Pulses->at(ind_Seed_U).hit.strip));
-                    lat1->DrawLatex(0.81, 0.96, Form("File %d", fnum));
-                    lat1->DrawLatex(0.9, 0.96, Form("Ev %d", evNum));
+                    lat1->SetTextColor(2);
                     lat1->DrawLatex(0.01, 0.91, Form("MPV_V = %1.2f", v_Max_V_Pulses->at(ind_Seed_V).pulse_MPV));
                     lat1->DrawLatex(0.22, 0.91, Form("#sigma_V = %1.2f", v_Max_V_Pulses->at(ind_Seed_V).pulse_Sigma));
                     lat1->DrawLatex(0.39, 0.91, Form("#chi2_V/ndf_V = %1.1f", v_Max_V_Pulses->at(ind_Seed_V).pulse_Chi2 / v_Max_V_Pulses->at(ind_Seed_V).pulse_NDF));
-
                     lat1->DrawLatex(0.65, 0.91, Form("Str_V = %d", v_Max_V_Pulses->at(ind_Seed_V).hit.strip));
+
+                    lat1->SetTextColor(1);
+                    lat1->DrawLatex(0.81, 0.96, Form("File %d", fnum));
+                    lat1->DrawLatex(0.9, 0.96, Form("Ev %d", evNum));
                     lat1->DrawLatex(0.82, 0.91, Form("Run %d", run));
 
                     c1->Print("PulseFigs/LargeDeltaStartTime.pdf");
