@@ -60,6 +60,7 @@ int main (int argc, char *argv[]) {
     const int layer_Y_GEM = 2;
     const int sec_uRwell = 6;
     const int sec_GEM = 8;
+    const double PulseSigmaMin = 1.2;
 
     const int minHits = 3;
 
@@ -110,12 +111,16 @@ int main (int argc, char *argv[]) {
 
     TH2D h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1("h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1("h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
 
     TH2D h_Cross_UCluster_Sigms_vs_Slot1("h_Cross_UCluster_Sigms_vs_Slot1", "", 13, -0.5, 12.5, 200, 0., 5.);
     TH2D h_Cross_VCluster_Sigms_vs_Slot1("h_Cross_VCluster_Sigms_vs_Slot1", "", 13, -0.5, 12.5, 200, 0., 5.);
 
-    TH2D h_Cross_UCluster_Sgima_vs_Strip1("h_Cross_UCluster_Sgima_vs_Strip1", "", 200, 0., 705, 200, 0., 5.);
-    TH2D h_Cross_VCluster_Sigma_vs_Strip1("h_Cross_VCluster_Sgima_vs_Strip1", "", 200, 0., 705, 200, 0., 5.);
+    TH2D h_Cross_UCluster_Sgima_vs_Strip1("h_Cross_UCluster_Sgima_vs_Strip1", "", 706, -0.5, 705.5, 200, 0., 5.);
+    TH2D h_Cross_VCluster_Sigma_vs_Strip1("h_Cross_VCluster_Sgima_vs_Strip1", "", 706, -0.5, 705.5, 200, 0., 5.);
 
     try {
 
@@ -217,6 +222,8 @@ int main (int argc, char *argv[]) {
                 double V_ClusterMPV = Max_V_Pulsecluster.getClusterMPV();
                 double U_SeedMPV = Max_U_PulseCluster.getSeedMPV();
                 double V_SeedMPV = Max_V_Pulsecluster.getSeedMPV();
+                double U_SeedSigma = Max_U_PulseCluster.getSeedSigma();
+                double V_SeedSigma = Max_V_Pulsecluster.getSeedSigma();
                 double U_ClusterSigma = Max_U_PulseCluster.getClusterSigma();
                 double V_ClusterSigma = Max_V_Pulsecluster.getClusterSigma();
                 double U_ClusterStatTime = U_ClusterMPV - U_ClusterSigma;
@@ -255,11 +262,21 @@ int main (int argc, char *argv[]) {
                 h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1.Fill( U_ClusterPulseIntegral, dtCluster_UV );
                 h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1.Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
 
+                h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1.Fill(U_ClusterPulseIntegral, dtSeed_UV);
+                h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1.Fill(U_ClusterPulseIntegral, dtSeed_StartTime_UV);
+
                 h_Cross_UCluster_Sigms_vs_Slot1.Fill(U_slot, U_ClusterSigma);
                 h_Cross_VCluster_Sigms_vs_Slot1.Fill(V_slot, U_ClusterSigma);
 
                 h_Cross_UCluster_Sgima_vs_Strip1.Fill(Max_U_PulseCluster.getClusterCenter(), U_ClusterSigma);
                 h_Cross_VCluster_Sigma_vs_Strip1.Fill(Max_V_Pulsecluster.getClusterCenter(), V_ClusterSigma);
+
+                bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin;
+
+                if (goodpulseWidth) {
+                    h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_UV);
+                    h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_StartTime_UV);
+                }
             }
         }
 
