@@ -112,6 +112,8 @@ int main (int argc, char *argv[]) {
 
     TH2D h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1("h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral_GoodWidth1("h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
@@ -277,6 +279,9 @@ int main (int argc, char *argv[]) {
                 if (goodpulseWidth) {
                     h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_UV);
                     h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_StartTime_UV);
+
+                    h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral_GoodWidth1.Fill( U_ClusterPulseIntegral, dtCluster_UV );
+                    h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
                 }
             }
         }
