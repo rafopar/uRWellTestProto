@@ -323,5 +323,47 @@ int main( int argc, char *argv[] ) {
     c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.png", run));
     c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.root", run));
 
+    auto h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1"));
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetStats(0);
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitleOffset(0.9, "Y");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitleSize(0.05, "Y");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetLabelSize(0.05, "Y");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitleSize(0.05, "X");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetLabelSize(0.05, "X");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitle("; U Cluster Pulse Integral; Cluster Start Time (table) difference [25 ns]");
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->GetXaxis()->SetNdivisions(404);
+    h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->Draw();
+    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.pdf", run));
+    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.png", run));
+    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.root", run));
+
+    auto h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1 = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_lowADC_ClustStartTimeDifference_GoodWidth1", 1, 50);
+    h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->Draw();
+    mean = h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->GetMean();
+    rms = h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->GetRMS();
+    f_Gaus->SetParameters(h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->GetMaximum(), mean, 0.5*rms);
+    h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->Fit(f_Gaus, "MeV", "", mean - 0.95*rms, mean + 0.95*rms);
+    mean = f_Gaus->GetParameter(1);
+    sigma = f_Gaus->GetParameter(2);
+    lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
+    lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
+    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", run));
+    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", run));
+    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", run));
+
+    nbinsX = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->GetNbinsX();
+    auto h_U_highADC_ClustStartTimeTableDifference_GoodWidth1 = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_highADC_ClustStartTimeDifference_GoodWidth1", nbinsX-50, nbinsX);
+    h_U_highADC_ClustStartTimeTableDifference_GoodWidth1->Draw();
+    mean = h_U_highADC_ClustStartTimeTableDifference_GoodWidth1->GetMean();
+    rms = h_U_highADC_ClustStartTimeTableDifference_GoodWidth1->GetRMS();
+    f_Gaus->SetParameters(h_U_highADC_ClustStartTimeTableDifference_GoodWidth1->GetMaximum(), mean, 0.45*rms);
+    h_U_highADC_ClustStartTimeTableDifference_GoodWidth1->Fit(f_Gaus, "MeV", "", mean - 0.55*rms, mean + 0.35*rms);
+    mean = f_Gaus->GetParameter(1);
+    sigma = f_Gaus->GetParameter(2);
+    lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
+    lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
+    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", run));
+    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", run));
+    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", run));
 
 }

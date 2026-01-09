@@ -49,9 +49,13 @@ add_executable(DrawPulseFitPlots DrawPulseFitPlots.cc)
 set_target_properties(DrawPulseFitPlots PROPERTIES OUTPUT_NAME "DrawPulseFitPlots.exe" )
 target_link_libraries(DrawPulseFitPlots uRWellLib ${ROOT_LIBRARIES})
 
+add_executable(UpdateStripSigmas UpdateStripSigmas.cc)
+set_target_properties(UpdateStripSigmas PROPERTIES OUTPUT_NAME "UpdateStripSigmas.exe")
+target_link_libraries(UpdateStripSigmas ${ROOT_LIBRARIES})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots
+DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
@@ -63,6 +67,9 @@ install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/PedFiles)
 install( DIRECTORY
   DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Figs )
+install( DIRECTORY
+  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Pars )
+
 
 
 
