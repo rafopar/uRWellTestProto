@@ -12,10 +12,24 @@ You need to have the LZ4 installed in your environment
    `git clone git@github.com:rafopar/uRWellTestProto.git`
 2) If you are working on JLab ifarms or any other computer where /group/clas12 is mounted, then automatically it will detect LZ4, otherwise you need to point to in the in the **cmake_modules/FindLZ4.cmake** file.
 3) go to the **uRWellTestProto** directory and run
-	1) cmake -S . -Bbuild -DCMAKE_INSTALL_PREFIX=/pathe/where/you/want/package/ToBeInstalled/
-	2) cmake --build build
-	3) cmake --install build
+	1) `cmake -S . -Bbuild -DCMAKE_INSTALL_PREFIX=/pathe/where/you/want/package/ToBeInstalled/`
+	2) `cmake --build build`
+	3) `cmake --install build`
 
+
+
+# Basic Analysis steps
+
+The 1st step is to decode evio files. One should use the coatjava to do the decoding. For this particular detector in order to speed up the decoding a special branch of coatjave is used (otherwise the decoding is about x10 slower). 
+
+`git clone git@github.com:JeffersonLab/clas12-offline-software.git`
+`git checkout iss1008-urWellDecoder`
+
+Note: this branch is in the old repository of coatjava (called clas12-offline-software).
+
+In order to do the decoding you should also use an sqlite file `/group/clas12/users/rafopar/uRWellImportant/clas12.sqlite`
+Your environmental variable **CCDB_CONNECTION** should point to `sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite`
+Note: "///" before /group... is not a mistake.
 
 [comment]: <> ( ## Clone the package )
 
