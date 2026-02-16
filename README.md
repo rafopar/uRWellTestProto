@@ -49,7 +49,7 @@ When the fitting of the pulse is done, parameters of the fit function(A, MPV and
 In addition chi2, ndf and also ADC data from all 15 time samples is stored too. In case one want to Re-Fit pulses. The data is stored in the bank named `uRwell::Pulse`
 
 The picture below shows one particular event from the **uRwell::Pulse** bank.
-![[Doc/uRwell_PulseBank.png]]
+![An example of the uRwell::Pulse bank ][Doc/uRwell_PulseBank.png]
 
 - sec:  Sector, usually takes values 6 for the uRwell, if 8 then it is a different detector, for example GEM
 - layer: takes 2 values: 1 = U layer, 2  V layer
