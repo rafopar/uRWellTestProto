@@ -67,6 +67,30 @@ The picture below shows one particular event from the **uRwell::Pulse** bank.
 - pulse_NDF: NDF of the fit
 - pulse_ADCN: R ranges from 0 to 15. is the ADC of the pulse in the N-th time sample.
 
+
+# Automatized running
+
+While it is not advised to run multiple parallel jobs on ifarm, however if you have a computer with multiple cores, the **AnaCodes/Run_PulseSkim.py** python script does the whole analysis chain
+for the given run, the user should only provide the run number. 
+1. Gets the list of all files from the /cache disk
+2. with a bunch of 18 parallel jobs runs decoding,
+	1. waits if no more than 8 jobs are left, then runs 2nd 18 parallel decodings and so on till all decodings are finished. This step is relatively slow, might take close to 30 min per file.
+3. In a similar manner runs the Skimming on all files, with 18 parallel tasks, and jumps to the next 18 runs only when no more than 8 processes are running. This step is also relatively slow, usually takes slightly more than 30 minutes per file.
+4. When all Skims are done. The same way it runs the analysis executable **AnaPulseFits.exe**  for all skimmed files, the same way (bunch of 18 parallel processes).  This step is very fast. Processing of a Single file will take under 20 seconds
+5. At the end it unifies output root files of the **AnaPulseFits.exe**  command (using hadd), then removes all those root files, and keeps only the unifided one.
+
+# Pedestal Runs
+During the analysis/Skiming, we nee to know the noise level for each strip, so that we can make a decision whether the given hit is a signal or just a noise. For this we take so called Pedestal runs, with a Randome trigger, and lower HVs. With those condition we know there is no real signal, and what we measure is just a noise. No much statistics is needed for the pedestal runs. Typically 2000 events are enough, which can be collected under 1 minute.
+
+The pedestal run should be decoded the same way as the production run, however to calculate pedestals following steps should be done:
+   1. ./CheckDecoding.exe <RUN> <FILE>
+   2.  root -l 'DrawPedestals.cc(<RUN>)'
+
+The DrawPedestals.cc will calculate pedestals and noise for each channel, will produce diagnostic plots in the sub directory **Figs**, and write pedestal and sigmas for in channel in the PedFiles/Peds_<RUN> and PedFiles/GEM_Peds_<RUN>
+
+Later for the given production run (let say 3333), if you want to use pedestals from the given pedestal run e.g. 1234, in the PedFiles directory link Peds_3333 to point to Peds_1234, and GEM_Peds_3333 to point to Peds_1234.
+
+
 [comment]: <> ( ## Clone the package )
 
 [comment]: <> (Package has a dependency on hipo library, which is a submodule. )
