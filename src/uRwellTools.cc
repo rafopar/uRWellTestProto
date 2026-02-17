@@ -381,6 +381,7 @@ namespace uRwellTools {
         fSeedMPV = -10000;
         fClusterMPV = -10000;
         fSeedSigma = -10000;
+        fSeedStrip = -10000;
         fClusterSigma = -10000;
         fSeedPulseIntegral = -10000;
         fClusterPulseIntegral = -10000;
@@ -407,6 +408,7 @@ namespace uRwellTools {
                 fSeedPulseIntegral = curPulse.pulse_Integral;
                 fSeedMPV = curPulse.pulse_MPV;
                 fSeedSigma = curPulse.pulse_Sigma;
+                fSeedStrip = curPulse.hit.strip;
             }
         }
 
@@ -437,6 +439,11 @@ namespace uRwellTools {
     double PulseCluster::getClusterCenter() const {
         return fAvgStrip;
     }
+
+    double PulseCluster::getSeedStrip() const {
+        return fSeedStrip;
+    }
+
 
     uRwellCross::uRwellCross() {
     }

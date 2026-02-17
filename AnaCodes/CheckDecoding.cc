@@ -60,7 +60,7 @@ int main(int argc, char** argv) {
 
     const int crateID_test3 = 40; // the fADC is on ROC 40
     const int slot_fADC = 3; // and the slot is 3
-    const int n_ts = 9;
+    const int n_ts = 15;
 
     TFile *file_out = new TFile(Form("CheckDecoding_%d_%d.root", run, fnum), "Recreate");
     TH2D *h_ADC_chan = new TH2D("h_ADC_chan", "", 1711, -0.5, 1710.5, 400, -400., 400.);

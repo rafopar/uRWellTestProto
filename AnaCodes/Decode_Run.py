@@ -51,7 +51,7 @@ if __name__ == "__main__":
     
     # will keep track of processes for each file, and rnu next step when then current step is finished
     proc_decode = {} 
-    
+
     file_counter = 0
     
     for curFile in files:
@@ -59,9 +59,9 @@ if __name__ == "__main__":
         #split the file name by ".evio." separator to get the file index
         splited_fname = curFile.split(".evio.")    
         file_ind = int( splited_fname[1] )
-        
         cmd = "%s -i %s -o Data/decoded_%d_%d.hipo -c 1" %(DECODER, curFile, run, file_ind )
-        
+        print("Decode command is %s"%(cmd))
+
         ModifiedRun = "%d%d"%(run, file_ind)
         
         #cmd = "ln -s Skim_ZeroSuppr_%d_%d.hipo Skim_ZeroSuppr_%s_All.hipo" %(run, file_ind, ModifiedRun)
@@ -119,6 +119,9 @@ if __name__ == "__main__":
 
     print("*     Decoding of all files is finished")
     print("\n\n\n")
+
+    sys.exit() # At this moment We don't need the rest
+
     print("*     Starting the Skim_ZeroSuppression")
 
     proc_Skim = {}

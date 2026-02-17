@@ -329,6 +329,7 @@ namespace uRwellTools {
         double getSeedPulseIntegral()const;         // ADC of the Seed pulse
         double getClusterPulseIntegral()const;      // sum of pulse integrals of all pulses of the cluster
         double getClusterCenter()const;             // Center of the cluster (weighted average)
+        double getSeedStrip()const;                 // Seed Strip (strip number) of the cluster
 
         void FinalizeCluster();
 
@@ -338,6 +339,7 @@ namespace uRwellTools {
         double fSeedMPV;
         double fClusterMPV;
         double fSeedSigma;
+        double fSeedStrip; // the strip number of the Seed hit
         double fClusterSigma;
         double fSeedPulseIntegral;
         double fClusterPulseIntegral;

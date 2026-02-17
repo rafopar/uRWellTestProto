@@ -75,11 +75,14 @@ int main(int argc, char **argv) {
     hipo::bank buRWellADC(factory.getSchema("URWELL::adc"));
     hipo::bank bRAWADc(factory.getSchema("RAW::adc"));
     hipo::bank bRunConf(factory.getSchema("RUN::config"));
+    hipo::bank bXYHodo(factory.getSchema("XYHODO::tdc"));
 
     hipo::writer writer;
     writer.getDictionary().addSchema(sch);
     writer.getDictionary().addSchema(factory.getSchema("RAW::adc"));
     writer.getDictionary().addSchema(factory.getSchema("RUN::config"));
+    writer.getDictionary().addSchema(factory.getSchema("XYHODO::tdc"));
+
 
     writer.open(outputFile);
 
@@ -94,7 +97,7 @@ int main(int argc, char **argv) {
     const double sigm_threshold = 3.; // Represents the threshold of the ADC in units of the sigma.
 
     const int nGEMChannels = 256;
-    const int n_ts = 9;
+    const int n_ts = 15;
     const int sec_GEM = 8; // GEM is in Sec 8
     const int sec_uRWell = 6; // uRWELL is in Sec 8
 
@@ -154,7 +157,7 @@ int main(int argc, char **argv) {
 
             evCounter = evCounter + 1;
 
-            //if (evCounter > 200) { break; }
+            //if (evCounter > 1500) { break; }
             if (evCounter % 1000 == 0) {
                 gSystem->RedirectOutput(0);
                 cout.flush() << "Processed " << evCounter << " events \r";
@@ -185,6 +188,9 @@ int main(int argc, char **argv) {
             TGraphErrors gr_ADC_Waveforms_uRwell[uRwellTools::nMaxUniqueChan + 1];
             TGraphErrors gr_ADC_Waveforms_GEM[uRwellTools::nMaxUniqueChan + 1];
 
+            double uRWell_grMax[uRwellTools::nMaxUniqueChan + 1] = {0.};
+            double uRWell_ts_grMax[uRwellTools::nMaxUniqueChan + 1] = {0.};
+
             for (int i = 0; i < n_uRwellADC; i++) {
                 int sector = buRWellADC.getInt(__bank_Sec_INDEX_, i);
                 int layer = buRWellADC.getInt(__bank_Layer_INDEX_, i);
@@ -210,6 +216,11 @@ int main(int argc, char **argv) {
 
                     gr_ADC_Waveforms_uRwell[uniqueChan].AddPointError(ts, m_ped_mean[uniqueChan] - ADC, 0,
                                                                       m_ped_rms[uniqueChan]);
+
+                    if ( m_ped_mean[uniqueChan] - ADC > uRWell_grMax[uniqueChan]  ) {
+                        uRWell_grMax[uniqueChan] = m_ped_mean[uniqueChan] - ADC;
+                        uRWell_ts_grMax[uniqueChan] = ts;
+                    }
 
                     if (m_ped_mean[uniqueChan] - ADC > m_MaxADC_uRWELL[uniqueChan]) {
                         m_MaxADC_uRWELL[uniqueChan] = m_ped_mean[uniqueChan] - ADC;
@@ -245,7 +256,7 @@ int main(int argc, char **argv) {
                     f_bgrPlusLandau->SetParameter(2, 3);
                     f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
 
-                    gr_ADC_Waveforms_GEM[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
+                    gr_ADC_Waveforms_GEM[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, double(n_ts) + 0.1);
                     //gr_ADC_Waveforms[ch].Fit(f_bgrPlusWaveform1, "MeV", "", -1.1, 9.1);
 
                     curPulse.hit = curHit;
@@ -293,10 +304,12 @@ int main(int argc, char **argv) {
                     f_bgrPlusLandau->SetParameter(
                         1, 4 * (gr_ADC_Waveforms_uRwell[ch].GetMaximum() - gr_ADC_Waveforms_uRwell[ch].GetMinimum()));
                     f_bgrPlusLandau->SetParLimits(1, 0., 10000.);
-                    f_bgrPlusLandau->SetParameter(2, 3);
+                    //f_bgrPlusLandau->SetParameter(2, 3);
+                    f_bgrPlusLandau->SetParameter(2, uRWell_ts_grMax[ch]);
                     f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
 
-                    gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
+                    //gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
+                    gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, double(n_ts) + 0.1);
 
                     curPulse.hit = curHit;
                     curPulse.ped_rms = m_ped_rms[ch];
@@ -384,10 +397,11 @@ int main(int argc, char **argv) {
                 col = col + 1;
             }
 
+            event.getStructure(bXYHodo);
             outEvent.addStructure(bRAWADc);
             outEvent.addStructure(bRunConf);
             outEvent.addStructure(buRwellPulses);
-            // outEvent.addStructure(bXYHodo);
+            outEvent.addStructure(bXYHodo);
             // outEvent.addStructure(bVMM3ADC);
             writer.addEvent(outEvent);
         }
