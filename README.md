@@ -6,8 +6,9 @@ for instructions on Software installation and running.
 # Installation
 
 ### Prerequisites
-You need to have the LZ4 installed in your environment 
+You need to have the LZ4 installed in your environment, and the XYHodoTools package
 
+#### LZ4
 1) clone the repository
    `git clone git@github.com:rafopar/uRWellTestProto.git`
 2) If you are working on JLab ifarms or any other computer where /group/clas12 is mounted, then automatically it will detect LZ4, otherwise you need to point to in the in the **cmake_modules/FindLZ4.cmake** file.
@@ -16,6 +17,9 @@ You need to have the LZ4 installed in your environment
 	2) `cmake --build build`
 	3) `cmake --install build`
 
+#### XYHodoTools
+
+You can download the XYHodoTools from this repository https://code.jlab.org/hallb/XYHodo
 
 
 # Basic Analysis steps
