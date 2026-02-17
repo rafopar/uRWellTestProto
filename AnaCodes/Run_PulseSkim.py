@@ -25,15 +25,88 @@ if __name__ == "__main__":
 
     if len(sys.argv) != 2 :
         print( "Wrong syntax, exiting" )
-        print( "The command should look like Decode_Run.py $Run" )
+        print( "The command should look like Run_PulseSkim.py $Run" )
         exit(1)
 
     processes = set()
     run: int = int(sys.argv[1])
 
     print( "The run is %d" %(run))
+    os.environ["CCDB_CONNECTION"] = "sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite"
+    evio_DIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
+    DECODER = "/home/rafopar/work/git/clas12-offline-software/coatjava/bin/decoder"
 
-    files = glob.glob("Data/decoded_%d*.hipo" %(run))
+    # Getting list of files. and Sort them by time. Sorting by time is important
+    # to avid partially populated batched
+    files = sorted(glob.glob("%s/urwell_maroc_00%d.evio*" %(evio_DIR, run)), key=os.path.getmtime)
+
+
+
+    # will keep track of processes for each file, and rnu next step when then current step is finished
+    proc_decode = {}
+
+    file_counter = 0
+
+    for curFile in files:
+
+        splited_fname = curFile.split(".evio.")
+        file_ind = int( splited_fname[1] )
+        cmd = "%s -i %s -o Data/decoded_%d_%d.hipo -c 1" %(DECODER, curFile, run, file_ind )
+        print("Decode command is %s"%(cmd))
+
+        print( "The command is %s"%(cmd) )
+        proc_decode[file_ind] = subprocess.Popen([cmd], shell = True)
+
+        file_counter = file_counter + 1
+
+        if file_counter % 18 == 0:
+
+            time.sleep(2)
+
+            stillRunning = True
+
+            while stillRunning:
+
+                nProc = check_NumberofProcesses(proc_decode)
+
+                if nProc > 8:
+                    print("* Still %d decodings are are running for this batch" %(nProc))
+                    print("* Sleeping...")
+                    time.sleep(10)
+                else:
+                    print( "Going to start next batch of decoding" )
+                    stillRunning = False
+
+
+    time.sleep(5)
+
+    stillRunning = True
+
+    while stillRunning:
+        nRunningProcess = 0
+
+        print("* Checking if decoding of all files is finished...")
+        for file_ind in proc_decode:
+
+            print( "Process Status for %d process is %s" %( proc_decode[file_ind].pid, proc_decode[file_ind].poll() ) )
+
+            if proc_decode[file_ind].poll() is None:
+                nRunningProcess = nRunningProcess + 1
+            print("The decoding for the file %d is still running" %(file_ind))
+
+        if nRunningProcess == 0:
+            stillRunning = False;
+            break
+        else:
+            print("There are still %d decodings running." %(nRunningProcess) )
+            wait_sec = 30;
+            print("Waiting for %d seconds" %(wait_sec))
+            time.sleep(wait_sec)
+
+
+    print("*     Decoding of all files is finished")
+    print("\n\n\n")
+
 
     proc_Skim = {}
 
@@ -41,10 +114,10 @@ if __name__ == "__main__":
 
     for curFile in files:
 
-        splited_fname1 = curFile.split("_")
-        splited_fname2 = splited_fname1[2].split(".")
-        file_ind = int(splited_fname2[0])
-        print("file in  = %d" %(file_ind))
+        splited_fname = curFile.split(".evio.")
+        file_ind = int( splited_fname[1] )
+
+        print("file ind  = %d" %(file_ind))
 
         cmd_Skim_PulseFit = "./Skim_PilseFit.exe %d %d" %(run, file_ind)
 
@@ -101,15 +174,31 @@ if __name__ == "__main__":
     file_counter = 0
     for curFile in files:
 
-        splited_fname1 = curFile.split("_")
-        splited_fname2 = splited_fname1[2].split(".")
-        file_ind = int(splited_fname2[0])
+        splited_fname = curFile.split(".evio.")
+        file_ind = int( splited_fname[1] )
 
         cmd = "./AnaPulseFits.exe -r %d -f %d " %( run, file_ind )
 
         proc_Ana[file_ind] = subprocess.Popen([cmd], shell = True)
 
         file_counter = file_counter + 1
+
+        if file_counter % 18 == 0:
+
+            time.sleep(2)
+            stillRunning = True
+
+            while stillRunning:
+
+                nProc = check_NumberofProcesses(proc_Ana)
+
+                if nProc > 8:
+                    print("* Still %d ./AnaPulseFits.exe are are running for this batch" %(nProc))
+                    print("* Sleeping...")
+                    time.sleep(10)
+                else:
+                    print( "Going to start next batch of Skim" )
+                    stillRunning = False
 
 
     time.sleep(5)

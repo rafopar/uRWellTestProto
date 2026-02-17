@@ -17,6 +17,10 @@
 #include "uRwellTools.h"
 #include <cxxopts.hpp>
 
+// ===== Hodo Tools ======
+#include <XYHodoTools.h>
+#include "XYHodoAnalyzer.h"
+
 using namespace std;
 using namespace uRwellTools;
 
@@ -63,7 +67,12 @@ int main (int argc, char *argv[]) {
     const double PulseSigmaMax = 5.2;
     const double PulseSigmaMin = 1.2;
 
-    const int minHits = 3;
+    // === Hodoscope analysis cuts ===
+    constexpr double T_OverThrCut = 20;
+    constexpr double deltaT_Cut_Cross = 20;
+    constexpr double deltaT_Cut_PMT12_Match = 20;
+
+    const int minHits = 2;
 
     const double chi2NDF_cut = 40;
 
@@ -81,6 +90,7 @@ int main (int argc, char *argv[]) {
     hipo::bank buRwellPulses(factory.getSchema("uRwell::Pulse"));
     hipo::bank bRAWADc(factory.getSchema("RAW::adc"));
     hipo::bank bRunConf(factory.getSchema("RUN::config"));
+    hipo::bank bXYHodoTDC(factory.getSchema("XYHODO::tdc"));
 
     auto *file_out = new TFile(Form("AnaPulseFits_%d_File_%d.root", run, fnum), "Recreate");
 
@@ -94,6 +104,7 @@ int main (int argc, char *argv[]) {
     TH2D h_N_V_vs_U_PulsClustrs1("h_N_V_vs_U_PulsClustrs1", "", 7, -0.5, 6.5, 7, -0.5, 6.5);
 
     TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma1", "", 1000, -900., 900., 200, -500., 500.);
 
     TH2D h_Cross_YXc_WeightedClusterStartTimeDiff1("h_Cross_YXc_WeightedClusterStartTimeDiff1", "", 1000, -900., 900., 200, -500., 500.);
 
@@ -134,6 +145,21 @@ int main (int argc, char *argv[]) {
     TH1D h_U_StrpPulseSigma("h_U_StrpPulseSigma", "", uRwellTools::nMaxUStrip + 1, -0.5, uRwellTools::nMaxUStrip + 0.5);
     TH1D h_V_StrpPulseSigma("h_V_StrpPulseSigma", "", uRwellTools::nMaxVStrip + 1, -0.5, uRwellTools::nMaxVStrip + 0.5);
 
+
+    // === Hodo related histograms ===
+    TH1D h_Hodo_N_LR_MatchCrosses("h_Hodo_N_LR_MatchCrosses", "", 21, -0.5, 20.5);
+    TH2D h_Hodo_XY_BarID0("h_Hodo_XY_BarID0", "", XYHodoTools::nShortBars + 1, -0.5, double(XYHodoTools::nShortBars) + 0.5, XYHodoTools::nLongBars + 1, -0.5, double(XYHodoTools::nLongBars) + 0.5);
+    TH2D h_Hodo_XY_BarID1("h_Hodo_XY_BarID1", "", XYHodoTools::nShortBars + 1, -0.5, double(XYHodoTools::nShortBars) + 0.5, XYHodoTools::nLongBars + 1, -0.5, double(XYHodoTools::nLongBars) + 0.5);
+
+    TH2D h_Hodo_XY_BarID_Tag1("h_Hodo_XY_BarID_Tag1", "", XYHodoTools::nShortBars + 1, -0.5, double(XYHodoTools::nShortBars) + 0.5, XYHodoTools::nLongBars + 1, -0.5, double(XYHodoTools::nLongBars) + 0.5);
+
+    TH2D h_Cross_YXC_Max1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
+    for (int is = 0; is < XYHodoTools::nShortBars; is++) {
+        for (int il = 0; il < XYHodoTools::nLongBars; il++) {
+            h_Cross_YXC_Max1_[is][il] = TH2D(Form("h_Cross_YXC_Max1_%d_%d", is, il), "", 1000, -900., 900., 200, -500., 500.);
+        }
+    }
+
     ifstream inp_stripPulseSigma(Form("Pars/Pulse_Sigmas_%d.dat", run));
 
     if ( inp_stripPulseSigma.good() ) {
@@ -166,6 +192,32 @@ int main (int argc, char *argv[]) {
             event.getStructure(buRwellPulses);
             event.getStructure(bRAWADc);
             event.getStructure(bRunConf);
+            event.getStructure(bXYHodoTDC);
+
+                        /*
+             * Analyzing Hodoscope data
+             */
+            XYHodoTools::XYHodoAnalyzer det0_analyzer(0);
+            det0_analyzer.SetTOverThreshold(T_OverThrCut);
+            det0_analyzer.SetCrossDeltaT(deltaT_Cut_Cross);
+            det0_analyzer.SetPMTMatchTimeCut(deltaT_Cut_PMT12_Match);
+            det0_analyzer.SetHitBank(bXYHodoTDC);
+
+            det0_analyzer.AnalyzeEvent();
+
+            int nLR_MatchedCross = det0_analyzer.LR_MatchedCrosses()->size();
+
+            h_Hodo_N_LR_MatchCrosses.Fill(nLR_MatchedCross);
+
+            if (nLR_MatchedCross > 0) {
+                h_Hodo_XY_BarID0.Fill( (det0_analyzer.LR_MatchedCrosses()->at(0).first)->ShortBarId(), (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId() );
+            }
+
+            for ( auto iCrs = 0; iCrs < nLR_MatchedCross; iCrs++ ) {
+                int shortBarID = (det0_analyzer.LR_MatchedCrosses()->at(iCrs).first)->ShortBarId();
+                int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(iCrs).first)->LongBarId();
+                h_Hodo_XY_BarID1.Fill( shortBarID, longBarID );
+            }
 
             std::vector<uRwellTools::APV25Pulse> v_U_Pulses;
             std::vector<uRwellTools::APV25Pulse> v_V_Pulses;
@@ -242,6 +294,18 @@ int main (int argc, char *argv[]) {
 
             uRwellCross crs_Max_Integral;
 
+            /*
+            * Selecting clean (unumbigous) Hodo hvents
+            */
+
+            if (nLR_MatchedCross == 1) {
+                int shortBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->ShortBarId();
+                int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId();
+
+                h_Hodo_XY_BarID_Tag1.Fill(shortBarID, longBarID);
+            }
+
+
             if ( has_U_AND_V_clusters ) {
                 crs_Max_Integral = uRwellCross(Max_U_PulseCluster.getClusterCenter(), Max_V_PulseCluster.getClusterCenter());
 
@@ -315,6 +379,8 @@ int main (int argc, char *argv[]) {
                 h_Cross_UCluster_Sgima_vs_Strip1.Fill(Max_U_PulseCluster.getClusterCenter(), U_ClusterSigma);
                 h_Cross_VCluster_Sigma_vs_Strip1.Fill(Max_V_PulseCluster.getClusterCenter(), V_ClusterSigma);
 
+
+
                 bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin && U_SeedSigma < PulseSigmaMax && V_SeedSigma < PulseSigmaMax;
 
                 if (goodpulseWidth) {
@@ -328,8 +394,20 @@ int main (int argc, char *argv[]) {
                     h_Cross_SeedStartTimeTable_Diff_GoodWidth1.Fill(dtSeed_StartTime_UV_table);
                     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV_table);
                     h_Cross_SeedStartTimeTable_Diff_vs_U_cl_PulseIntegral1.Fill(U_SeedPulseIntegral, dtSeed_StartTime_UV_table);
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma1.Fill(crs_X, crs_Y);
+                }
+
+
+                if ( nLR_MatchedCross == 1 ) {
+                    int shortBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->ShortBarId();
+                    int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId();
+
+                    h_Cross_YXC_Max1_[shortBarID][longBarID].Fill(crs_X, crs_Y);
                 }
             }
+
+
+
         }
 
     }catch (exception &e) {

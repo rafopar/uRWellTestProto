@@ -20,7 +20,7 @@ void DrawPedestals(int run) {
         cout << "Run number has to be above 0. End program " << endl;
         exit(1);
     }
-    const int n_ts = 9;
+    const int n_ts = 15;
 
     TF1 *f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", 1000, 3500);
     f_Gaus->SetNpx(4500);
