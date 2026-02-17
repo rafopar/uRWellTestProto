@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
     print(" \n\n\n\n * Adding all root files together")
 
-    cmd_hadd = "hadd -f AnaPulseFits_%d.root AnaPulseFits_%d_File_*.root"%( run, run )
+    cmd_hadd = "hadd -f -j 18 AnaPulseFits_%d.root AnaPulseFits_%d_File_*.root"%( run, run )
     proc_Hadd = subprocess.Popen([cmd_hadd], shell = True)
 
     WaitWhileRunning(proc_Hadd, "Hadd")
