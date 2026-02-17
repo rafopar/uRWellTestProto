@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
         fnum = atoi(argv[2]);
 
         sprintf(inputFile, "Data/decoded_%d_%d.hipo", run, fnum);
-        sprintf(outputFile, "Skim_PulseFit_%d_%d.hipo", run, fnum);
+        sprintf(outputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
         std::string outFileName_Str = outputFile;
 
         if (uRwellTools::fileExists(outputFile)) {

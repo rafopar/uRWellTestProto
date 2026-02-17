@@ -56,7 +56,7 @@ int main (int argc, char *argv[]) {
         exit(1);
     }
 
-    sprintf(inputFile, "Skim_PulseFit_%d_%d.hipo", run, fnum);
+    sprintf(inputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
 
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
@@ -105,6 +105,12 @@ int main (int argc, char *argv[]) {
 
     TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1", "", 1000, -900., 900., 200, -500., 500.);
 
     TH2D h_Cross_YXc_WeightedClusterStartTimeDiff1("h_Cross_YXc_WeightedClusterStartTimeDiff1", "", 1000, -900., 900., 200, -500., 500.);
 
@@ -127,6 +133,7 @@ int main (int argc, char *argv[]) {
     TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral_GoodWidth1("h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
+    TH2D h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth_ActiveArea1("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth_ActiveArea1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1("h_Cross_SeedStartTimeDiff_vs_U_cl_PulseIntegral1", "", 200, 0, 50000., 200, -5., 5.);
     TH2D h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1("h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1", "", 200, 0, 50000., 200, -5., 5.);
@@ -154,9 +161,11 @@ int main (int argc, char *argv[]) {
     TH2D h_Hodo_XY_BarID_Tag1("h_Hodo_XY_BarID_Tag1", "", XYHodoTools::nShortBars + 1, -0.5, double(XYHodoTools::nShortBars) + 0.5, XYHodoTools::nLongBars + 1, -0.5, double(XYHodoTools::nLongBars) + 0.5);
 
     TH2D h_Cross_YXC_Max1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
+    TH2D h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
     for (int is = 0; is < XYHodoTools::nShortBars; is++) {
         for (int il = 0; il < XYHodoTools::nLongBars; il++) {
             h_Cross_YXC_Max1_[is][il] = TH2D(Form("h_Cross_YXC_Max1_%d_%d", is, il), "", 1000, -900., 900., 200, -500., 500.);
+            h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[is][il] = TH2D(Form("h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_%d_%d", is, il), "", 200, 0, 50000., 200, -5., 5.);
         }
     }
 
@@ -382,6 +391,7 @@ int main (int argc, char *argv[]) {
 
 
                 bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin && U_SeedSigma < PulseSigmaMax && V_SeedSigma < PulseSigmaMax;
+                bool IsInActiveArea = uRwellTools::IsInsideDetector(crs_X, crs_Y);
 
                 if (goodpulseWidth) {
                     h_Cross_SeedTimeDiff_vs_U_clPulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtSeed_UV);
@@ -395,6 +405,18 @@ int main (int argc, char *argv[]) {
                     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1.Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV_table);
                     h_Cross_SeedStartTimeTable_Diff_vs_U_cl_PulseIntegral1.Fill(U_SeedPulseIntegral, dtSeed_StartTime_UV_table);
                     h_Cross_YXc_MaxIntegrall_GoodPulseSigma1.Fill(crs_X, crs_Y);
+
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1.Fill(crs_X, crs_Y, U_ClusterStatTime );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1.Fill(crs_X, crs_Y, V_ClusterStartTime );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1.Fill(crs_X, crs_Y, Max_U_PulseCluster.getPulses()->size() );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1.Fill(crs_X, crs_Y, Max_V_PulseCluster.getPulses()->size() );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1.Fill(crs_X, crs_Y, U_ClusterPulseIntegral );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1.Fill(crs_X, crs_Y, V_ClusterPulseIntegral );
+
+                    if (IsInActiveArea) {
+                        h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth_ActiveArea1.Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
+
+                    }
                 }
 
 
@@ -403,6 +425,9 @@ int main (int argc, char *argv[]) {
                     int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId();
 
                     h_Cross_YXC_Max1_[shortBarID][longBarID].Fill(crs_X, crs_Y);
+                    if (IsInActiveArea) {
+                        h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[shortBarID][longBarID].Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
+                    }
                 }
             }
 
