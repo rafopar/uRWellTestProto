@@ -34,8 +34,6 @@ def Run_Decoding(files):
         file_ind = int( splited_fname[1] )
         cmd = "%s -i %s -o Data/decoded_%d_%d.hipo -c 1" %(DECODER, curFile, run, file_ind )
         print("Decode command is %s"%(cmd))
-
-        print( "The command is %s"%(cmd) )
         proc_decode[file_ind] = subprocess.Popen([cmd], shell = True)
 
         file_counter = file_counter + 1
@@ -73,7 +71,7 @@ def Run_Decoding(files):
 
             if proc_decode[file_ind].poll() is None:
                 nRunningProcess = nRunningProcess + 1
-            print("The decoding for the file %d is still running" %(file_ind))
+                print("The decoding for the file %d is still running" %(file_ind))
 
         if nRunningProcess == 0:
             stillRunning = False;
@@ -102,7 +100,7 @@ def Run_Skim_PulseFitting(files):
 
         print("file ind  = %d" %(file_ind))
 
-        cmd_Skim_PulseFit = "./Skim_PilseFit.exe %d %d" %(run, file_ind)
+        cmd_Skim_PulseFit = "./Skim_PulseFit.exe %d %d" %(run, file_ind)
 
         proc_Skim[file_ind] = subprocess.Popen([cmd_Skim_PulseFit], shell = True)
 
@@ -160,7 +158,7 @@ def Run_AnaPulseFit(file_list):
     proc_Ana = {}
 
     file_counter = 0
-    for curFile in files:
+    for curFile in file_list:
 
         splited_fname = curFile.split(".evio.")
         file_ind = int( splited_fname[1] )
@@ -242,8 +240,6 @@ if __name__ == "__main__":
     run = int(sys.argv[1])
     start_task = sys.argv[2] if len(sys.argv) > 2 else "TASK_DECODE"
 
-    processes = set()
-
     print( "The run is %d" %(run))
     os.environ["CCDB_CONNECTION"] = "sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite"
     evio_DIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
@@ -273,5 +269,3 @@ if __name__ == "__main__":
         func(argument)
 
     print("All requested tasks finished.")
-
-    # will keep track of processes for each file, and rnu next step when then current step is finished

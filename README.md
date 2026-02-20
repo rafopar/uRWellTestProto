@@ -52,14 +52,14 @@ the `URWELL::adc` in the uRwell readout there is no Zero suppression, in other w
 In the data stream the APV25 chip provides a waveform of ADCs. Each time sample corresponds to the measured charge in 25 ns time period. Number of time samples is multiple of 3, and can be maximum 15. Currently with cosmic runs, we take 15 time samples of data.
 During the skimming process, all pulses that are above the hit threshold are fit with a A Landau(x, MPV, sigma) function, where A is the amplitude of the function, MPV is the Most Probable Value of the Landau function, and the sigma is the width of the Landau function.
 
-The skimming executable is `Skim_PilseFit.exe`.
+The skimming executable is `Skim_PulseFit.exe`.
 
-`Usage: ./Skim_PilseFit.exe <RUN> <File_Number>`
+`Usage: ./Skim_PulseFit.exe <RUN> <File_Number>`
 where the <RUN> is the Run number and <File_number> is the index of the file in the given run.
 The program will look for an input hipo file  Data/decoded_\<RUN\>_\<File_Number\>.hipo and put the output 
 in the **Skims** directory: *Skims/Skim\_PulseFit\_\<RUN>\_<File\_Number>.hipo*
 
-**IMPORTANT** Make sure you have a directory "Skims" where you run the **Skim_PilseFit.exe** executable.
+**IMPORTANT** Make sure you have a directory "Skims" where you run the **Skim_PulseFit.exe** executable.
 
 ### Format of the Skimmed file
 When the fitting of the pulse is done, parameters of the fit function(A, MPV and sigma) are stored.

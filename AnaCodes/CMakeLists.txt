@@ -39,7 +39,7 @@ target_link_libraries(DrawNoise_Vs_StripCoorelations.exe uRWellLib ${ROOT_LIBRAR
 #################################################################################################
 
 add_executable(Skim_PulseFit Skim_PulseFit.cc)
-set_target_properties(Skim_PulseFit PROPERTIES OUTPUT_NAME "Skim_PilseFit.exe")
+set_target_properties(Skim_PulseFit PROPERTIES OUTPUT_NAME "Skim_PulseFit.exe")
 target_link_libraries(Skim_PulseFit Hipo4 uRWellLib ${ROOT_LIBRARIES})
 
 add_executable(AnaPulseFits AnaPulseFits.cc)
