@@ -23,11 +23,19 @@ int main(int argc, const char *argv[]) {
 
     auto c1 = new TCanvas("c1", "", 1800., 1000.);
 
+
     int run = atoi(argv[1]);
 
     TLatex lat1;
     lat1.SetNDC();
     lat1.SetTextFont(42);
+
+    constexpr double tsWidth = 25; // Width of the APV25 time sample
+
+    auto f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", -5., 5.);
+    f_Gaus->SetParLimits(1, -2., 2.);
+    f_Gaus->SetParLimits(2, 0., 2.);
+    f_Gaus->SetNpx(4500);
 
     TFile file_in(Form("AnaPulseFits_%d.root", run));
 
@@ -45,6 +53,102 @@ int main(int argc, const char *argv[]) {
     h_uRwell_YXc1.SetTitle("; X [mm]; Y [mm]");
     h_uRwell_YXc1.SetStats(0);
     TH2D h_uRwell_YXc_Eff1 = *(dynamic_cast<TH2D*>(h_uRwell_YXc1.Clone("h_uRwell_YXc_Eff1")));
+
+    TH2D h_Cross_YXc_GoodPulseSigma_CoarseBin1 = *(dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_GoodPulseSigma_CoarseBin1")));
+    h_Cross_YXc_GoodPulseSigma_CoarseBin1.SetTitle("; X [mm]; Y [mm]");
+    TH2D h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg = *(dynamic_cast<TH2D*>(h_Cross_YXc_GoodPulseSigma_CoarseBin1.Clone("h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg")));
+    TH2D h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High = *(dynamic_cast<TH2D*>(h_Cross_YXc_GoodPulseSigma_CoarseBin1.Clone("h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High")));
+    TH2D h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low = *(dynamic_cast<TH2D*>(h_Cross_YXc_GoodPulseSigma_CoarseBin1.Clone("h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low")));
+
+    const int n_uRWell_CoarsBinsX = 20;
+    const int n_uRWell_CoarsBinsY = 10;
+    c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf[", run));
+    c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf[", run));
+    c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf[", run));
+    TH2D *h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY];
+    for ( int ixBin = 0; ixBin < n_uRWell_CoarsBinsX; ixBin++ ) {
+        for (int iyBin = 0; iyBin < n_uRWell_CoarsBinsY; iyBin++ ) {
+            h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin] = dynamic_cast<TH2D*>(file_in.Get(Form("h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_%d_%d", ixBin, iyBin)));
+            h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->SetTitle("; U Cluster Pulse Integral; #Delta t Start Time [25 ns]");
+
+            int nbinsX = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->GetNbinsX();
+
+            // double RMS_deltaT_UClPulseIntegral = tsWidth*h_dT_StartTimeAvg_UPulseIntegral->GetRMS();
+            double RMS_deltaT_UClPulseIntegral = tsWidth*h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->GetRMS(2);
+
+            auto h_dT_StartTime_AvgUPusle = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->ProjectionY( Form("h_dT_StartTime_AvgUPusle_%d_%d", ixBin, iyBin), 1, nbinsX);
+
+            h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.SetBinContent(ixBin, iyBin, 0);
+            if ( h_dT_StartTime_AvgUPusle->Integral() > 150 ) {
+                double RMS = h_dT_StartTime_AvgUPusle->GetRMS();
+                double mean = h_dT_StartTime_AvgUPusle->GetBinCenter( h_dT_StartTime_AvgUPusle->GetMaximumBin() );
+                double max = h_dT_StartTime_AvgUPusle->GetMaximum();
+
+                f_Gaus->SetParameters(max, mean, 0.7*RMS);
+                h_dT_StartTime_AvgUPusle->Fit(f_Gaus, "MeV", "", mean - 0.7*RMS, mean + 0.7*RMS);
+                double sigma = tsWidth*f_Gaus->GetParameter(2);
+                mean = tsWidth*f_Gaus->GetParameter(1);
+                h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.SetBinContent(ixBin, iyBin, sigma);
+
+                double x = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.GetXaxis()->GetBinCenter(ixBin);
+                double y = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.GetYaxis()->GetBinCenter(iyBin);
+                lat1.DrawLatex(0.12, 0.91, Form("X = %1.2f mm; Y = %1.2f mm", x, y));
+                lat1.DrawLatex(0.65, 0.8, Form("#sigma = %1.2f ns", sigma));
+                lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
+
+
+                c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf", run));
+            }
+
+            auto h_dT_StartTime_HighUPusle = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->ProjectionY( Form("h_dT_StartTime_HighUPusle_%d_%d", ixBin, iyBin), nbinsX - 50, nbinsX);
+            h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.SetBinContent(ixBin, iyBin, 0);
+            if ( h_dT_StartTime_HighUPusle->Integral() > 150 ) {
+                double RMS = h_dT_StartTime_HighUPusle->GetRMS();
+                double mean = h_dT_StartTime_HighUPusle->GetBinCenter( h_dT_StartTime_HighUPusle->GetMaximumBin() );
+                double max = h_dT_StartTime_HighUPusle->GetMaximum();
+
+                f_Gaus->SetParameters(max, mean, 0.7*RMS);
+                h_dT_StartTime_HighUPusle->Fit(f_Gaus, "MeV", "", mean - 0.7*RMS, mean + 0.7*RMS);
+                double sigma = tsWidth*f_Gaus->GetParameter(2);
+                mean = tsWidth*f_Gaus->GetParameter(1);
+                h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.SetBinContent(ixBin, iyBin, sigma);
+
+                double x = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.GetXaxis()->GetBinCenter(ixBin);
+                double y = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.GetYaxis()->GetBinCenter(iyBin);
+                lat1.DrawLatex(0.12, 0.91, Form("X = %1.2f mm; Y = %1.2f mm", x, y));
+                lat1.DrawLatex(0.65, 0.8, Form("#sigma = %1.2f ns", sigma));
+                lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
+
+                c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf", run));
+            }
+
+            auto h_dT_StartTime_LowUPusle = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->ProjectionY( Form("h_dT_StartTime_LowUPusle_%d_%d", ixBin, iyBin), 1, 50);
+            h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.SetBinContent(ixBin, iyBin, 0);
+            if ( h_dT_StartTime_LowUPusle->Integral() > 150 ) {
+                double RMS = h_dT_StartTime_LowUPusle->GetRMS();
+                double mean = h_dT_StartTime_LowUPusle->GetBinCenter( h_dT_StartTime_LowUPusle->GetMaximumBin() );
+                double max = h_dT_StartTime_LowUPusle->GetMaximum();
+
+                f_Gaus->SetParameters(max, mean, 0.7*RMS);
+                h_dT_StartTime_LowUPusle->Fit(f_Gaus, "MeV", "", mean - 0.7*RMS, mean + 0.7*RMS);
+                double sigma = tsWidth*f_Gaus->GetParameter(2);
+                mean = tsWidth*f_Gaus->GetParameter(1);
+                h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.SetBinContent(ixBin, iyBin, sigma);
+
+                double x = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.GetXaxis()->GetBinCenter(ixBin);
+                double y = h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.GetYaxis()->GetBinCenter(iyBin);
+                lat1.DrawLatex(0.12, 0.91, Form("X = %1.2f mm; Y = %1.2f mm", x, y));
+                lat1.DrawLatex(0.65, 0.8, Form("#sigma = %1.2f ns", sigma));
+                lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
+                c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf", run));
+            }
+
+
+        }
+    }
+    c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf]", run));
+    c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf]", run));
+    c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf]", run));
 
     TH2D *h_Cross_YXC_Max1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
 
@@ -68,6 +172,8 @@ int main(int argc, const char *argv[]) {
             double nuRwellHits = h_Cross_YXC_Max1_[ishortBar][ilongBar]->Integral();
             double eff = nuRwellHits/NHodoHits;
 
+
+
             if ( !XYHodoTools::IsPixelOnuRwell(ishortBar, ilongBar) ) {
                 continue;
             }
@@ -89,11 +195,33 @@ int main(int argc, const char *argv[]) {
 
     c1->Clear();
     h_uRwell_YXc_Eff1.Divide(&h_uRwell_YXc1);
+    h_uRwell_YXc_Eff1.SetMaximum(1.);
     h_uRwell_YXc_Eff1.Draw("colz");
     uRwellTools::DrawActiveArea();
     c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.pdf", run));
     c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.png", run));
     c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.root", run));
+
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.SetStats(0);
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.Draw("colz");
+    uRwellTools::DrawActiveArea();
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.pdf", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.png", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.root", run));
+
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.SetStats(0);
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.Draw("colz");
+    uRwellTools::DrawActiveArea();
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.pdf", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.png", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.root", run));
+
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.SetStats(0);
+    h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.Draw("colz");
+    uRwellTools::DrawActiveArea();
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.pdf", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.png", run));
+    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.root", run));
 
     file_in.Close();
     return 0;

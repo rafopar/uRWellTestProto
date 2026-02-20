@@ -366,4 +366,90 @@ int main( int argc, char *argv[] ) {
     c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", run));
     c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", run));
 
+    /// ******** Distribution of hit properties (time, Pulse integral, cl_size) over the uRwell surface
+    c2->cd()->SetRightMargin(0.08);
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->SetMaximum(0.25*h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->GetMaximum());
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->Draw();
+    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.pdf", run));
+    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.png", run));
+    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.root", run));
+
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetMaximum(10);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetMinimum(0.1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->Draw("colz");
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.root", run));
+
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetMaximum(10);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetMinimum(0.1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->Draw("colz");
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.root", run));
+
+    c1->cd();
+    int binx1 = h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->GetXaxis()->FindBin(-150.);
+    int binx2 = h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->GetXaxis()->FindBin(150.);
+    auto h_avgStartTime_vs_Y1 = h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->ProjectionY("h_avgStartTime_vs_Y1", binx1, binx2);
+    h_avgStartTime_vs_Y1->Scale(1./double(binx2 - binx1));
+    h_avgStartTime_vs_Y1->SetMinimum(0.);
+    h_avgStartTime_vs_Y1->Draw();
+    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.pdf", run));
+    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.png", run));
+    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.root", run));
+
+    c2->cd()->Clear();
+
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->SetMaximum(10);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->Draw("colz");
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.root", run));
+
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->SetMaximum(10);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->Draw("colz");
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.root", run));
+
+    c2->SetRightMargin(0.1);
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->Draw("colz");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->SetMaximum(80000);
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.root", run));
+
+    auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1"));
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->SetStats(0);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->SetTitle("; Cross X [mm]; Cross Y [mm]");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->Draw("colz");
+    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->SetMaximum(80000);
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.pdf", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.png", run));
+    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.root", run));
 }

@@ -152,6 +152,17 @@ int main (int argc, char *argv[]) {
     TH1D h_U_StrpPulseSigma("h_U_StrpPulseSigma", "", uRwellTools::nMaxUStrip + 1, -0.5, uRwellTools::nMaxUStrip + 0.5);
     TH1D h_V_StrpPulseSigma("h_V_StrpPulseSigma", "", uRwellTools::nMaxVStrip + 1, -0.5, uRwellTools::nMaxVStrip + 0.5);
 
+    const int n_uRWell_CoarsBinsX = 20;
+    const int n_uRWell_CoarsBinsY = 10;
+
+    TH2D h_Cross_YXc_GoodPulseSigma_CoarseBin1("h_Cross_YXc_GoodPulseSigma_CoarseBin1", "", n_uRWell_CoarsBinsX, -900., 900., n_uRWell_CoarsBinsY, -500., 500.);
+    TH2D h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY];
+
+    for (int ixBin = 0; ixBin < n_uRWell_CoarsBinsX; ixBin++) {
+        for (int iyBin = 0; iyBin < n_uRWell_CoarsBinsY; iyBin++) {
+            h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin] = TH2D(Form("h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_%d_%d", ixBin, iyBin), "", 200, 0, 50000., 200, -5., 5.);
+        }
+    }
 
     // === Hodo related histograms ===
     TH1D h_Hodo_N_LR_MatchCrosses("h_Hodo_N_LR_MatchCrosses", "", 21, -0.5, 20.5);
@@ -161,11 +172,10 @@ int main (int argc, char *argv[]) {
     TH2D h_Hodo_XY_BarID_Tag1("h_Hodo_XY_BarID_Tag1", "", XYHodoTools::nShortBars + 1, -0.5, double(XYHodoTools::nShortBars) + 0.5, XYHodoTools::nLongBars + 1, -0.5, double(XYHodoTools::nLongBars) + 0.5);
 
     TH2D h_Cross_YXC_Max1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
-    TH2D h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
+
     for (int is = 0; is < XYHodoTools::nShortBars; is++) {
         for (int il = 0; il < XYHodoTools::nLongBars; il++) {
             h_Cross_YXC_Max1_[is][il] = TH2D(Form("h_Cross_YXC_Max1_%d_%d", is, il), "", 1000, -900., 900., 200, -500., 500.);
-            h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[is][il] = TH2D(Form("h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_%d_%d", is, il), "", 200, 0, 50000., 200, -5., 5.);
         }
     }
 
@@ -389,7 +399,6 @@ int main (int argc, char *argv[]) {
                 h_Cross_VCluster_Sigma_vs_Strip1.Fill(Max_V_PulseCluster.getClusterCenter(), V_ClusterSigma);
 
 
-
                 bool goodpulseWidth = U_SeedSigma > PulseSigmaMin && V_SeedSigma > PulseSigmaMin && U_SeedSigma < PulseSigmaMax && V_SeedSigma < PulseSigmaMax;
                 bool IsInActiveArea = uRwellTools::IsInsideDetector(crs_X, crs_Y);
 
@@ -424,9 +433,13 @@ int main (int argc, char *argv[]) {
                     int shortBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->ShortBarId();
                     int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId();
 
-                    h_Cross_YXC_Max1_[shortBarID][longBarID].Fill(crs_X, crs_Y);
                     if (IsInActiveArea) {
-                        h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[shortBarID][longBarID].Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
+                        h_Cross_YXc_GoodPulseSigma_CoarseBin1.Fill(crs_X, crs_Y);
+                        int coarseBinX = h_Cross_YXc_GoodPulseSigma_CoarseBin1.GetXaxis()->FindBin(crs_X);
+                        int coarseBinY = h_Cross_YXc_GoodPulseSigma_CoarseBin1.GetYaxis()->FindBin(crs_Y);
+
+                        h_Cross_YXC_Max1_[shortBarID][longBarID].Fill(crs_X, crs_Y);
+                        h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[coarseBinX][coarseBinY].Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
                     }
                 }
             }
