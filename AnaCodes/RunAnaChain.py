@@ -21,26 +21,7 @@ def WaitWhileRunning(proc, procDescription):
         else:
             return 1
 
-if __name__ == "__main__":
-
-    if len(sys.argv) != 2 :
-        print( "Wrong syntax, exiting" )
-        print( "The command should look like Run_PulseSkim.py $Run" )
-        exit(1)
-
-    processes = set()
-    run: int = int(sys.argv[1])
-
-    print( "The run is %d" %(run))
-    os.environ["CCDB_CONNECTION"] = "sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite"
-    evio_DIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
-    DECODER = "/home/rafopar/work/git/clas12-offline-software/coatjava/bin/decoder"
-
-    # Getting list of files. and Sort them by time. Sorting by time is important
-    # to avid partially populated batched
-    files = sorted(glob.glob("%s/urwell_maroc_00%d.evio*" %(evio_DIR, run)), key=os.path.getmtime)
-
-
+def Run_Decoding(files):
 
     # will keep track of processes for each file, and rnu next step when then current step is finished
     proc_decode = {}
@@ -107,6 +88,8 @@ if __name__ == "__main__":
     print("*     Decoding of all files is finished")
     print("\n\n\n")
 
+    return 0
+def Run_Skim_PulseFitting(files):
 
     proc_Skim = {}
 
@@ -169,6 +152,11 @@ if __name__ == "__main__":
 
     print("Skimming is done")
 
+
+    return 0
+
+def Run_AnaPulseFit(file_list):
+
     proc_Ana = {}
 
     file_counter = 0
@@ -217,6 +205,10 @@ if __name__ == "__main__":
 
     print("All AnalPulseFits are done")
 
+    return 0
+
+def Run_Hadd(run):
+
     print(" \n\n\n\n * Adding all root files together")
 
     cmd_hadd = "hadd -f -j 18 AnaPulseFits_%d.root AnaPulseFits_%d_File_*.root"%( run, run )
@@ -230,12 +222,56 @@ if __name__ == "__main__":
 
     WaitWhileRunning(proc_rm, "Cleaning root files")
 
-    # print("\n\n\n * Starting Drawing histograms")
-    #
-    # cmd_Draw = "./DrawPlotsWithClustering.exe -r %d -t %1.1f -m %d"%(run, threshold, clSize)
-    # proc_Draw = subprocess.Popen([cmd_Draw], shell = True)
-    #
-    # WaitWhileRunning(proc_rm, "Drawing plots")
-    # print("\n\n All done")
 
-    print("All done.")
+    return 0
+
+TASKS = [
+    ("TASK_DECODE", Run_Decoding),
+    ("TASK_SkimPulseFit", Run_Skim_PulseFitting),
+    ("TASK_AnaPulseFit", Run_AnaPulseFit),
+    ("TASK_Hadd", Run_Hadd),
+]
+
+
+if __name__ == "__main__":
+
+    if len(sys.argv) < 2:
+        print("Usage: python3 RunAnaChain.py <RUN> [START_TASK]")
+        sys.exit(1)
+
+    run = int(sys.argv[1])
+    start_task = sys.argv[2] if len(sys.argv) > 2 else "TASK_DECODE"
+
+    processes = set()
+
+    print( "The run is %d" %(run))
+    os.environ["CCDB_CONNECTION"] = "sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite"
+    evio_DIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
+    DECODER = "/home/rafopar/work/git/clas12-offline-software/coatjava/bin/decoder"
+
+    # Getting list of files. and Sort them by time. Sorting by time is important
+    # to avid partially populated batched
+    files = sorted(glob.glob("%s/urwell_maroc_00%d.evio*" %(evio_DIR, run)), key=os.path.getmtime)
+
+
+    # Find where to start
+    task_names = [name for name, _ in TASKS]
+
+    if start_task not in task_names:
+        print(f"Unknown task: {start_task}")
+        print("Available tasks:", ", ".join(task_names))
+        sys.exit(1)
+
+    start_index = task_names.index(start_task)
+
+    # Execute from chosen task onward
+    for name, func in TASKS[start_index:]:
+        print(f"Starting {name}")
+        argument = files # default argument
+        if name == "TASK_Hadd":
+            argument = run
+        func(argument)
+
+    print("All requested tasks finished.")
+
+    # will keep track of processes for each file, and rnu next step when then current step is finished
