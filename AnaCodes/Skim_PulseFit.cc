@@ -4,6 +4,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
+#include <chrono>
+#include <unordered_map>
 
 #include <TMath.h>
 #include <TFile.h>
@@ -60,6 +62,7 @@ int main(int argc, char **argv) {
 
     auto *f_bgrPlusLandau = new TF1("f_bgrPlusLandau", "[0] + [1]*TMath::Landau(x,[2],[3])", -10, 10.);
     f_bgrPlusLandau->SetNpx(4500);
+    f_bgrPlusLandau->FixParameter(0, 0.);
 
     hipo::reader reader;
     reader.open(inputFile);
@@ -105,51 +108,51 @@ int main(int argc, char **argv) {
  * Reading the pedestal file and and fill a map for pedestals and RMSs
  */
 
-    std::map<int, double> m_ped_mean; // Mean value of the pedestal
-    std::map<int, double> m_ped_rms; // rms of the pedestal
-    std::map<int, double> m_ped_GEM_mean; // Mean value of the pedestal
-    std::map<int, double> m_ped_GEM_rms; // rms of the pedestal
+    std::unordered_map<int, double> m_ped_mean; // Mean value of the pedestal
+    std::unordered_map<int, double> m_ped_rms; // rms of the pedestal
+    std::unordered_map<int, double> m_ped_GEM_mean; // Mean value of the pedestal
+    std::unordered_map<int, double> m_ped_GEM_rms; // rms of the pedestal
 
     ifstream inp_ped(Form("PedFiles/Peds_%d", run));
 
     if (!inp_ped.is_open()) {
-        cout << "Can not find the pedestal file \"PedFiles/CosmicPeds.dat\". " << endl;
+        cout << "Can not find the pedestal file \"PedFiles/Peds_" << run << "\". " << endl;
         cout << "Exiting..." << endl;
         exit(1);
     }
 
-    cout << "Kuku" << endl;
-    while (!inp_ped.eof()) {
+    {
         int ch;
         double mean, rms;
-        inp_ped >> ch;
-        inp_ped >> mean;
-        inp_ped >> rms;
-
-        m_ped_mean[ch] = mean;
-        m_ped_rms[ch] = rms;
+        while (inp_ped >> ch >> mean >> rms) {
+            m_ped_mean[ch] = mean;
+            m_ped_rms[ch] = rms;
+        }
     }
 
     ifstream inp_ped_GEM(Form("PedFiles/GEM_Peds_%d", run));
 
     if (!inp_ped_GEM.is_open()) {
-        cout << "Can not find the pedestal file. " << endl;
+        cout << "Can not find the pedestal file \"PedFiles/GEM_Peds_" << run << "\". " << endl;
         cout << "Exiting..." << endl;
         exit(1);
     }
 
-    while (!inp_ped_GEM.eof()) {
+    {
         int ch;
         double mean, rms;
-        inp_ped_GEM >> ch;
-        inp_ped_GEM >> mean;
-        inp_ped_GEM >> rms;
-
-        m_ped_GEM_mean[ch] = mean;
-        m_ped_GEM_rms[ch] = rms;
+        while (inp_ped_GEM >> ch >> mean >> rms) {
+            m_ped_GEM_mean[ch] = mean;
+            m_ped_GEM_rms[ch] = rms;
+        }
     }
 
     cout << "The pedestal map is loaded." << endl;
+
+    std::chrono::duration<double> t_adc_loop{0};
+    std::chrono::duration<double> t_gem_fit{0};
+    std::chrono::duration<double> t_urwell_fit{0};
+    std::chrono::duration<double> t_output{0};
 
     try {
         while (reader.next() == true) {
@@ -157,7 +160,7 @@ int main(int argc, char **argv) {
 
             evCounter = evCounter + 1;
 
-            //if (evCounter > 1500) { break; }
+            if (evCounter > 2000) { break; }
             if (evCounter % 1000 == 0) {
                 gSystem->RedirectOutput(0);
                 cout.flush() << "Processed " << evCounter << " events \r";
@@ -173,10 +176,6 @@ int main(int argc, char **argv) {
                 continue;
             }
 
-            std::map<int, int> m_ts_uRWELL;
-            // This represents the time sample that has the highest ADC for the given strip
-            std::map<int, double> m_MaxADC_uRWELL;
-            // This represents the maximum ADC from all time samples of the given strip
             std::map<int, double> m_ADC_uRWELL;
             std::map<int, double> m_ADCRel_uRWELL;
             std::map<int, int> m_ts_GEM; // This represents the time sample that has the highest ADC for the given strip
@@ -191,6 +190,8 @@ int main(int argc, char **argv) {
             double uRWell_grMax[uRwellTools::nMaxUniqueChan + 1] = {0.};
             double uRWell_ts_grMax[uRwellTools::nMaxUniqueChan + 1] = {0.};
 
+            auto t0 = std::chrono::high_resolution_clock::now();
+
             for (int i = 0; i < n_uRwellADC; i++) {
                 int sector = buRWellADC.getInt(__bank_Sec_INDEX_, i);
                 int layer = buRWellADC.getInt(__bank_Layer_INDEX_, i);
@@ -202,44 +203,52 @@ int main(int argc, char **argv) {
                 int slot = layer;
 
                 if (sector == sec_GEM) {
-                    m_ADC_GEM[uniqueChan] += double(ADC);
+                    auto gem_result = m_ADC_GEM.emplace(uniqueChan, 0.0);
+                    if (gem_result.second) {                             // first time seeing this channel
+                        gr_ADC_Waveforms_GEM[uniqueChan].Set(n_ts);     // pre-allocate all 15 points once
+                    }
+                    gem_result.first->second += double(ADC);             // accumulate
 
-                    gr_ADC_Waveforms_GEM[uniqueChan].AddPointError(ts, m_ped_GEM_mean[uniqueChan] - ADC, 0,
-                                                                   m_ped_GEM_rms[uniqueChan]);
+                    gr_ADC_Waveforms_GEM[uniqueChan].SetPoint(ts, ts, m_ped_GEM_mean[uniqueChan] - ADC);
+                    gr_ADC_Waveforms_GEM[uniqueChan].SetPointError(ts, 0, m_ped_GEM_rms[uniqueChan]);
 
                     if (m_ped_GEM_mean[uniqueChan] - ADC > m_MaxADC_GEM[uniqueChan]) {
                         m_MaxADC_GEM[uniqueChan] = m_ped_GEM_mean[uniqueChan] - ADC;
                         m_ts_GEM[uniqueChan] = ts;
                     }
                 } else if (sector == sec_uRWell) {
-                    m_ADC_uRWELL[uniqueChan] = m_ADC_uRWELL[uniqueChan] + double(ADC);
+                    auto urwell_result = m_ADC_uRWELL.emplace(uniqueChan, 0.0);
+                    if (urwell_result.second) {                              // first time seeing this channel
+                        gr_ADC_Waveforms_uRwell[uniqueChan].Set(n_ts);      // pre-allocate all 15 points once
+                    }
+                    urwell_result.first->second += double(ADC);              // accumulate
 
-                    gr_ADC_Waveforms_uRwell[uniqueChan].AddPointError(ts, m_ped_mean[uniqueChan] - ADC, 0,
-                                                                      m_ped_rms[uniqueChan]);
+                    gr_ADC_Waveforms_uRwell[uniqueChan].SetPoint(ts, ts, m_ped_mean[uniqueChan] - ADC);
+                    gr_ADC_Waveforms_uRwell[uniqueChan].SetPointError(ts, 0, m_ped_rms[uniqueChan]);
 
-                    if ( m_ped_mean[uniqueChan] - ADC > uRWell_grMax[uniqueChan]  ) {
+                    if (m_ped_mean[uniqueChan] - ADC > uRWell_grMax[uniqueChan]) {
                         uRWell_grMax[uniqueChan] = m_ped_mean[uniqueChan] - ADC;
                         uRWell_ts_grMax[uniqueChan] = ts;
-                    }
-
-                    if (m_ped_mean[uniqueChan] - ADC > m_MaxADC_uRWELL[uniqueChan]) {
-                        m_MaxADC_uRWELL[uniqueChan] = m_ped_mean[uniqueChan] - ADC;
-                        m_ts_uRWELL[uniqueChan] = ts;
                     }
                 }
             }
 
+            t_adc_loop += std::chrono::high_resolution_clock::now() - t0;
+
             vector<uRwellTools::APV25Pulse> v_GEM_Pulses;
+
+            t0 = std::chrono::high_resolution_clock::now();
+
             for (auto it = m_ADC_GEM.begin(); it != m_ADC_GEM.end(); ++it) {
                 int ch = it->first;
 
                 m_ADC_GEM[ch] = m_ped_GEM_mean[ch] - m_ADC_GEM[ch] / double(n_ts);
-                m_ADCRel_GEM[ch] = m_ADC_GEM[ch] / m_ped_GEM_rms[ch];
+                double adcRel = m_ADC_GEM[ch] / m_ped_GEM_rms[ch];
 
-                if (m_ADCRel_GEM[ch] > sigm_threshold) {
+                if (adcRel > sigm_threshold) {
                     uRwellTools::uRwellHit curHit;
                     curHit.adc = m_ADC_GEM[ch];
-                    curHit.adcRel = m_ADCRel_GEM[ch];
+                    curHit.adcRel = adcRel;
                     curHit.sector = sec_GEM;
                     curHit.layer = 1 + ch / 1000;
                     curHit.slot = uRwellTools::getGEMSlot(ch);
@@ -249,7 +258,6 @@ int main(int argc, char **argv) {
 
                     uRwellTools::APV25Pulse curPulse;
 
-                    f_bgrPlusLandau->FixParameter(0, 0.);
                     f_bgrPlusLandau->SetParameter(
                         1, 4 * (gr_ADC_Waveforms_GEM[ch].GetMaximum() - gr_ADC_Waveforms_GEM[ch].GetMinimum()));
                     f_bgrPlusLandau->SetParLimits(1, 0., 10000.);
@@ -280,27 +288,30 @@ int main(int argc, char **argv) {
                 }
             }
 
+            t_gem_fit += std::chrono::high_resolution_clock::now() - t0;
+
             vector<uRwellTools::APV25Pulse> v_uRwell_Pulses;
+
+            t0 = std::chrono::high_resolution_clock::now();
 
             for (auto it = m_ADC_uRWELL.begin(); it != m_ADC_uRWELL.end(); ++it) {
                 int ch = it->first;
                 m_ADC_uRWELL[ch] = m_ped_mean[ch] - m_ADC_uRWELL[ch] / double(n_ts);
-                m_ADCRel_uRWELL[ch] = m_ADC_uRWELL[ch] / m_ped_rms[ch];
+                double adcRel = m_ADC_uRWELL[ch] / m_ped_rms[ch];
 
-                if (m_ADCRel_uRWELL[ch] > sigm_threshold) {
+                if (adcRel > sigm_threshold) {
                     uRwellTools::uRwellHit curHit;
                     curHit.adc = m_ADC_uRWELL[ch];
-                    curHit.adcRel = m_ADCRel_uRWELL[ch];
+                    curHit.adcRel = adcRel;
                     curHit.sector = sec_uRWell;
                     curHit.layer = 1 + ch / 1000;
                     curHit.slot = uRwellTools::getURwellSlot(ch);
                     curHit.strip = ch % 1000;
                     curHit.stripLocal = ch - uRwellTools::slot_Offset[curHit.slot];
-                    curHit.ts = m_ts_uRWELL[ch];
+                    curHit.ts = uRWell_ts_grMax[ch];
 
                     uRwellTools::APV25Pulse curPulse;
 
-                    f_bgrPlusLandau->FixParameter(0, 0.);
                     f_bgrPlusLandau->SetParameter(
                         1, 4 * (gr_ADC_Waveforms_uRwell[ch].GetMaximum() - gr_ADC_Waveforms_uRwell[ch].GetMinimum()));
                     f_bgrPlusLandau->SetParLimits(1, 0., 10000.);
@@ -309,7 +320,7 @@ int main(int argc, char **argv) {
                     f_bgrPlusLandau->SetParLimits(3, 0.4, 10.);
 
                     //gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, 9.1);
-                    gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MeQ", "", -1.1, double(n_ts) + 0.1);
+                    gr_ADC_Waveforms_uRwell[ch].Fit(f_bgrPlusLandau, "MEQ", "", -1.1, double(n_ts) + 0.1);
 
                     curPulse.hit = curHit;
                     curPulse.ped_rms = m_ped_rms[ch];
@@ -333,11 +344,15 @@ int main(int argc, char **argv) {
                 }
             }
 
+            t_urwell_fit += std::chrono::high_resolution_clock::now() - t0;
+
             int n_TotHits = v_GEM_Pulses.size() + v_uRwell_Pulses.size();
 
             if (n_TotHits == 0) {
                 continue;
             }
+
+            t0 = std::chrono::high_resolution_clock::now();
 
             hipo::bank buRwellPulses(sch, n_TotHits);
             hipo::event outEvent;
@@ -347,7 +362,7 @@ int main(int argc, char **argv) {
             // "sec/S,layer/S,strip/S,stripLocal/S,adc/F,adcRel/F,ts/S,slot/S,
             // ped_rms/F,pulse_p0/F,pulse_A0/F,pulse_MPV/F,pulse_Sigma/F,pulse_Chi2/F,pulse_NDF/S,pulse_ADC0/F,pulse_ADC1/F,pulse_ADC2/F,pulse_ADC3/F,pulse_ADC4/F,
             // pulse_ADC5/F,pulse_ADC6/F,pulse_ADC7/F,pulse_ADC8/F,pulse_ADC9/F,pulse_ADC10/F,pulse_ADC11/F,pulse_ADC12/F,pulse_ADC13/F,pulse_ADC14/F");
-            for (auto curPulse: v_uRwell_Pulses) {
+            for (const auto& curPulse: v_uRwell_Pulses) {
                 buRwellPulses.putShort("sec", col, short(curPulse.hit.sector));
                 buRwellPulses.putShort("layer", col, short(curPulse.hit.layer));
                 buRwellPulses.putShort("strip", col, short(curPulse.hit.strip));
@@ -372,7 +387,7 @@ int main(int argc, char **argv) {
                 col = col + 1;
             }
 
-            for (auto curPulse: v_GEM_Pulses) {
+            for (const auto& curPulse: v_GEM_Pulses) {
                 buRwellPulses.putShort("sec", col, short(curPulse.hit.sector));
                 buRwellPulses.putShort("layer", col, short(curPulse.hit.layer));
                 buRwellPulses.putShort("strip", col, short(curPulse.hit.strip));
@@ -404,12 +419,21 @@ int main(int argc, char **argv) {
             outEvent.addStructure(bXYHodo);
             // outEvent.addStructure(bVMM3ADC);
             writer.addEvent(outEvent);
+
+            t_output += std::chrono::high_resolution_clock::now() - t0;
         }
         gSystem->RedirectOutput(0);
     } catch (exception &e) {
         cerr << e.what() << endl;
     }
 
+    std::cout << "\n===== Timing Summary =====" << std::endl;
+    std::cout << "ADC loop:       " << t_adc_loop.count()   << " s" << std::endl;
+    std::cout << "GEM fitting:    " << t_gem_fit.count()    << " s" << std::endl;
+    std::cout << "uRWell fitting: " << t_urwell_fit.count() << " s" << std::endl;
+    std::cout << "Output writing: " << t_output.count()     << " s" << std::endl;
+    std::cout << "Total measured: " << (t_adc_loop + t_gem_fit + t_urwell_fit + t_output).count() << " s" << std::endl;
+    std::cout << "==========================" << std::endl;
 
     writer.close();
     writer.showSummary();
