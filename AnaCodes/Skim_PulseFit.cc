@@ -160,7 +160,7 @@ int main(int argc, char **argv) {
 
             evCounter = evCounter + 1;
 
-            if (evCounter > 2000) { break; }
+            //if (evCounter > 2000) { break; }
             if (evCounter % 1000 == 0) {
                 gSystem->RedirectOutput(0);
                 cout.flush() << "Processed " << evCounter << " events \r";
