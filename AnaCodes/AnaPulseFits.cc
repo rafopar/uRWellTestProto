@@ -45,14 +45,14 @@ int main (int argc, char *argv[]) {
     if (parsed_options.count("Run")) {
         run = parsed_options["Run"].as<int>();
     } else {
-        cout << "The run number is nor provided. Exiting..." << endl;
+        cout << "The run number is not provided. Exiting..." << endl;
         exit(1);
     }
 
     if (parsed_options.count("FileNo")) {
         fnum = parsed_options["FileNo"].as<int>();
     } else {
-        cout << "The file number is nor provided. Exiting..." << endl;
+        cout << "The file number is not provided. Exiting..." << endl;
         exit(1);
     }
 
@@ -314,7 +314,11 @@ int main (int argc, char *argv[]) {
             uRwellCross crs_Max_Integral;
 
             /*
-            * Selecting clean (unumbigous) Hodo hvents
+            * Selecting clean (unambiguous) Hodo events.
+            * h_Hodo_XY_BarID_Tag1 serves as the DENOMINATOR for the uRWell detection efficiency:
+            *   efficiency = h_Cross_YXC_Max1_[shortBarID][longBarID] / h_Hodo_XY_BarID_Tag1
+            * It is filled here (outside the uRWell cluster requirement) so that it counts
+            * all clean single-cross Hodo tags, regardless of whether a uRWell cluster was found.
             */
 
             if (nLR_MatchedCross == 1) {
@@ -344,7 +348,7 @@ int main (int argc, char *argv[]) {
                 double U_SeedSigma_table = h_U_StrpPulseSigma.GetBinContent( h_U_StrpPulseSigma.FindBin(Max_U_PulseCluster.getSeedStrip() ) );
                 double V_SeedSigma_table = h_V_StrpPulseSigma.GetBinContent( h_V_StrpPulseSigma.FindBin(Max_V_PulseCluster.getSeedStrip() ) );
 
-                double U_ClusterStatTime = U_ClusterMPV - U_ClusterSigma;
+                double U_ClusterStartTime = U_ClusterMPV - U_ClusterSigma;
                 double V_ClusterStartTime = V_ClusterMPV - V_ClusterSigma;
                 double U_SeedStartTime = U_SeedMPV - Max_U_PulseCluster.getSeedSigma();
                 double V_SeedStartTime = V_SeedMPV - Max_V_PulseCluster.getSeedSigma();
@@ -356,7 +360,7 @@ int main (int argc, char *argv[]) {
 
                 double dtCluster_UV = U_ClusterMPV - V_ClusterMPV;
                 double dtSeed_UV = U_SeedMPV - V_SeedMPV;
-                double dtCluster_StartTime_UV = U_ClusterStatTime - V_ClusterStartTime;
+                double dtCluster_StartTime_UV = U_ClusterStartTime - V_ClusterStartTime;
                 double dtSeed_StartTime_UV = U_SeedStartTime - V_SeedStartTime;
                 double dtCluster_StartTime_UV_table = U_ClusterStartTime_table - V_ClusterStartTime_table;
                 double dtSeed_StartTime_UV_table = U_SeedStartTime_table - V_SeedStartTime_table;
@@ -373,7 +377,7 @@ int main (int argc, char *argv[]) {
                 h_Cross_YXc_WeightedClusterStartTimeDiff1.Fill(crs_X, crs_Y, dtCluster_StartTime_UV);
                 h_Cross_V_vs_U_ClusterMPV1.Fill( U_ClusterMPV, V_ClusterMPV );
                 h_Cross_V_vs_U_SeedMPV1.Fill(U_SeedMPV, V_SeedMPV);
-                h_Cross_V_vs_U_ClusterStartTime1.Fill( U_ClusterStatTime, V_ClusterStartTime );
+                h_Cross_V_vs_U_ClusterStartTime1.Fill( U_ClusterStartTime, V_ClusterStartTime );
                 h_Cross_V_vs_U_SeedStartTime1.Fill(U_SeedStartTime, V_SeedStartTime );
 
                 h_Cross_ClusterTimeDiff1.Fill( dtCluster_UV );
@@ -415,7 +419,7 @@ int main (int argc, char *argv[]) {
                     h_Cross_SeedStartTimeTable_Diff_vs_U_cl_PulseIntegral1.Fill(U_SeedPulseIntegral, dtSeed_StartTime_UV_table);
                     h_Cross_YXc_MaxIntegrall_GoodPulseSigma1.Fill(crs_X, crs_Y);
 
-                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1.Fill(crs_X, crs_Y, U_ClusterStatTime );
+                    h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1.Fill(crs_X, crs_Y, U_ClusterStartTime );
                     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1.Fill(crs_X, crs_Y, V_ClusterStartTime );
                     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1.Fill(crs_X, crs_Y, Max_U_PulseCluster.getPulses()->size() );
                     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1.Fill(crs_X, crs_Y, Max_V_PulseCluster.getPulses()->size() );
@@ -429,6 +433,8 @@ int main (int argc, char *argv[]) {
                 }
 
 
+                // NUMERATOR for efficiency: additionally requires has_U_AND_V_clusters (implicit,
+                // since we are inside that block) and IsInActiveArea.
                 if ( nLR_MatchedCross == 1 ) {
                     int shortBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->ShortBarId();
                     int longBarID = (det0_analyzer.LR_MatchedCrosses()->at(0).first)->LongBarId();
