@@ -1,5 +1,5 @@
 set(INCLUDES
-  ${ROOT_INCLUDE_DIR}
+  ${ROOT_INCLUDE_DIRS}
   ${CMAKE_SOURCE_DIR}/build/include
   ${CMAKE_SOURCE_DIR}/hipo/hipo4
   ${XYHodoTools_INCLUDE_DIRS})
