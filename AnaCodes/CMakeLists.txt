@@ -33,7 +33,7 @@ add_executable(DrawHVDependencePlots.exe DrawHVDependencePlots.cc)
 target_link_libraries(DrawHVDependencePlots.exe uRWellLib ${ROOT_LIBRARIES} )
 #################################################################################################
 
-############################  DrawHVDependencePlots.cc  #########################################
+############################  DrawNoise_Vs_StripCoorelations  #########################################
 add_executable(DrawNoise_Vs_StripCoorelations.exe DrawNoise_Vs_StripCoorelations.cc)
 target_link_libraries(DrawNoise_Vs_StripCoorelations.exe uRWellLib ${ROOT_LIBRARIES} )
 #################################################################################################
