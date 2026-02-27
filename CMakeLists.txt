@@ -5,7 +5,8 @@ project(uRWellTestProto VERSION 1.0.1 DESCRIPTION "Tools for analysing data from
 
 # Set up
 set(CMAKE_VERBOSE_MAKEFILE ON)
-set(CMAKE_CXX_FLAGS "-std=c++17")
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules")
 set(CMAKE_PREFIX_PATH $ENV{ROOTSYS}/cmake)
 #set(CMAKE_INSTALL_PREFIX "${CMAKE_SOURCE_DIR}/build")
