@@ -18,7 +18,6 @@ SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 SET(CMAKE_INSTALL_RPATH "${CMAKE_SOURCE_DIR}/urwelllib")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
-include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
 set(uRWell_SOURCE_FILES
   "${PROJECT_SOURCE_DIR}/src/uRwellTools.cc" )
 set(uRWell_HEADERS
@@ -32,6 +31,7 @@ target_include_directories(uRWellLib
   PUBLIC
   $<INSTALL_INTERFACE:include>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${ROOT_INCLUDE_DIRS}>
   )
 
 include(GNUInstallDirs)
@@ -42,7 +42,7 @@ install(TARGETS uRWellLib
     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 configure_file(uRWellLib.pc.in uRWellLib.pc @ONLY)
-  
+
 install(FILES ${CMAKE_BINARY_DIR}/uRWellLib.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
 
 message("ROOT_INCLUDE_DIR is " ${ROOT_INCLUDE_DIRS})
