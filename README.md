@@ -17,8 +17,9 @@ for instructions on Software installation and running.
    - [Analysis: AnaPulseFits](#analysis-anapulsefits)
 5. [Automated Running](#automated-running)
 6. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
-7. [Key Analysis Parameters](#key-analysis-parameters)
-8. [Data File Locations](#data-file-locations)
+7. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
+8. [Key Analysis Parameters](#key-analysis-parameters)
+9. [Data File Locations](#data-file-locations)
 
 ---
 
@@ -60,7 +61,7 @@ uRWellTestProto/
 │   ├── Decode_Run.py               # Standalone decoding script
 │   └── CMakeLists.txt
 ├── include/
-│   └── uRwellTools.h               # Core data structures and analysis utilities
+│   └── uRwellTools.h               # Core data structures, analysis utilities, and geometry tools
 ├── src/
 │   └── uRwellTools.cc              # Implementation of uRwellTools
 ├── hipo/hipo4/                     # HIPO4 I/O library (header-only, included)
@@ -341,9 +342,39 @@ executables and produce PDF/PNG plots in the `Figs/` directory.
 | `DrawPulseFitPlots.cc` | `AnaPulseFits_<RUN>.root` | Pulse fit parameter distributions |
 | `DrawPlotsWithClustering.cc` | `AnaPulseFits_<RUN>.root` | Cluster size, position, and charge |
 | `DrawHVDependencePlots.cc` | multiple runs | Efficiency vs. detector HV |
-| `DrawEffWithHodo.cc` | `AnaPulseFits_<RUN>.root` | Detection efficiency with hodoscope tagging |
+| `DrawEffWithHodo.cc` | `AnaPulseFits_<RUN>.root` | Detection efficiency with hodoscope tagging; also produces a TF2-based 2D map of the normalized U−V strip RO-length difference across the detector face (`Figs/Str_ROLength_Diff.*`) |
 | `DrawNoise_Vs_StripCoorelations.cc` | `CheckDecoding_<RUN>_0.root` | Strip-to-strip noise correlations |
 | `UpdateStripSigmas.cc` | `AnaPulseFits_<RUN>.root` | Updates per-strip σ in `Pars/Pulse_Sigmas_<RUN>.dat` |
+
+---
+
+# Geometry Utilities in uRwellTools
+
+Two functions in `uRwellTools` compute the distance along the strip direction from a hit
+position `(x, y)` to the detector edge where the readout (RO) connectors are located:
+
+```cc
+double uRwellTools::getROLength_U(double x, double y);
+double uRwellTools::getROLength_V(double x, double y);
+```
+
+Both functions:
+- Return `-1` if `(x, y)` is outside the active detector area.
+- Account for the strip flip point at strip 448.5, where the readout side switches:
+  U strips switch from the **left** edge to the **right** edge, and V strips switch from
+  the **right** edge to the **left** edge.
+- Return the Euclidean distance in **mm** from `(x, y)` along the strip to the boundary
+  where the connector sits.
+
+These functions are used in `DrawEffWithHodo.cc` to define a ROOT `TF2` object
+(`f_UStrROLength`) that maps the normalized difference
+
+```
+f(x, y) = (getROLength_U(x, y) − getROLength_V(x, y)) / 300
+```
+
+across the full detector face, and saves it as `Figs/Str_ROLength_Diff.*`. This visualization
+helps study any signal amplitude or timing dependence on the distance to the RO connector.
 
 ---
 
@@ -362,6 +393,7 @@ executables and produce PDF/PNG plots in the `Figs/` directory.
 | `deltaT_Cut_PMT12_Match` | 20 ns | `AnaPulseFits.cc` | Hodoscope PMT1/2 match Δt cut                                 |
 | `sec_uRwell` | 6 | `AnaPulseFits.cc` | Sector ID of the μRwell detector                              |
 | `sec_GEM` | 8 | `AnaPulseFits.cc` | Sector ID of the GEM detector                                 |
+| Strip flip point | 448.5 | `uRwellTools.cc` | Strip number above which RO connector side switches (U and V) |
 
 ---
 
