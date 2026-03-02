@@ -367,7 +367,7 @@ Both functions:
   where the connector sits.
 
 These functions are used in `DrawEffWithHodo.cc` to define a ROOT `TF2` object
-(`f_UStrROLength`) that maps the normalized difference
+(`f_UStrROLength`) that maps the normalized (to the speed of light) difference
 
 ```
 f(x, y) = (getROLength_U(x, y) − getROLength_V(x, y)) / 300
