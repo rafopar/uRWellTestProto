@@ -608,6 +608,80 @@ namespace uRwellTools {
         return tan(strip_alpha) * crs_x + Y_0 - (strip_U * pitch) / cos(strip_alpha);
     }
 
+
+    double getROLength_U(double xx, double yy) {
+
+        if ( !IsInsideDetector(xx, yy) ) {
+            return -1;
+        }
+
+        // starting from this strip readout side for U(V) strips changes from left(right) to right(left) side.
+        double stripFlip = 448.5;
+
+        // Lets define the line for the left and right side, i.e. "a" and "b" of y = ax+b
+        double a_left = (Y_top_edge - Y_bot_edge) / (X_bot_edge - X_top_edge);
+        double b_left = Y_bot_edge + a_left * X_bot_edge;
+
+        double a_right = (Y_top_edge - Y_bot_edge) / (X_top_edge - X_bot_edge);
+        double b_right = Y_bot_edge - a_right * X_bot_edge;
+
+        // x1 and y1 are the intersection of the left side of the uRwell and the splitting strip (i.e. strips above
+        // are readout from left and strips below readout from right side)
+        double x1 = (b_left - Y_0 + (stripFlip * pitch) / cos(strip_alpha)) / (tan(strip_alpha) - a_left);
+        double y1 = a_left * x1 + b_left;
+
+        double y_strEnd = 100000;
+        double x_strEnd = 100000;
+
+        bool leftSide = yy > y1 + (xx - x1)*tan(strip_alpha);
+        if (leftSide) {
+            x_strEnd = (yy - b_left - xx*tan(strip_alpha))/(a_left - tan(strip_alpha));
+            y_strEnd = a_left*x_strEnd + b_left;
+        }else {
+            x_strEnd = (yy - b_right - xx*tan(strip_alpha))/(a_right - tan(strip_alpha));
+            y_strEnd = a_right*x_strEnd + b_right;
+        }
+        return sqrt( (xx - x_strEnd)*(xx - x_strEnd) + (yy - y_strEnd)*(yy - y_strEnd) );
+    }
+
+     double getROLength_V(double xx, double yy) {
+
+        if ( !IsInsideDetector(xx, yy) ) {
+            return -1;
+        }
+
+        // starting from this strip readout side for U(V) strips changes from left(right) to right(left) side.
+        double stripFlip = 448.5;
+
+        // Lets define the line for the left and right side, i.e. "a" and "b" of y = ax+b
+        double a_left = (Y_top_edge - Y_bot_edge) / (X_bot_edge - X_top_edge);
+        double b_left = Y_bot_edge + a_left * X_bot_edge;
+
+        double a_right = (Y_top_edge - Y_bot_edge) / (X_top_edge - X_bot_edge);
+        double b_right = Y_bot_edge - a_right * X_bot_edge;
+
+        // x1 and y1 are the intersection of the left side of the uRwell and the splitting strip (i.e. strips above
+        // are readout from left and strips below readout from right side)
+        // x1 and y1 are the intersection of the strip and the left side of the uRwell
+        double x1 = (b_right - Y_0 + (stripFlip * pitch) / cos(-strip_alpha)) / (tan(-strip_alpha) - a_right);
+        double y1 = a_right * x1 + b_right;
+
+        double y_strEnd = 100000;
+        double x_strEnd = 100000;
+
+        bool rightSide = yy > y1 - (xx - x1)*tan(strip_alpha);
+        if (rightSide) {
+            x_strEnd = (yy - b_right + xx*tan(strip_alpha))/(a_right + tan(strip_alpha));
+            y_strEnd = a_right*x_strEnd + b_right;
+        }else {
+            x_strEnd = (yy - b_left + xx*tan(strip_alpha))/(a_left + tan(strip_alpha));
+            y_strEnd = a_left*x_strEnd + b_left;
+        }
+        return sqrt( (xx - x_strEnd)*(xx - x_strEnd) + (yy - y_strEnd)*(yy - y_strEnd) );
+    }
+
+
+
     bool fileExists(const char *filename) {
         FILE *file = fopen(filename, "r");
         if (file) {
@@ -616,4 +690,4 @@ namespace uRwellTools {
         }
         return false;
     }
-}
+} // namespace uRwellTools

@@ -416,6 +416,12 @@ namespace uRwellTools {
 
     PulseCluster getMaxIntegralPulseCluster(std::vector<PulseCluster> &, int);
 
+    /*
+     * Those two functions return the distance along the strip from the point (x,y) to the edge
+     * of the active area where the RO connector is located
+     */
+    double getROLength_U(double x, double y);
+    double getROLength_V(double x, double y);
 
     // Not specific for uRwell, later maybe I will have another more global name
     // for such type of functions

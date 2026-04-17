@@ -58,22 +58,25 @@ add_executable(DrawEffWithHodo DrawEffWithHodo.cc)
 set_target_properties(DrawEffWithHodo PROPERTIES OUTPUT_NAME "DrawEffWithHodo.exe")
 target_link_libraries(DrawEffWithHodo uRWellLib ${ROOT_LIBRARIES} ${XYHodoTools_LIBRARY} )
 
+add_executable(DrawEff_HVScans DrawEff_HVScans.cc)
+set_target_properties(DrawEff_HVScans PROPERTIES OUTPUT_NAME "DrawEff_HVScans.exe")
+target_link_libraries(DrawEff_HVScans ${ROOT_LIBRARIES})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
+        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
+install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py jputDecodes.py jputSkims.py
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################
 install( DIRECTORY
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/PedFiles)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/PedFiles)
 install( DIRECTORY
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Figs )
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Figs )
 install( DIRECTORY
-  DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Pars )
-
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/Pars )
 
 

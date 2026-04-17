@@ -8,6 +8,8 @@
 #include <TH1D.h>
 #include <TMath.h>
 #include <TFile.h>
+#include <Compression.h>
+#include <TEnv.h>
 
 // ===== Hipo headers =====
 #include <reader.h>
@@ -23,6 +25,20 @@
 
 using namespace std;
 using namespace uRwellTools;
+
+   static constexpr int n_uRWell_CoarsBinsX = 20;
+   static constexpr int n_uRWell_CoarsBinsY = 10;
+
+struct CellHistos {
+    TH1D *h_U_clSize;
+    TH1D *h_V_clSize;
+    TH1D *h_U_ClStartTime;
+    TH1D *h_V_ClStartTime;
+    TH2D *h_UV_clSize;
+    // add new histograms here only — nowhere else
+};
+
+void InitHistograms(CellHistos hCell[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY]);
 
 int main (int argc, char *argv[]) {
 
@@ -57,6 +73,13 @@ int main (int argc, char *argv[]) {
     }
 
     sprintf(inputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
+
+
+    ROOT::CompressionSettings(ROOT::RCompressionSetting::EAlgorithm::kLZ4, 2);
+
+    // And for TFile, it's not a static method — set via gEnv instead
+    gEnv->SetValue("Root.CompressionAlgorithm", 4);  // 4 = LZ4
+    gEnv->SetValue("Root.CompressionLevel", 2);
 
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
@@ -152,8 +175,9 @@ int main (int argc, char *argv[]) {
     TH1D h_U_StrpPulseSigma("h_U_StrpPulseSigma", "", uRwellTools::nMaxUStrip + 1, -0.5, uRwellTools::nMaxUStrip + 0.5);
     TH1D h_V_StrpPulseSigma("h_V_StrpPulseSigma", "", uRwellTools::nMaxVStrip + 1, -0.5, uRwellTools::nMaxVStrip + 0.5);
 
-    const int n_uRWell_CoarsBinsX = 20;
-    const int n_uRWell_CoarsBinsY = 10;
+
+    CellHistos hCell[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY];
+    InitHistograms(hCell);
 
     TH2D h_Cross_YXc_GoodPulseSigma_CoarseBin1("h_Cross_YXc_GoodPulseSigma_CoarseBin1", "", n_uRWell_CoarsBinsX, -900., 900., n_uRWell_CoarsBinsY, -500., 500.);
     TH2D h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY];
@@ -445,7 +469,13 @@ int main (int argc, char *argv[]) {
                         int coarseBinY = h_Cross_YXc_GoodPulseSigma_CoarseBin1.GetYaxis()->FindBin(crs_Y);
 
                         h_Cross_YXC_Max1_[shortBarID][longBarID].Fill(crs_X, crs_Y);
+
+                        CellHistos &h = hCell[coarseBinX][coarseBinY];  // convenient reference
                         h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[coarseBinX][coarseBinY].Fill(U_ClusterPulseIntegral, dtCluster_StartTime_UV);
+                        h.h_U_clSize ->Fill(Max_U_PulseCluster.getPulses()->size());
+                        h.h_V_clSize ->Fill(Max_V_PulseCluster.getPulses()->size());
+                        h.h_U_ClStartTime->Fill(U_ClusterStartTime);
+                        h.h_V_ClStartTime->Fill(V_ClusterStartTime);
                     }
                 }
             }
@@ -462,4 +492,18 @@ int main (int argc, char *argv[]) {
     file_out->Close();
 
 
+}
+
+void InitHistograms(CellHistos hCell[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY]) {
+        for (int ix = 0; ix < n_uRWell_CoarsBinsX; ix++) {
+            for (int iy = 0; iy < n_uRWell_CoarsBinsY; iy++) {
+                std::string s = "_" + std::to_string(ix) + "_" + std::to_string(iy);
+
+                hCell[ix][iy].h_U_clSize  = new TH1D(("h_U_clSize"  + s).c_str(), ";U cluster size", 11, -0.5, 10.5);
+                hCell[ix][iy].h_V_clSize  = new TH1D(("h_V_clSize"  + s).c_str(), ";V cluster size", 11, -0.5, 10.5);
+                hCell[ix][iy].h_U_ClStartTime = new TH1D(("h_U_ClStartTime" + s).c_str(), "U cluster start time [25 ns]", 200, -5, 20.);
+                hCell[ix][iy].h_V_ClStartTime = new TH1D(("h_V_ClStartTime" + s).c_str(), "V cluster start time [25 ns]", 200, -5, 20.);
+                hCell[ix][iy].h_UV_clSize = new TH2D(("h_UV_clSize" + s).c_str(), ";U cl. size; V cl. size", 20, 0., 20., 20, 0., 20.);
+            }
+        }
 }

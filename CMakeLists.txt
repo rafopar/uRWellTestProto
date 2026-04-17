@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 4.0)
 
 # CMakeLists for tools
 project(uRWellTestProto VERSION 1.0.1 DESCRIPTION "Tools for analysing data from uRwell Test prototype")
@@ -16,7 +16,7 @@ find_package(LZ4 REQUIRED)
 add_definitions(-D__LZ4__)
 SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
 SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-SET(CMAKE_INSTALL_RPATH "${CMAKE_SOURCE_DIR}/urwelllib")
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 include_directories(${PROJECT_SOURCE_DIR}/include ${ROOT_INCLUDE_DIRS})
