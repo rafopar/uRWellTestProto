@@ -62,9 +62,13 @@ add_executable(DrawEff_HVScans DrawEff_HVScans.cc)
 set_target_properties(DrawEff_HVScans PROPERTIES OUTPUT_NAME "DrawEff_HVScans.exe")
 target_link_libraries(DrawEff_HVScans ${ROOT_LIBRARIES})
 
+add_executable(HVScanAnalyzer HVScanAnalyzer.cc)
+set_target_properties(HVScanAnalyzer PROPERTIES OUTPUT_NAME "HVScanAnalyzer.exe")
+target_link_libraries(HVScanAnalyzer ${ROOT_LIBRARIES})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans
+        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans HVScanAnalyzer
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################

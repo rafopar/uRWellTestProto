@@ -49,11 +49,19 @@ struct RunInfo {
     double drift_field() const { return (cathode_HV - mesh_HV) / l_drift; }
 };
 
+struct ExtractorSpec {
+    std::string name;
+    bool   hasYmin = false;
+    bool   hasYmax = false;
+    double yMin = 0.;
+    double yMax = 0.;
+};
+
 struct HistoTypeCfg {
     std::string name;           // section name, e.g. "h_U_clSize"
     std::string pattern;        // e.g. "h_U_clSize_%d_%d"
     std::string className;      // "TH1D" or "TH2D"
-    std::vector<std::string> extractors;
+    std::vector<ExtractorSpec> extractors;
 };
 
 // An extractor takes a histogram and returns a value (NaN if it cannot be computed)
@@ -137,9 +145,49 @@ std::vector<HistoTypeCfg> readConfig(const std::string &path) {
         if      (key == "pattern")    cur.pattern = val;
         else if (key == "class")      cur.className = val;
         else if (key == "extractors") {
-            std::stringstream ss(val);
-            std::string tok;
-            while (std::getline(ss, tok, ',')) { trim(tok); if (!tok.empty()) cur.extractors.push_back(tok); }
+            // Split on commas that are NOT inside parentheses
+            std::vector<std::string> pieces;
+            std::string buf;
+            int depth = 0;
+            for (char ch : val) {
+                if (ch == '(')      { depth++; buf.push_back(ch); }
+                else if (ch == ')') { depth--; buf.push_back(ch); }
+                else if (ch == ',' && depth == 0) { pieces.push_back(buf); buf.clear(); }
+                else                { buf.push_back(ch); }
+            }
+            if (!buf.empty()) pieces.push_back(buf);
+
+            // Parse each piece:  name        OR   name(ymin, ymax)
+            //   also allow:  name(, ymax)  or  name(ymin, )
+            for (auto &p : pieces) {
+                trim(p);
+                if (p.empty()) continue;
+                ExtractorSpec spec;
+                auto lp = p.find('(');
+                if (lp == std::string::npos) {
+                    spec.name = p;
+                } else {
+                    auto rp = p.find(')', lp);
+                    if (rp == std::string::npos) {
+                        std::cerr << "WARNING: missing ')' in extractor spec '" << p
+                                  << "' — ignoring range." << std::endl;
+                        spec.name = p.substr(0, lp);
+                        trim(spec.name);
+                    } else {
+                        spec.name = p.substr(0, lp);
+                        trim(spec.name);
+                        std::string inside = p.substr(lp + 1, rp - lp - 1);
+                        auto comma = inside.find(',');
+                        std::string sMin, sMax;
+                        if (comma == std::string::npos) { sMin = inside; }
+                        else { sMin = inside.substr(0, comma); sMax = inside.substr(comma + 1); }
+                        trim(sMin); trim(sMax);
+                        if (!sMin.empty()) { spec.yMin = std::stod(sMin); spec.hasYmin = true; }
+                        if (!sMax.empty()) { spec.yMax = std::stod(sMax); spec.hasYmax = true; }
+                    }
+                }
+                if (!spec.name.empty()) cur.extractors.push_back(spec);
+            }
         }
     }
     if (have) out.push_back(cur);
@@ -235,7 +283,8 @@ int main(int argc, char** argv) {
     // Main loop
     // ------------------------------------------------------------------
     for (const auto &ht : histoTypes) {
-        for (const auto &extName : ht.extractors) {
+        for (const auto &extSpec : ht.extractors) {
+            const std::string &extName = extSpec.name;
             auto itExt = registry.find(extName);
             if (itExt == registry.end()) {
                 std::cerr << "WARNING: unknown extractor '" << extName
@@ -284,12 +333,25 @@ int main(int argc, char** argv) {
                                     ht.name.c_str(), ix, iy,
                                     xTitle.c_str(), extName.c_str()));
                     g.SetMarkerStyle(20);
+                    g.SetMarkerColor(kBlue);
                     g.SetMarkerSize(1.0);
                     g.SetLineWidth(1);
 
+                    // ----- Y-axis limits ---------------------------------
+                    // Defaults: min = 0, max = max(ys)
+                    double yMin = 0.;
+                    double yMax = *std::max_element(ys.begin(), ys.end());
+                    if (extSpec.hasYmin) yMin = extSpec.yMin;
+                    if (extSpec.hasYmax) yMax = extSpec.yMax;
+                    // Avoid degenerate range
+                    if (yMax <= yMin) yMax = yMin + 1.;
+                    g.SetMinimum(yMin);
+                    g.SetMaximum(yMax);
+                    // -----------------------------------------------------
+
                     c.cd();
                     c.Clear();
-                    g.Draw("APL");
+                    g.Draw("AP");
 
                     // Open PDF on first successful page
                     if (!pdfOpen) {
