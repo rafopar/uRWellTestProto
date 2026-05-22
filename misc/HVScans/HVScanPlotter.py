@@ -350,8 +350,12 @@ def main():
     )
     args = parser.parse_args()
 
-    print(f'Loading {args.input_file} …')
-    df = load_data(args.input_file)
+    default_file = args.input_file
+    prompted = input(f'Input data file [{default_file}]: ').strip()
+    input_file = prompted if prompted else default_file
+
+    print(f'Loading {input_file} …')
+    df = load_data(input_file)
     print(f'  {len(df)} rows  |  {df["datetime"].iloc[0]}  →  {df["datetime"].iloc[-1]}')
 
     keyword = ask_keyword()
