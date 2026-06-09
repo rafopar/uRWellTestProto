@@ -66,13 +66,17 @@ add_executable(HVScanAnalyzer HVScanAnalyzer.cc)
 set_target_properties(HVScanAnalyzer PROPERTIES OUTPUT_NAME "HVScanAnalyzer.exe")
 target_link_libraries(HVScanAnalyzer ${ROOT_LIBRARIES})
 
+add_executable(AnaSecondProtoDoubleHodo AnaSecondProtoDoubleHodo.cc)
+set_target_properties(AnaSecondProtoDoubleHodo PROPERTIES OUTPUT_NAME "AnaSecondProtoDoubleHodo.exe")
+target_link_libraries(AnaSecondProtoDoubleHodo Hipo4 uRWellLib ${ROOT_LIBRARIES} ${XYHodoTools_LIBRARY})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans HVScanAnalyzer
+        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans HVScanAnalyzer AnaSecondProtoDoubleHodo
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py jputDecodes.py jputSkims.py
+install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py RunSecondProtoAnaChain.py jputDecodes.py jputSkims.py
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################

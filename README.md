@@ -57,7 +57,8 @@ uRWellTestProto/
 │   ├── DrawEffWithHodo.cc          # Efficiency with hodoscope matching (ROOT macro)
 │   ├── DrawNoise_Vs_StripCoorelations.cc  # Noise correlations (ROOT macro)
 │   ├── UpdateStripSigmas.cc        # Update per-strip sigma parameters (ROOT macro)
-│   ├── RunAnaChain.py              # Automated full-chain analysis script
+│   ├── RunAnaChain.py              # Automated full-chain analysis script (first prototype)
+│   ├── RunSecondProtoAnaChain.py   # Automated full-chain analysis script (second prototype)
 │   ├── Decode_Run.py               # Standalone decoding script
 │   └── CMakeLists.txt
 ├── include/
@@ -305,28 +306,44 @@ the ratio defined above.
 
 # Automated Running
 
-`RunAnaChain.py` runs the full analysis chain in parallel on a multi-core machine.
+`RunSecondProtoAnaChain.py` runs the full analysis chain in parallel on a multi-core machine.
 It is **not recommended on JLab ifarms** (use batch jobs there instead).
 
 ```bash
-python3 RunAnaChain.py <RUN> [Task]
+python3 RunSecondProtoAnaChain.py <RUN> [START_TASK] [--ana=pulsefit|doublehodo|both]
 ```
 
 The script launches up to 18 parallel jobs, waits until ≤ 8 are still running, then submits
-the next batch. It proceeds through the following tasks in order:
+the next batch. Decoding and skimming always run first; after `TASK_SkimPulseFit` the
+analysis selected with `--ana` is run (and its per-file ROOT outputs merged). The available
+tasks are:
 
 | Task name | Description | Typical time per file |
 |---|---|---|
 | `TASK_DECODE` | Decode EVIO → HIPO with coatjava | ~30 min |
 | `TASK_SkimPulseFit` | Run `Skim_PulseFit.exe` | ~30 min |
-| `TASK_AnaPulseFit` | Run `AnaPulseFits.exe` | < 20 s |
-| `TASK_Hadd` | Merge per-file ROOT outputs with `hadd`, then remove inputs | seconds |
+| `TASK_AnaPulseFit` | Run `AnaPulseFits.exe` → `AnaPulseFits_<RUN>_File_<FileNo>.root` | < 20 s |
+| `TASK_Hadd_pulsefit` | Merge `AnaPulseFits_<RUN>_File_*.root` → `AnaPulseFits_<RUN>.root`, then remove inputs | seconds |
+| `TASK_AnaDoubleHodo` | Run `AnaSecondProtoDoubleHodo.exe` → `AnaSecondHodoDoubleHodo_<RUN>_File_<FileNo>.root` | < 20 s |
+| `TASK_Hadd_doublehodo` | Merge `AnaSecondHodoDoubleHodo_<RUN>_File_*.root` → `AnaSecondHodoDoubleHodo_<RUN>.root`, then remove inputs | seconds |
 
-The `[Task]` argument is optional. If omitted, the chain starts from `TASK_DECODE`.
+**Selecting the analysis (`--ana`):** choose which analysis to run after skimming.
+- `--ana=pulsefit` — only `AnaPulseFits.exe`
+- `--ana=doublehodo` — only `AnaSecondProtoDoubleHodo.exe`
+- `--ana=both` — both, one after another (**default**)
+
+`AnaPulseFits.exe` and `AnaSecondProtoDoubleHodo.exe` are independent programs; each task is
+followed by its own `hadd` step that merges the matching per-file ROOT files.
+
+The `[START_TASK]` argument is optional. If omitted, the chain starts from `TASK_DECODE`.
 To resume from a later step (e.g. if decoding is already done):
 
 ```bash
-python3 RunAnaChain.py 3333 TASK_SkimPulseFit
+# Skim + both analyses, starting from skimming
+python3 RunSecondProtoAnaChain.py 3333 TASK_SkimPulseFit
+
+# Only the double-hodo analysis, starting from its task (skim already done)
+python3 RunSecondProtoAnaChain.py 3333 TASK_AnaDoubleHodo --ana=doublehodo
 ```
 
 ---
