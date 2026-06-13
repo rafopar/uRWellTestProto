@@ -70,9 +70,13 @@ add_executable(AnaSecondProtoDoubleHodo AnaSecondProtoDoubleHodo.cc)
 set_target_properties(AnaSecondProtoDoubleHodo PROPERTIES OUTPUT_NAME "AnaSecondProtoDoubleHodo.exe")
 target_link_libraries(AnaSecondProtoDoubleHodo Hipo4 uRWellLib ${ROOT_LIBRARIES} ${XYHodoTools_LIBRARY})
 
+add_executable(DrawSecondHodoPlots DrawSecondHodoPlots.cc)
+set_target_properties(DrawSecondHodoPlots PROPERTIES OUTPUT_NAME "DrawSecondHodoPlots.exe")
+target_link_libraries(DrawSecondHodoPlots uRWellLib ${ROOT_LIBRARIES} ${XYHodoTools_LIBRARY})
+
 ################################ Installing Executable targets #############################
 install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe DrawHVDependencePlots.exe DrawPlotsWithClustering.exe Skim_PulseFit
-        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans HVScanAnalyzer AnaSecondProtoDoubleHodo
+        DrawNoise_Vs_StripCoorelations.exe AnaPulseFits DrawPulseFitPlots UpdateStripSigmas DrawEffWithHodo DrawEff_HVScans HVScanAnalyzer AnaSecondProtoDoubleHodo DrawSecondHodoPlots
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
