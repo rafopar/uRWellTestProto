@@ -20,6 +20,8 @@
 
 #include "EVClustersTab.h"
 #include "EVHitsTab.h"
+#include "EVHodoCrossesTab.h"
+#include "EVHodoHitsTab.h"
 #include "EVPulsesTab.h"
 #include "EVTab.h"
 
@@ -133,11 +135,22 @@ void EVMainFrame::BuildTabs() {
     clustersContainer->AddFrame(clustersTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
     AddViewerTab(clustersTab);
 
-    // ============== Placeholder tabs =================
+    // ============== Hodoscope tab with daughter tabs =================
     TGCompositeFrame *hodoContainer = topTab->AddTab("Hodoscope");
-    hodoContainer->AddFrame(new TGLabel(hodoContainer, "Hodoscope plots will be added later."),
-                            new TGLayoutHints(kLHintsCenterX | kLHintsCenterY));
+    auto *hodoTab = new TGTab(hodoContainer);
+    hodoContainer->AddFrame(hodoTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
 
+    TGCompositeFrame *hodoHitsContainer = hodoTab->AddTab("Hits");
+    auto *hodoHitsTab = new EVHodoHitsTab(hodoHitsContainer);
+    hodoHitsContainer->AddFrame(hodoHitsTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+    AddViewerTab(hodoHitsTab);
+
+    TGCompositeFrame *hodoCrossesContainer = hodoTab->AddTab("Crosses");
+    auto *hodoCrossesTab = new EVHodoCrossesTab(hodoCrossesContainer);
+    hodoCrossesContainer->AddFrame(hodoCrossesTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+    AddViewerTab(hodoCrossesTab);
+
+    // ============== Placeholder tabs =================
     TGCompositeFrame *combinedContainer = topTab->AddTab("Combined");
     combinedContainer->AddFrame(new TGLabel(combinedContainer, "Combined uRwell + Hodoscope plots will be added later."),
                                 new TGLayoutHints(kLHintsCenterX | kLHintsCenterY));

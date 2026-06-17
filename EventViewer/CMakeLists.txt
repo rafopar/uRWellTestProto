@@ -15,9 +15,11 @@ add_executable(uRwellEventViewer
         EVGeometry.cc
         EVPulsesTab.cc
         EVHitsTab.cc
-        EVClustersTab.cc)
+        EVClustersTab.cc
+        EVHodoHitsTab.cc
+        EVHodoCrossesTab.cc)
 set_target_properties(uRwellEventViewer PROPERTIES OUTPUT_NAME "uRwellEventViewer.exe")
-target_link_libraries(uRwellEventViewer Hipo4 uRWellLib ${ROOT_LIBRARIES} ROOT::Gui)
+target_link_libraries(uRwellEventViewer Hipo4 uRWellLib ${ROOT_LIBRARIES} ROOT::Gui ${XYHodoTools_LIBRARY})
 #################################################################################################
 
 install(TARGETS uRwellEventViewer DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

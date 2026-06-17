@@ -123,6 +123,7 @@ void EVReader::FillEvent(EVEvent &ev, int index) {
         }
     }
 
+    ev.hodoBank = fHodoBank.get();
     if (fHodoBank != nullptr) {
         fHipoEvent.getStructure(*fHodoBank);
         int nHodoHits = fHodoBank->getRows();
