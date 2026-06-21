@@ -15,11 +15,12 @@ for instructions on Software installation and running.
    - [Decoding](#decoding)
    - [Skimming & Pulse Fitting](#skimming--pulse-fitting)
    - [Analysis: AnaPulseFits](#analysis-anapulsefits)
-5. [Automated Running](#automated-running)
-6. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
-7. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
-8. [Key Analysis Parameters](#key-analysis-parameters)
-9. [Data File Locations](#data-file-locations)
+5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
+6. [Automated Running](#automated-running)
+7. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
+8. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
+9. [Key Analysis Parameters](#key-analysis-parameters)
+10. [Data File Locations](#data-file-locations)
 
 ---
 
@@ -60,6 +61,17 @@ uRWellTestProto/
 │   ├── RunAnaChain.py              # Automated full-chain analysis script (first prototype)
 │   ├── RunSecondProtoAnaChain.py   # Automated full-chain analysis script (second prototype)
 │   ├── Decode_Run.py               # Standalone decoding script
+│   └── CMakeLists.txt
+├── Decoder/                        # Standalone C++ EVIO→HIPO decoder (no coatjava dependency)
+│   ├── uRwellDecoder.cc            # Main: decode (URWELL::adc/XYHODO::tdc) or fused --pulse
+│   ├── uRwellSRSDecoder.{h,cpp}    # SRS-APV decode (port of coatjava getDataEntries_57631)
+│   ├── MarocHodoDecoder.{h,cpp}    # MAROC hodoscope decode (port of getDataEntries_57655)
+│   ├── TranslationTable.{h,cpp}    # CCDB translation-table reader (reads the sqlite directly)
+│   ├── HipoBankWriter.{h,cpp}      # Writes URWELL::adc / XYHODO::tdc / RUN::config
+│   ├── PulseFitWriter.{h,cpp}      # --pulse: writes uRwell::Pulse (port of Skim_PulseFit)
+│   ├── CompareDecoded.cc           # Validate URWELL::adc / XYHODO::tdc vs another HIPO file
+│   ├── ComparePulse.cc             # Validate uRwell::Pulse vs another HIPO file
+│   ├── evio-5.2/                   # Vendored EVIO-5.2 C library
 │   └── CMakeLists.txt
 ├── include/
 │   └── uRwellTools.h               # Core data structures, analysis utilities, and geometry tools
@@ -105,6 +117,9 @@ Download from https://code.jlab.org/hallb/XYHodo.
    cmake --install build
    ```
 
+The build also produces the standalone C++ decoder, installed under a separate
+`decoder/bin` subdirectory (see [Standalone C++ Decoder](#standalone-c-decoder-decoder)).
+
 ---
 
 # Analysis Workflow
@@ -129,6 +144,12 @@ Raw EVIO files
       ▼
 [ROOT plotting macros]
 ```
+
+> The decoding (and optionally the skimming) step above can also be done by the bundled
+> standalone C++ decoder (`Decoder/`), with no coatjava/Java dependency and faster runtime.
+> Its `--pulse` mode fuses decoding and pulse fitting into a single pass, producing
+> `Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo` directly from EVIO. See
+> [Standalone C++ Decoder](#standalone-c-decoder-decoder).
 
 ---
 
@@ -170,7 +191,7 @@ git checkout iss1008-urWellDecoder
 
 The CCDB environment variable must point to the sqlite file:
 ```bash
-export CCDB_CONNECTION="sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12.sqlite"
+export CCDB_CONNECTION="sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12SecondProto.sqlite"
 ```
 *(The triple slash before `/group` is intentional.)*
 
@@ -182,6 +203,13 @@ Decode a single file:
 After decoding, the HIPO file contains two key banks:
 - `XYHODO::tdc` — hodoscope hits that pass threshold
 - `URWELL::adc` — raw ADC waveforms for all 1408 μRwell channels (no online zero-suppression)
+
+### Alternative: standalone C++ decoder
+
+The bundled `Decoder/` provides a self-contained C++ decoder (`uRwellDecoder.exe`) that produces
+the same `URWELL::adc` and `XYHODO::tdc` banks without the coatjava/Java dependency and runs
+faster. It can also fuse the skim step into the same pass (`--pulse`). See
+[Standalone C++ Decoder](#standalone-c-decoder-decoder).
 
 ---
 
@@ -301,6 +329,97 @@ efficiency[shortBarID][longBarID] =
 NOTE: with only single hodoscope, there will be non-negligible amount of cosmic tracks passing therough
 the hodoscope, but missing the μRwell. So actuall efficiency of the μRwell close to the edges will be higher
 the ratio defined above.
+
+---
+
+# Standalone C++ Decoder (`Decoder/`)
+
+`Decoder/` is a self-contained C++ EVIO→HIPO decoder for the μRwell test-prototype data
+(single crate / single FEC). It reproduces the relevant coatjava decoding bit-for-bit but
+**without the coatjava/Java dependency**, and it is faster. It vendors a minimal EVIO-5.2 C
+library and reads the CCDB translation tables directly from the sqlite file (no `libccdb`).
+
+It builds as part of the normal `cmake --build build` and installs to its own subdirectory
+`${CMAKE_INSTALL_PREFIX}/decoder/bin`:
+
+| Executable | Purpose |
+|---|---|
+| `uRwellDecoder.exe` | The decoder (standard mode and fused `--pulse` mode) |
+| `CompareDecoded.exe` | Compare `URWELL::adc` / `XYHODO::tdc` of two HIPO files (order-insensitive multiset) |
+| `ComparePulse.exe` | Compare `uRwell::Pulse` of two HIPO files (multiset, keyed by `RUN::config.event`) |
+
+## Decoding (standard mode)
+
+```bash
+uRwellDecoder.exe -i inpFile.evio -o Data/decoded_<RUN>_<FileNo>.hipo
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `-i <file>` | — | Input EVIO file (**required**) |
+| `-o <file>` | — | Output HIPO file (**required**) |
+| `-r <run>` | parsed from filename `urwell_maroc_<run>` | Run number (for CCDB resolution) |
+| `-n <N>` | all | Decode at most N events |
+| `-v <variation>` | `default` | CCDB variation |
+| `--ccdb <conn>` | `sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12SecondProto.sqlite` | CCDB connection string |
+| `-c <n>` | ignored | Accepted for coatjava CLI compatibility (compression type) |
+
+The output banks (`URWELL::adc`, `XYHODO::tdc`, `RUN::config`) are identical to the coatjava
+decoder **when the same CCDB is used**. Verified for run 3208 with the default
+`clas12SecondProto.sqlite` via `CompareDecoded.exe` (0 mismatching events).
+
+> The CCDB must contain the μRwell translation table. The built-in default
+> `clas12SecondProto.sqlite` is the one used by `RunSecondProtoAnaChain.py`; override with
+> `--ccdb` if you need a different one.
+
+## Fused Pulse-Fit Mode (`--pulse`)
+
+`--pulse` performs the decoding **and** the `Skim_PulseFit` step in a single pass. Instead of
+writing the large `URWELL::adc` bank it builds the strip waveforms, keeps only strips above the
+3σ threshold, Landau-fits each one, and writes the compact `uRwell::Pulse` bank directly (plus an
+empty `RAW::adc`, `RUN::config`, and `XYHODO::tdc`). This avoids writing and re-reading the
+multi-GB decoded intermediate file.
+
+```bash
+uRwellDecoder.exe -i inpFile.evio -o Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo \
+    --pulse --peds-dir PedFiles
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `--pulse` | off | Write `uRwell::Pulse` instead of `URWELL::adc` |
+| `--peds-dir <dir>` | `PedFiles` | Directory holding `Peds_<RUN>` and `GEM_Peds_<RUN>` |
+
+Requirements and behaviour:
+- Needs `<peds-dir>/Peds_<RUN>` (μRwell, sector 6) and `<peds-dir>/GEM_Peds_<RUN>` (GEM,
+  sector 8) — exactly the files `Skim_PulseFit` uses. The GEM file may be empty if the run has
+  no GEM channels.
+- The `uRwell::Pulse` output is a direct port of `AnaCodes/Skim_PulseFit.cc`, so the threshold,
+  fit function, and bank format are the same (see
+  [Skimming & Pulse Fitting](#skimming--pulse-fitting)). The result is **bit-identical** to the
+  two-step `decode → Skim_PulseFit` (verified with `ComparePulse.exe` on run 3208: 167 events,
+  619 pulses, 0 mismatching rows).
+
+**Performance (per 1000 events, run 3208, warm cache):** the fused path is ~31% faster in
+wall-clock (~27.5 s vs ~22.5 s decode + ~17.4 s skim) and eliminates the ~55 MB-per-1000-events
+`URWELL::adc` intermediate (~2.8 GB for a full EVIO file). The Landau fit is the dominant cost and
+is unchanged; the saving comes from not writing/reading the giant bank.
+
+> **Trade-off:** because the `URWELL::adc` bank is never written, you cannot re-skim with a
+> different threshold or different pedestals without re-decoding from EVIO. Use the standard mode
+> if you also need the full decoded file for other analyses.
+
+## Validation
+
+```bash
+# decoded banks vs another decoded file (e.g. C++ vs coatjava)
+CompareDecoded.exe fileA.hipo fileB.hipo
+
+# uRwell::Pulse of the fused output vs a decode → Skim_PulseFit output
+ComparePulse.exe merged.hipo Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo
+```
+
+Both tools report the number of mismatching events/rows and print `IDENTICAL` on a perfect match.
 
 ---
 

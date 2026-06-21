@@ -5,7 +5,7 @@
 //
 //   CompareDecoded <fileA.hipo> <fileB.hipo> [maxEvents]
 //
-// Exit code 0 = identical, 1 = mismatch / error.
+// Exit code 0 = identical, 1 = mismatch, 2 = bad input (e.g. no URWELL::adc).
 
 #include "reader.h"
 #include "dictionary.h"
@@ -19,6 +19,15 @@
 #include <algorithm>
 #include <string>
 
+// Exit with a clear message if a required bank is absent, rather than building a
+// bank from an empty schema and segfaulting on the first cell access.
+static void requireSchema(hipo::dictionary &d, const char *name, const char *file) {
+    for (const auto &n : d.getSchemaList()) if (n == name) return;
+    fprintf(stderr, "error: \"%s\" has no %s bank "
+                    "(is it a uRwell::Pulse skim file? use ComparePulse.exe)\n", file, name);
+    exit(2);
+}
+
 struct Side {
     hipo::reader reader;
     hipo::dictionary factory;
@@ -27,6 +36,9 @@ struct Side {
     explicit Side(const char *f) {
         reader.open(f);
         reader.readDictionary(factory);
+        requireSchema(factory, "URWELL::adc", f);
+        requireSchema(factory, "XYHODO::tdc", f);
+        requireSchema(factory, "RUN::config", f);
         urw  = hipo::bank(factory.getSchema("URWELL::adc"));
         hodo = hipo::bank(factory.getSchema("XYHODO::tdc"));
         cfg  = hipo::bank(factory.getSchema("RUN::config"));
@@ -62,7 +74,7 @@ static std::vector<std::array<int,5>> hodoRows(hipo::bank &b) {
 }
 
 int main(int argc, char **argv) {
-    if (argc < 3) { printf("usage: CompareDecoded <A.hipo> <B.hipo> [maxEvents]\n"); return 1; }
+    if (argc < 3) { printf("usage: CompareDecoded <A.hipo> <B.hipo> [maxEvents]\n"); return 2; }
     int maxev = (argc > 3) ? atoi(argv[3]) : -1;
 
     Side A(argv[1]), B(argv[2]);

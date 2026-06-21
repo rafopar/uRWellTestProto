@@ -19,6 +19,9 @@
 // The crate is always taken from the EVIO bank hierarchy. The -c flag (in the
 // Java decoder this selects the HIPO compression type) is accepted for CLI
 // compatibility but ignored here: the bundled C++ hipo4 writer uses its default.
+//
+// An existing output file is never overwritten: if -o already exists the program
+// reports it and exits.
 
 #include "EvioFileReader.h"
 #include "EventParser.h"
@@ -34,6 +37,7 @@
 #include <cstring>
 #include <string>
 #include <vector>
+#include <sys/stat.h>
 
 // Masked (12-bit) bank tags as seen by EventParser.
 static const int TAG_HEADER = 271;   // 57615 & 0x0fff
@@ -44,6 +48,11 @@ static const char *URWELL_TT = "/daq/tt/clasdev/urwellWithLdrdGem";
 static const char *HODO_TT   = "/daq/tt/clasdev/Hodo";
 static const char *DEFAULT_CCDB =
     "sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12SecondProto.sqlite";
+
+static bool fileExists(const std::string &path) {
+    struct stat st;
+    return stat(path.c_str(), &st) == 0;
+}
 
 // Header bank (57615 -> 271): run/event/unixtime persist across events, exactly
 // as CodaEventDecoder keeps them as members (set only when the bank is present).
@@ -95,6 +104,13 @@ int main(int argc, char **argv) {
                         "[-r run] [-n maxEvents] [-v variation] [--ccdb conn] "
                         "[--pulse [--peds-dir dir]]\n");
         return 1;
+    }
+
+    // Never overwrite an existing output file.
+    if (fileExists(outFile)) {
+        fprintf(stderr, "error: output file \"%s\" already exists; refusing to overwrite. "
+                        "Remove it or choose a different -o.\n", outFile.c_str());
+        return 5;
     }
 
     int run = (runArg > 0) ? runArg : parseRunFromName(inFile);
