@@ -1,0 +1,12 @@
+# Scan_Settings_1.dat
+# Format: Run   MESH_HV[V]   Drift_HV[V]
+# Lines starting with # are ignored
+3108	500	1600
+3109	520	1620
+3112	510	1610
+3113	500	1600
+3114	490	1590
+3115	480	1580
+3119    470     1570
+3121    460     1560
+3123    440     1540

@@ -322,14 +322,15 @@ namespace uRwellTools {
             return &fv_Pulses;
         }
 
-        double getSeedMPV()const;                   // MPV of the Seed pulse
-        double getClusterMPV()const;                // Weighted average of all MPVs of the cluster
-        double getSeedSigma()const;                 // Sigma of the Seed pulse
-        double getClusterSigma()const;              // Weighted average of Sigmas of all pulses of the cluster
-        double getSeedPulseIntegral()const;         // ADC of the Seed pulse
-        double getClusterPulseIntegral()const;      // sum of pulse integrals of all pulses of the cluster
-        double getClusterCenter()const;             // Center of the cluster (weighted average)
-        double getSeedStrip()const;                 // Seed Strip (strip number) of the cluster
+        double getSeedMPV()const;                       // MPV of the Seed pulse
+        double getClusterMPV()const;                    // Weighted average of all MPVs of the cluster
+        double getSeedSigma()const;                     // Sigma of the Seed pulse
+        double getClusterSigma()const;                  // Weighted average of Sigmas of all pulses of the cluster
+        double getSeedPulseIntegral()const;             // ADC of the Seed pulse
+        double getClusterPulseIntegral()const;          // sum of pulse integrals of all pulses of the cluster
+        double getClusterCenter()const;                 // Center of the cluster (weighted average)
+        double getSeedStrip()const;                     // Seed Strip (strip number) of the cluster
+        [[nodiscard]] APV25Pulse getSeedPulse()const;   // Returns the seed pulse
 
         void FinalizeCluster();
 
@@ -344,6 +345,7 @@ namespace uRwellTools {
         double fSeedPulseIntegral;
         double fClusterPulseIntegral;
         double fAvgStrip;
+        APV25Pulse fSeedPulse;
     };
 
     class uRwellCross {

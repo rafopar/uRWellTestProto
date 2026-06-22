@@ -23,10 +23,16 @@ using namespace uRwellTools;
 
 struct HodoPixelHistos {
     TH2D *h_uRwellCross_YXc1;
+    TH1D *h_DeltaStartTime_UV1;
     // add new histograms here only — nowhere else
 };
 
 void InitHodoPixelHistograms(HodoPixelHistos hCell[XYHodoTools::nShortBars][XYHodoTools::nLongBars]);
+
+bool GoodPulse( uRwellTools::APV25Pulse & Pulse );
+bool MonsterEvent( int nUhits, int nVhits); // Checks if number of U or V hits are more than certain threshold. usually those events are discarded
+
+bool IsHodoPixelInsideuRwell(int indShort, int indLong ); // Makes sure the hodo pixel vertical projection intu uRwell is inside the uRwell.
 
 int main(int argc, char **argv) {
 
@@ -57,6 +63,8 @@ int main(int argc, char **argv) {
     }
 
     sprintf(inputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
+
+    static constexpr double LandauScale = 0.180655;
 
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
@@ -102,12 +110,42 @@ int main(int argc, char **argv) {
     TH2D h_LongBarID_Det01_1("h_LongBarID_Det01_1", "", XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
     TH2D h_Det0_Occupancy_vertTrk1("h_Det0_Occupancy_vertTrk1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+    TH2D h_Det0_Occupancy_Fiducial1("h_Det0_Occupancy_Fiducial1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
     TH2D h_Det0_Occupancy_vert_uRwell_Ucluster1("h_Det0_Occupancy_vert_uRwell_Ucluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_vert_uRwell_Vcluster1("h_Det0_Occupancy_vert_uRwell_Vcluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_vert_uRwell_UVcluster1("h_Det0_Occupancy_vert_uRwell_UVcluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
-    TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral_vertTrk1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegralInsideDet1("h_Cross_YXc_MaxIntegralInsideDet1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegral_vertTrk11("h_Cross_YXc_MaxIntegral_vertTrk1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegral_Fiducial1("h_Cross_YXc_MaxIntegral_Fiducial1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXC_Weighted_deltaT_StTime1("h_Cross_YXC_Weighted_deltaT_StTime1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXC_Weighted_UClSize1("h_Cross_YXC_Weighted_UClSize1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXC_Weighted_VClSize1("h_Cross_YXC_Weighted_VClSize1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXC_Weighted_U_PulseIntegral1("h_Cross_YXC_Weighted_U_PulseIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXC_Weighted_V_PulseIntegral1("h_Cross_YXC_Weighted_V_PulseIntegral1", "", 1000, -900., 900., 200, -500., 500.);
+
+
+
+    // ---------------- U and V cluster property histograms --------------------------------------------
+    // ---------------- They don't require cross, U(V) related histograms will be filled ---------------
+    // ---------------- id U(V) cluster present --------------------------------------------------------
+    TH1D h_UCl_Size1("h_UCl_Size1", "", 11, -0.5, 10.5);
+    TH1D h_VCl_Size1("h_VCl_Size1", "", 11, -0.5, 10.5);
+    TH1D h_U_PulseIntegral1("h_U_PulseIntegral1", "", 200, 0., 50000);
+    TH1D h_V_PulseIntegral1("h_V_PulseIntegral1", "", 200, 0., 50000);
+    TH1D h_U_PulseHeight1("h_U_PulseHeight1", "", 200, 0., 2500.);
+    TH1D h_V_PulseHeight1("h_V_PulseHeight1", "", 200, 0., 2500.);
+
+    // ----------------- Following histograms will be filled only when there is a cross ---------------
+    TH1D h_UCl_Size2("h_UCl_Size2", "", 11, -0.5, 10.5);
+    TH1D h_VCl_Size2("h_VCl_Size2", "", 11, -0.5, 10.5);
+    TH1D h_U_PulseIntegral2("h_U_PulseIntegral2", "", 200, 0., 50000);
+    TH1D h_V_PulseIntegral2("h_V_PulseIntegral2", "", 200, 0., 50000);
+    TH1D h_U_PulseHeight2("h_U_PulseHeight2", "", 200, 0., 2500.);
+    TH1D h_V_PulseHeight2("h_V_PulseHeight2", "", 200, 0., 2500.);
+
 
     try {
         while (reader.next() == true) {
@@ -155,13 +193,18 @@ int main(int argc, char **argv) {
             h_LongBarID_Det01_1.Fill( det0_LongBarID, det1_LongBarID );
             h_ShortBarID_Det01_1.Fill( det0_ShortBarID, det1_ShortBarID );
 
+            bool fiducial_trk = IsHodoPixelInsideuRwell(det0_ShortBarID, det0_LongBarID) && IsHodoPixelInsideuRwell(det1_ShortBarID, det1_LongBarID);
+
+            if (fiducial_trk) {
+                h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
+            }
+
             bool vertical_trk = TMath::Abs(det0_ShortBarID - det1_ShortBarID) <= 2 && TMath::Abs(det0_LongBarID - det1_LongBarID) <= 2;
 
-            if (!vertical_trk) {continue;}
+            //if (!vertical_trk) {continue;}
 
             // ---- At this point we have a good vertical track, as a denominator for the efficiency we will have
             // ---- number of events in the Det0 pixel
-            h_Det0_Occupancy_vertTrk1.Fill(det0_ShortBarID, det0_LongBarID);
 
             std::vector<uRwellTools::APV25Pulse> v_U_Pulses;
             std::vector<uRwellTools::APV25Pulse> v_V_Pulses;
@@ -189,6 +232,8 @@ int main(int argc, char **argv) {
                 curPulse.pulse_Chi2 = double(buRwellPulses.getFloat("pulse_Chi2", iPulse));
                 curPulse.pulse_NDF = buRwellPulses.getInt("pulse_NDF", iPulse);
 
+                if ( !GoodPulse(curPulse) ){continue;}
+
                 if ( curPulse.hit.sector == sec_uRwell ) {
 
                     if ( curPulse.hit.layer == layer_U_uRwell ) {
@@ -206,6 +251,11 @@ int main(int argc, char **argv) {
             unsigned int n_U_Pulses = v_U_Pulses.size();
             unsigned int n_V_Pulses = v_V_Pulses.size();
 
+            // --- We want to avoid these events where there is huge amount of hits in the uRwell.
+            // --- Those are mostly caused by a bad noise, which is not direcly caused by the detector performance
+            if (MonsterEvent(n_U_Pulses, n_U_Pulses)) {continue;}
+
+
             //       Forming U and V Clusters
             std::vector<uRwellTools::PulseCluster> v_U_PulseClusters = uRwellTools::getPulseClusters(v_U_Pulses);
             std::vector<uRwellTools::PulseCluster> v_V_PulseClusters = uRwellTools::getPulseClusters(v_V_Pulses);
@@ -217,29 +267,81 @@ int main(int argc, char **argv) {
             uRwellTools::PulseCluster Max_U_PulseCluster = uRwellTools::getMaxIntegralPulseCluster(v_U_PulseClusters, minHits);
             uRwellTools::PulseCluster Max_V_PulseCluster = uRwellTools::getMaxIntegralPulseCluster(v_V_PulseClusters, minHits);
 
+            double startTime_U_cl = Max_U_PulseCluster.getClusterMPV() - Max_U_PulseCluster.getClusterSigma();
+            double startTime_V_cl = Max_V_PulseCluster.getClusterMPV() - Max_V_PulseCluster.getClusterSigma();
+
+            double deltaT_StartTime = startTime_U_cl - startTime_V_cl;
+            int U_ClSize = Max_U_PulseCluster.getPulses()->size();
+            int V_ClSize = Max_V_PulseCluster.getPulses()->size();
+            double U_ClPulseIntegral = Max_U_PulseCluster.getClusterPulseIntegral();
+            double V_ClPulseIntegral = Max_V_PulseCluster.getClusterPulseIntegral();
+
+            double U_ClSeadPeakHeight = Max_U_PulseCluster.getSeedPulse().pulse_A0*LandauScale;
+            double V_ClSeadPeakHeight = Max_V_PulseCluster.getSeedPulse().pulse_A0*LandauScale;
+
             bool has_U_cluster = !Max_U_PulseCluster.getPulses()->empty();
             bool has_V_cluster = !Max_V_PulseCluster.getPulses()->empty();
             bool has_U_AND_V_clusters =  has_U_cluster && has_V_cluster;
 
-            if ( has_U_cluster ) {
-                h_Det0_Occupancy_vert_uRwell_Ucluster1.Fill(det0_ShortBarID, det0_LongBarID);
-            }
-            if ( has_V_cluster ) {
-                h_Det0_Occupancy_vert_uRwell_Vcluster1.Fill(det0_ShortBarID, det0_LongBarID);
-            }
 
+            if ( vertical_trk ) {
+                h_Det0_Occupancy_vertTrk1.Fill(det0_ShortBarID, det0_LongBarID);
+
+                if ( has_U_cluster ) {
+                    h_Det0_Occupancy_vert_uRwell_Ucluster1.Fill(det0_ShortBarID, det0_LongBarID);
+                    h_UCl_Size1.Fill(U_ClSize);
+                    h_U_PulseIntegral1.Fill(U_ClPulseIntegral);
+                    h_U_PulseHeight1.Fill(U_ClSeadPeakHeight);
+                }
+                if ( has_V_cluster ) {
+                    h_Det0_Occupancy_vert_uRwell_Vcluster1.Fill(det0_ShortBarID, det0_LongBarID);
+                    h_VCl_Size1.Fill(V_ClSize);
+                    h_V_PulseIntegral1.Fill(V_ClPulseIntegral);
+                    h_V_PulseHeight1.Fill(V_ClSeadPeakHeight);
+                }
+            }
             uRwellCross crs_Max_Integral;
+
+
 
             if (has_U_AND_V_clusters) {
 
-                h_Det0_Occupancy_vert_uRwell_UVcluster1.Fill(det0_ShortBarID, det0_LongBarID);
                 crs_Max_Integral = uRwellCross(Max_U_PulseCluster.getClusterCenter(), Max_V_PulseCluster.getClusterCenter());
+
 
                 double crs_X = crs_Max_Integral.getX();
                 double crs_Y = crs_Max_Integral.getY();
 
+                bool isInsiDeDetector = uRwellTools::IsInsideDetector(crs_X, crs_Y);
+
                 h_Cross_YXc_MaxIntegral1.Fill(crs_X, crs_Y);
-                h_pixelHistos[det0_ShortBarID][det0_LongBarID].h_uRwellCross_YXc1->Fill(crs_X, crs_Y);
+                if (!isInsiDeDetector) {continue;}
+
+                h_Cross_YXc_MaxIntegralInsideDet1.Fill(crs_X, crs_Y);
+                if ( fiducial_trk ) {
+                    h_Cross_YXc_MaxIntegral_Fiducial1.Fill(crs_X, crs_Y);
+                }
+
+                if (vertical_trk) {
+                    h_Det0_Occupancy_vert_uRwell_UVcluster1.Fill(det0_ShortBarID, det0_LongBarID);
+
+                    h_UCl_Size2.Fill(U_ClSize);
+                    h_U_PulseIntegral2.Fill(U_ClPulseIntegral);
+                    h_U_PulseHeight2.Fill(U_ClSeadPeakHeight);
+                    h_VCl_Size2.Fill(V_ClSize);
+                    h_V_PulseIntegral2.Fill(V_ClPulseIntegral);
+                    h_V_PulseHeight2.Fill(V_ClSeadPeakHeight);
+
+                    h_Cross_YXc_MaxIntegral_vertTrk11.Fill(crs_X, crs_Y);
+                    h_pixelHistos[det0_ShortBarID][det0_LongBarID].h_uRwellCross_YXc1->Fill(crs_X, crs_Y);
+                    h_pixelHistos[det0_ShortBarID][det0_LongBarID].h_DeltaStartTime_UV1->Fill(deltaT_StartTime);
+
+                    h_Cross_YXC_Weighted_deltaT_StTime1.Fill(crs_X, crs_Y, deltaT_StartTime);
+                    h_Cross_YXC_Weighted_UClSize1.Fill(crs_X, crs_Y, U_ClSize );
+                    h_Cross_YXC_Weighted_VClSize1.Fill(crs_X, crs_Y, V_ClSize );
+                    h_Cross_YXC_Weighted_U_PulseIntegral1.Fill(crs_X, crs_Y, U_ClPulseIntegral );
+                    h_Cross_YXC_Weighted_V_PulseIntegral1.Fill(crs_X, crs_Y, V_ClPulseIntegral );
+                }
             }
 
         }
@@ -257,7 +359,39 @@ void InitHodoPixelHistograms(HodoPixelHistos hCell[XYHodoTools::nShortBars][XYHo
         for (int il = 0; il < XYHodoTools::nLongBars; il++ ) {
             std::string s = "_" + std::to_string(is) + "_" + std::to_string(il);
             hCell[is][il].h_uRwellCross_YXc1 = new TH2D( ("h_uRwell_Cross_YXc1" + s).c_str(), "; Cross X [mm]; Cross Y [mm]", 1000, -900., 900., 200, -500., 500.);
+            hCell[is][il].h_DeltaStartTime_UV1 = new TH1D(("h_DeltaStartTime_UV1" + s).c_str(), "", 100, -8, 8.);
         }
     }
 
+}
+
+
+bool GoodPulse( uRwellTools::APV25Pulse & pulse ) {
+
+    static constexpr double MaxSigma = 5.2;
+    static constexpr double MinSigma = 1.;
+    static constexpr double MPVMax = 15.;
+    static constexpr double MPVMin = 0.;
+
+    return pulse.pulse_Sigma > MinSigma && pulse.pulse_Sigma < MaxSigma && pulse.pulse_MPV > MPVMin && pulse.pulse_MPV < MPVMax;
+
+}
+
+bool MonsterEvent( int nUhits, int nVhits) {
+    static constexpr int nMaxUHits = 15;
+    static constexpr int nMaxVHits = 15;
+
+    return nUhits > nMaxUHits || nVhits > nMaxVHits;
+}
+
+bool IsHodoPixelInsideuRwell(int indShort, int indLong ) {
+    static constexpr double ilongMax = 9;
+    static constexpr double ilongMin = 2;
+
+    if (indLong < ilongMin || indLong > ilongMax) {return false;}
+
+    static const int ishortMax[XYHodoTools::nLongBars] = {0, 0, 26, 27, 27, 28, 28, 29, 29, 30, 0, 0};
+    static const int ishortMin[XYHodoTools::nLongBars] = {0,0, 6, 6, 5, 5, 4, 4, 4, 4, 0, 0};
+
+    return indShort >= ishortMin[indLong] && indShort <= ishortMax[indLong];
 }

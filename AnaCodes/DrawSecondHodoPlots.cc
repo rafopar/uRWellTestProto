@@ -23,6 +23,7 @@
 // ROOT file, e.g. /u/home/rafopar/work/builds/TestProto/bin
 //
 
+#include <TF1.h>
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
@@ -43,11 +44,16 @@ int main(int argc, const char *argv[]) {
 
     const int run = atoi(argv[1]);
 
+    static constexpr double ts2ns = 25.;
     auto c1 = new TCanvas("c1", "", 1800., 1000.);
 
     TLatex lat1;
     lat1.SetNDC();
     lat1.SetTextFont(42);
+
+    TF1 *f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", -25., 25);
+    f_Gaus->SetNpx(4500);
+    f_Gaus->SetParLimits(2, 0., 10.);
 
     TFile file_in(Form("AnaSecondHodoDoubleHodo_%d.root", run));
     if (file_in.IsZombie()) {
@@ -64,8 +70,16 @@ int main(int argc, const char *argv[]) {
     // Efficiency histogram: same range as the h_uRwell_Cross_YXc1_<i>_<j>
     // histograms (X: -900..900, Y: -500..500) but coarser binning (99 x 36).
     TH2D h_SecondProt_2DEff("h_SecondProt_2DEff", "; Cross X [mm]; Cross Y [mm]",
-                            99, -900., 900., 36, -500., 500.);
+                            200, -900., 900., 72, -500., 500.);
     h_SecondProt_2DEff.SetStats(0);
+
+    TH2D h_pixel_deltaT_mean("h_pixel_deltaT_mean", "", 150, -900., 900, 50, -500., 500.);
+    h_pixel_deltaT_mean.SetTitle("; uRwell X [mm]; uRwell Y [mm] ");
+    TH2D h_pixel_deltaT_sigm("h_pixel_deltaT_sigm", "", 150, -900., 900, 50, -500., 500.);
+    h_pixel_deltaT_sigm.SetTitle("; uRwell X [mm]; uRwell Y [mm] ");
+
+    auto *c_2d_dtFit = new TCanvas("c_2d_dtFit", "", 1800, 1000);
+    c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf[", run));
 
     for (int i = 0; i < XYHodoTools::nShortBars; i++) {
         for (int j = 0; j < XYHodoTools::nLongBars; j++) {
@@ -99,13 +113,34 @@ int main(int argc, const char *argv[]) {
             const double xc = 0.5 * (x_min + x_max);
             const double yc = 0.5 * (y_min + y_max);
             h_SecondProt_2DEff.Fill(xc, yc, eff);
+
+            auto h_DeltaStartTime_UV1 = dynamic_cast<TH1D*>(file_in.Get(Form("h_DeltaStartTime_UV1_%d_%d", i, j)));
+
+            if ( h_DeltaStartTime_UV1->GetEntries() > 80 ) {
+                double mean = h_DeltaStartTime_UV1->GetMean();
+                double rms = h_DeltaStartTime_UV1->GetRMS();
+                f_Gaus->SetParameters( h_DeltaStartTime_UV1->GetMaximum(), mean, rms );
+                h_DeltaStartTime_UV1->Fit(f_Gaus, "Me", "", mean - 2.5*rms, mean + 2.5*rms);
+                c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf", run));
+
+                mean = f_Gaus->GetParameter(1)*ts2ns;
+                double sigm = f_Gaus->GetParameter(2)*ts2ns;
+
+                h_pixel_deltaT_mean.Fill( xc, yc, mean);
+                h_pixel_deltaT_sigm.Fill( xc, yc, sigm);
+            }
+
         }
     }
 
+    c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf]", run));
+
     gStyle->SetPalette(kBird);
     gStyle->SetNumberContours(99);
+    gStyle->SetOptStat(0);
 
     c1->Clear();
+    c1->cd();
     h_SecondProt_2DEff.SetMaximum(1.);
     h_SecondProt_2DEff.Draw("colz");
     lat1.DrawLatex(0.12, 0.91, Form("Run %d", run));
@@ -113,6 +148,21 @@ int main(int argc, const char *argv[]) {
     c1->Print(Form("Figs/SecondProt_2DEff_%d.pdf", run));
     c1->Print(Form("Figs/SecondProt_2DEff_%d.png", run));
     c1->Print(Form("Figs/SecondProt_2DEff_%d.root", run));
+
+    h_pixel_deltaT_mean.SetMaximum(25.);
+    h_pixel_deltaT_mean.SetMinimum(-25.);
+    h_pixel_deltaT_mean.Draw("colz");
+    lat1.DrawLatex(0.12, 0.91, Form("Run %d #Delta t mean", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.pdf", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.png", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.root", run));
+
+    h_pixel_deltaT_sigm.SetMaximum(45);
+    h_pixel_deltaT_sigm.Draw("colz");
+    lat1.DrawLatex(0.12, 0.91, Form("Run %d #Delta t #sigma", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.pdf", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.png", run));
+    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.root", run));
 
     file_in.Close();
     return 0;

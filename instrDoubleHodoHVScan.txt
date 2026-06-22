@@ -1,0 +1,46 @@
+Write a C++ code named HV_Scan_SecondProtoDoubleHodo.cc
+
+We took diferent runs at different High Voltage settings,
+the code should read root files, root filename pattern is
+AnaSecondHodoDoubleHodo_$RUN.root, where $RUN is the run number.
+
+In the root file some set of histigrams will be read and based on them different quantities will be constructed, for example, the mean of the histigram, or X value of the bin corresponding the maximum of the histogram, etc...
+
+Settings of each run will be will be listed in the file SecondProtoHVScan_$Series.dat, where $Series will be a uniquely identifiable integer starting from 1 and incrementing for each of a new setting.
+
+The columns of the file SecondProtoHVScan_$Series.dat are following
+$Run	$HV_MESH_Top   $HV_MESH_Bot  $HV_Cathode_Top  $HV_Cathode_Bot
+
+Each row represents a specific run setting.
+
+Types of scans: MESH, Drift, MESH_Top, MESH_Bot, Drift_Top, Drift_Bot
+Whene type of scans is MESH, then for each setting HV_MESH_Top should be equalto HV_MESH_Bot,
+and if scan type is Drift the HV_Cathode_Top should be equal to $HV_Cathode_Bot for each run in the series.
+
+When the scan type is MESH_Top, MESH_Bot, Drift_Top or Drift_Bot are selected as a scan type, then variables that are extracted from root files (histograms) should be plotted as a function of corresponding variable.
+Note: Drift HV is the difference between th Cathode HV and Mesh_HV, which is DriftHV = Cathode_HV - MESH_HV
+
+
+* Histogram: "h_UCl_Size2" : "U cluster size", Need the mean value of the histogram and also the bin center of the maximum content bin.
+* Histogram: "h_VCl_Size2" : "V cluster size" Need the mean value of the histogram and also the bin center of the maximum content bin.
+* Histogram "h_U_PulseIntegral2" : "U pulse integral", Fit this with A Landau funct A*Landau(x, MPV, sigma), As an initial parameters for the fit
+use A=h_U_PulseIntegral2->GetMaximum()/0.180655, for MPV use bin center of the maximum bin, and for sigma use the half of the bin center of the maximum bin.
+Need MPV of the Landau distribution
+* Histogram "h_V_PulseIntegral2" : "V pulse integral", Fit this with A Landau funct A*Landau(x, MPV, sigma), As an initial parameters for the fit
+use A=h_V_PulseIntegral2->GetMaximum()/0.180655, for MPV use bin center of the maximum bin, and for sigma use the half of the bin center of the maximum bin.
+Need MPV of the Landau distribution
+* Histogram "h_U_PulseHeight2" : "U Pulse height", Fit this with A Landau funct A*Landau(x, MPV, sigma) in the 0 to 1000 range, As an initial parameters for the fit
+use A=h_U_PulseIntegral2->GetMaximum()/0.180655, for MPV use bin center of the maximum bin, and for sigma use the half of the bin center of the maximum bin.
+Need MPV of the Landau distribution
+* Histogram "h_V_PulseHeight2" : "U Pulse height", Fit this with A Landau funct A*Landau(x, MPV, sigma) in the 0 to 1000 range, As an initial parameters for the fit
+use A=h_V_PulseIntegral2->GetMaximum()/0.180655, for MPV use bin center of the maximum bin, and for sigma use the half of the bin center of the maximum bin.
+Need MPV of the Landau distribution
+
+All above mentioned extracted varaibles should be added into a graph and plotted as a function of HV (where depending on the user provided scan type, HV can be different, e.g. MESH, Drift, or MESH_Top etc)
+make graphs of the same variable for U and V on the same figure, e.g. graph of U_cluster size and graph of the V_cluster size in the same figure, could be done through TMultiGraph.
+
+general notes:
+histograms with h_U... correspond to Top detector, and h_V... correspond to bottom detector.
+Code should be organized with a thing in mind that other variables leter will be added
+Each produced HV dependence should be saved in the Figs subdirectory withe a selfdescribing filename to include thr Scan Series as well.
+If you want to test, Root files are in the install directory, in particular /home/rafopar/work/builds/TestProto/bin, and in the same directory there is a SecondProtoHVScan_1.dat file.

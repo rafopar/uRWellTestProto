@@ -365,7 +365,7 @@ namespace uRwellTools {
         fPeakTime = time; // Time of the highest energy strip
     }
 
-    PulseCluster::PulseCluster() : fnStrips(0), fSeedMPV(0), fClusterMPV(0), fSeedSigma(0), fClusterSigma(), fSeedPulseIntegral(), fClusterPulseIntegral(0) {
+    PulseCluster::PulseCluster() : fnStrips(0), fSeedMPV(0), fClusterMPV(0), fSeedSigma(0), fClusterSigma(), fSeedPulseIntegral(), fClusterPulseIntegral{} {
 
     }
 
@@ -386,7 +386,7 @@ namespace uRwellTools {
         fSeedPulseIntegral = -10000;
         fClusterPulseIntegral = -10000;
         fAvgStrip = -10000;
-
+        fSeedPulse = {};
 
         if ( fv_Pulses.empty() ) {
             return;
@@ -409,6 +409,7 @@ namespace uRwellTools {
                 fSeedMPV = curPulse.pulse_MPV;
                 fSeedSigma = curPulse.pulse_Sigma;
                 fSeedStrip = curPulse.hit.strip;
+                fSeedPulse = curPulse;
             }
         }
 
@@ -442,6 +443,9 @@ namespace uRwellTools {
 
     double PulseCluster::getSeedStrip() const {
         return fSeedStrip;
+    }
+    APV25Pulse PulseCluster::getSeedPulse() const {
+        return fSeedPulse;
     }
 
 

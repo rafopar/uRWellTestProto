@@ -33,7 +33,8 @@ COLOR = {
 
 COLS = ['datetime', 'imon2', 'imon3', 'hv1', 'hv2']
 
-CURRENT_YLIM = (-35, 35)   # nA, applied to all current axes
+CURRENT_YLIM    = (-35, 35)   # nA, applied to all current axes
+BOGUS_CURRENT_A = 50e-6       # readings with |I| > this value (A) are discarded
 
 
 # ─── Data loading ─────────────────────────────────────────────────────────────
@@ -236,7 +237,10 @@ def plot_distributions(df: pd.DataFrame, titles: dict, keyword: str, out_dir: st
             for hv_mean, mask in stable_periods(hv_arr, t_arr):
                 if hv_mean < 50:
                     continue
-                cur = cur_arr[mask] * 1e9    # convert A → nA
+                cur = cur_arr[mask] * 1e9              # convert A → nA
+                cur = cur[np.isfinite(cur)]            # drop NaN (bogus readings)
+                if cur.size < 5:
+                    continue
                 t_start = pd.Timestamp(t_arr[mask][0]).strftime('%Y-%m-%d %H:%M:%S')
                 t_end   = pd.Timestamp(t_arr[mask][-1]).strftime('%Y-%m-%d %H:%M:%S')
                 fig, ax = plt.subplots(figsize=(8, 5))
@@ -247,7 +251,7 @@ def plot_distributions(df: pd.DataFrame, titles: dict, keyword: str, out_dir: st
                 ax.set_title(
                     f"{titles[icol]}  —  HV ≈ {hv_mean:.1f} V\n"
                     f"{t_start}  –  {t_end}\n"
-                    f"N = {mask.sum()},  "
+                    f"N = {cur.size},  "
                     f"mean = {cur.mean():.4f} nA,  "
                     f"σ = {cur.std():.4f} nA"
                 )
@@ -337,8 +341,8 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        'input_file', nargs='?', default='Scan_TopLeftBottomRigh.dat',
-        help='Input data file',
+        'input_file', nargs='?', default=None,
+        help='Input data file (if omitted, prompted interactively)',
     )
     parser.add_argument(
         '--output-dir', '-o', default='Figs',
@@ -350,13 +354,23 @@ def main():
     )
     args = parser.parse_args()
 
-    default_file = args.input_file
-    prompted = input(f'Input data file [{default_file}]: ').strip()
-    input_file = prompted if prompted else default_file
+    if args.input_file:
+        input_file = args.input_file
+    else:
+        input_file = input('Input data file: ').strip()
+        if not input_file:
+            input_file = 'Scan_TopLeftBottomRigh.dat'
 
     print(f'Loading {input_file} …')
     df = load_data(input_file)
     print(f'  {len(df)} rows  |  {df["datetime"].iloc[0]}  →  {df["datetime"].iloc[-1]}')
+
+    # Discard bogus current readings (|I| > 50 µA) per channel independently
+    for col in ('imon2', 'imon3'):
+        n_bad = (df[col].abs() > BOGUS_CURRENT_A).sum()
+        if n_bad:
+            df.loc[df[col].abs() > BOGUS_CURRENT_A, col] = np.nan
+            print(f'  Discarded {n_bad} bogus readings in {col} (|I| > 50 µA)')
 
     keyword = ask_keyword()
     titles  = ask_titles()

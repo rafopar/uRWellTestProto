@@ -8,3 +8,25 @@
 build
 nbproject
 misc/HVScans/HV_Scan_Instructions.txt
+
+# editor / tooling / environments
+*.swp
+.obsidian/
+.venv/
+**/__pycache__/
+cmake-build-*/
+
+# scratch / session files
+/tmp
+claude_RESUME*
+**/claude_Resume
+
+# LaTeX build artifacts
+Latex/*.aux
+Latex/*.log
+Latex/*.synctex.gz
+Latex/*.pdf
+Latex/Figs
+
+# generated figures
+misc/HVScans/Figs/
