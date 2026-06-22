@@ -20,6 +20,7 @@ cmake-build-*/
 /tmp
 claude_RESUME*
 **/claude_Resume
+uRwellEventViewer.txt
 
 # LaTeX build artifacts
 Latex/*.aux
