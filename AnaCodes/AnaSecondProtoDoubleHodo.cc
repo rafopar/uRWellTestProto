@@ -137,6 +137,8 @@ int main(int argc, char **argv) {
     TH1D h_V_PulseIntegral1("h_V_PulseIntegral1", "", 200, 0., 50000);
     TH1D h_U_PulseHeight1("h_U_PulseHeight1", "", 200, 0., 2500.);
     TH1D h_V_PulseHeight1("h_V_PulseHeight1", "", 200, 0., 2500.);
+    TH2D h_U_Nbr_DeltaSTartTime1("h_U_Nbr_DeltaSTartTime1", "", 200, 0., 50000, 200, -10., 10.);
+    TH2D h_U_Nbr_DeltaSTartTime_Fiducial1("h_U_Nbr_DeltaSTartTime_Fiducial1", "", 200, 0., 50000, 200, -10., 10.);
 
     // ----------------- Following histograms will be filled only when there is a cross ---------------
     TH1D h_UCl_Size2("h_UCl_Size2", "", 11, -0.5, 10.5);
@@ -145,7 +147,8 @@ int main(int argc, char **argv) {
     TH1D h_V_PulseIntegral2("h_V_PulseIntegral2", "", 200, 0., 50000);
     TH1D h_U_PulseHeight2("h_U_PulseHeight2", "", 200, 0., 2500.);
     TH1D h_V_PulseHeight2("h_V_PulseHeight2", "", 200, 0., 2500.);
-
+    TH2D h_V_Nbr_DeltaSTartTime1("h_V_Nbr_DeltaSTartTime1", "", 200, 0., 50000, 200, -10., 10.);
+    TH2D h_V_Nbr_DeltaSTartTime_Fiducial1("h_V_Nbr_DeltaSTartTime_Fiducial1", "", 200, 0., 50000, 200, -10., 10.);
 
     try {
         while (reader.next() == true) {
@@ -264,8 +267,25 @@ int main(int argc, char **argv) {
             unsigned int n_U_PulseClusters = v_U_PulseClusters.size();
             unsigned int n_V_PulseClusters = v_V_PulseClusters.size();
 
+            bool UhasNbr;
+            bool VhasNbr;
+
             uRwellTools::PulseCluster Max_U_PulseCluster = uRwellTools::getMaxIntegralPulseCluster(v_U_PulseClusters, minHits);
+            uRwellTools::APV25Pulse nbrU = Max_U_PulseCluster.getSeedNeighborPulse(UhasNbr);
             uRwellTools::PulseCluster Max_V_PulseCluster = uRwellTools::getMaxIntegralPulseCluster(v_V_PulseClusters, minHits);
+            uRwellTools::APV25Pulse nbrV = Max_U_PulseCluster.getSeedNeighborPulse(VhasNbr);
+
+            double deltaT_U_nbr = -1000;
+            if (UhasNbr) {
+                deltaT_U_nbr = (Max_U_PulseCluster.getSeedMPV() - Max_U_PulseCluster.getSeedSigma()) - ( nbrU.pulse_MPV - nbrU.pulse_Sigma );
+                h_U_Nbr_DeltaSTartTime1.Fill( Max_U_PulseCluster.getClusterPulseIntegral(), deltaT_U_nbr );
+            }
+
+            double deltaT_V_nbr = -1000;
+            if (VhasNbr) {
+                deltaT_V_nbr = (Max_V_PulseCluster.getSeedMPV() - Max_V_PulseCluster.getSeedSigma()) - ( nbrV.pulse_MPV - nbrV.pulse_Sigma );
+                h_V_Nbr_DeltaSTartTime1.Fill( Max_V_PulseCluster.getClusterPulseIntegral(), deltaT_V_nbr );
+            }
 
             double startTime_U_cl = Max_U_PulseCluster.getClusterMPV() - Max_U_PulseCluster.getClusterSigma();
             double startTime_V_cl = Max_V_PulseCluster.getClusterMPV() - Max_V_PulseCluster.getClusterSigma();
@@ -302,8 +322,6 @@ int main(int argc, char **argv) {
             }
             uRwellCross crs_Max_Integral;
 
-
-
             if (has_U_AND_V_clusters) {
 
                 crs_Max_Integral = uRwellCross(Max_U_PulseCluster.getClusterCenter(), Max_V_PulseCluster.getClusterCenter());
@@ -320,6 +338,12 @@ int main(int argc, char **argv) {
                 h_Cross_YXc_MaxIntegralInsideDet1.Fill(crs_X, crs_Y);
                 if ( fiducial_trk ) {
                     h_Cross_YXc_MaxIntegral_Fiducial1.Fill(crs_X, crs_Y);
+                    if (UhasNbr) {
+                        h_U_Nbr_DeltaSTartTime_Fiducial1.Fill( Max_U_PulseCluster.getClusterPulseIntegral(), deltaT_U_nbr );
+                    }
+                    if (VhasNbr) {
+                        h_V_Nbr_DeltaSTartTime_Fiducial1.Fill( Max_V_PulseCluster.getClusterPulseIntegral(), deltaT_V_nbr );
+                    }
                 }
 
                 if (vertical_trk) {

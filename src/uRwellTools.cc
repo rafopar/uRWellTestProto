@@ -1,10 +1,10 @@
-#include <iostream>
 #include <algorithm>
+#include <iostream>
 #include <uRwellTools.h>
 
-#include <TLine.h>
 #include <TCanvas.h>
 #include <TEfficiency.h>
+#include <TLine.h>
 
 using namespace std;
 
@@ -68,7 +68,8 @@ double uRwellTools::getStripLength(int ch) {
     }
 
     /*
-     *  see https://jeffersonlab-my.sharepoint.com/:x:/g/personal/rafopar_jlab_org/EXSTTdqkWClJl9J0J-0IayUBFrx2ZroRYswHxBfEYwc3fg?e=MHDlDT
+     *  see
+     * https://jeffersonlab-my.sharepoint.com/:x:/g/personal/rafopar_jlab_org/EXSTTdqkWClJl9J0J-0IayUBFrx2ZroRYswHxBfEYwc3fg?e=MHDlDT
      */
 
     if (ch <= 253) {
@@ -88,9 +89,8 @@ double uRwellTools::getStripArea(int ch, int view) {
     return l * width;
 }
 
-int uRwellTools::slot_Offset[uRwellTools::nSlot] = {
-    0, 64, 192, 1448, 320, 1576, 1000, 1064, 1192, 448, 1320, 576, 0, 128, 1000, 1128
-};
+int uRwellTools::slot_Offset[uRwellTools::nSlot] = {0,    64,  192,  1448, 320, 1576, 1000, 1064,
+                                                    1192, 448, 1320, 576,  0,   128,  1000, 1128};
 
 uRwellTools::ADC_Distribution uRwellTools::CalcMPVandMean(TH1D *h_in) {
     TF1 *f_Landau = new TF1("f_Landau", "[0]*TMath::Landau(x, [1], [2])", 0., 1000.);
@@ -127,25 +127,25 @@ void uRwellTools::CalcEfficiencies(TH2 *h_in, uRwellTools::uRwellEff &eff) {
     eff.eff_OR = 100. * counts_has_AnyCluster / counts_integral;
     eff.eff_AND = 100. * counts_has_U_AND_V_Cluster / counts_integral;
 
-    eff.errUp_eff_U = 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_Cluster, OneSigma, true) - eff.
-                      eff_U;
-    eff.errLow_eff_U = eff.eff_U - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_Cluster, OneSigma,
-                                                                     false);
-    eff.errUp_eff_V = 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_V_Cluster, OneSigma, true) - eff.
-                      eff_V;
-    eff.errLow_eff_V = eff.eff_V - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_V_Cluster, OneSigma,
-                                                                     false);
-    eff.errUp_eff_OR = 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_AnyCluster, OneSigma, true) - eff.
-                       eff_OR;
-    eff.errLow_eff_OR = eff.eff_OR - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_AnyCluster, OneSigma,
-                                                                       false);
+    eff.errUp_eff_U =
+            100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_Cluster, OneSigma, true) - eff.eff_U;
+    eff.errLow_eff_U =
+            eff.eff_U - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_Cluster, OneSigma, false);
+    eff.errUp_eff_V =
+            100 * TEfficiency::ClopperPearson(counts_integral, counts_has_V_Cluster, OneSigma, true) - eff.eff_V;
+    eff.errLow_eff_V =
+            eff.eff_V - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_V_Cluster, OneSigma, false);
+    eff.errUp_eff_OR =
+            100 * TEfficiency::ClopperPearson(counts_integral, counts_has_AnyCluster, OneSigma, true) - eff.eff_OR;
+    eff.errLow_eff_OR =
+            eff.eff_OR - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_AnyCluster, OneSigma, false);
     eff.errUp_eff_AND = 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_AND_V_Cluster, OneSigma, true) -
                         eff.eff_AND;
-    eff.errLow_eff_AND = eff.eff_AND - 100 * TEfficiency::ClopperPearson(
-                             counts_integral, counts_has_U_AND_V_Cluster, OneSigma, false);
+    eff.errLow_eff_AND = eff.eff_AND - 100 * TEfficiency::ClopperPearson(counts_integral, counts_has_U_AND_V_Cluster,
+                                                                         OneSigma, false);
 
-    cout << eff.errLow_eff_U << " Kuku   " << eff.errUp_eff_U << "  " << counts_integral << "   " <<
-            counts_has_U_Cluster << endl;
+    cout << eff.errLow_eff_U << " Kuku   " << eff.errUp_eff_U << "  " << counts_integral << "   "
+         << counts_has_U_Cluster << endl;
 }
 
 double uRwellTools::getNofBgrSbtrCrosses(TH2 *h_in) {
@@ -201,7 +201,8 @@ void uRwellTools::DrawGroupStripBiundaries() {
         double x1 = (b_left - Y_0 + (U_bounderies[i] * pitch) / cos(strip_alpha)) / (tan(strip_alpha) - a_left);
         double y1 = a_left * x1 + b_left;
 
-        // x2 and y2 are the intersection coordinates of the strip and either the Top base or the right side, whichever intersects first
+        // x2 and y2 are the intersection coordinates of the strip and either the Top base or the right side, whichever
+        // intersects first
 
         // First we check the crossing with the top base
         double x2 = (Y_top_edge - Y_0 + (U_bounderies[i] * pitch)) / tan(strip_alpha);
@@ -223,7 +224,8 @@ void uRwellTools::DrawGroupStripBiundaries() {
         double x1 = (b_right - Y_0 + (V_bounderies[i] * pitch) / cos(-strip_alpha)) / (tan(-strip_alpha) - a_right);
         double y1 = a_right * x1 + b_right;
 
-        // x2 and y2 are the intersection coordinates of the strip and either the Top base or the right side, whichever intersects first
+        // x2 and y2 are the intersection coordinates of the strip and either the Top base or the right side, whichever
+        // intersects first
 
         // First we check the crossing with the top base
         double x2 = (Y_top_edge - Y_0 + (V_bounderies[i] * pitch)) / tan(-strip_alpha);
@@ -284,7 +286,7 @@ namespace uRwellTools {
                 continue;
             }
 
-            if (v_Pulseclusters.at(ind).getClusterPulseIntegral() > Integral_Max ) {
+            if (v_Pulseclusters.at(ind).getClusterPulseIntegral() > Integral_Max) {
                 Integral_Max = v_Pulseclusters.at(ind).getClusterPulseIntegral();
                 ind_Max = ind;
             }
@@ -292,7 +294,7 @@ namespace uRwellTools {
 
         if (Integral_Max > 0) {
             return v_Pulseclusters.at(ind_Max);
-        }else {
+        } else {
             PulseCluster tmp;
             return tmp;
         }
@@ -304,9 +306,7 @@ namespace uRwellTools {
         fEnergy = 0;
     }
 
-    void uRwellCluster::setHits(std::vector<uRwellHit> aHits) {
-        fv_Hits = aHits;
-    }
+    void uRwellCluster::setHits(std::vector<uRwellHit> aHits) { fv_Hits = aHits; }
 
     void uRwellCluster::findPeakEnergy() {
         double MaxADC = 0;
@@ -365,11 +365,11 @@ namespace uRwellTools {
         fPeakTime = time; // Time of the highest energy strip
     }
 
-    PulseCluster::PulseCluster() : fnStrips(0), fSeedMPV(0), fClusterMPV(0), fSeedSigma(0), fClusterSigma(), fSeedPulseIntegral(), fClusterPulseIntegral{} {
+    PulseCluster::PulseCluster() :
+        fnStrips(0), fSeedMPV(0), fClusterMPV(0), fSeedSigma(0), fClusterSigma(), fSeedPulseIntegral(),
+        fClusterPulseIntegral{} {}
 
-    }
-
-    void PulseCluster::setPulses( std::vector<APV25Pulse> aPulses ) {
+    void PulseCluster::setPulses(std::vector<APV25Pulse> aPulses) {
         fv_Pulses = std::move(aPulses);
 
         // New pulses are set for this cluster, so we will perform the FinalizeCluster() on it
@@ -388,7 +388,7 @@ namespace uRwellTools {
         fAvgStrip = -10000;
         fSeedPulse = {};
 
-        if ( fv_Pulses.empty() ) {
+        if (fv_Pulses.empty()) {
             return;
         }
         fnStrips = fv_Pulses.size();
@@ -397,14 +397,14 @@ namespace uRwellTools {
         fClusterSigma = 0;
         fAvgStrip = 0;
 
-        for (auto curPulse : fv_Pulses) {
+        for (auto curPulse: fv_Pulses) {
             fClusterPulseIntegral = fClusterPulseIntegral + curPulse.pulse_Integral;
 
-            fClusterMPV = fClusterMPV + curPulse.pulse_Integral*curPulse.pulse_MPV;
-            fClusterSigma = fClusterSigma + curPulse.pulse_Integral*curPulse.pulse_Sigma;
-            fAvgStrip = fAvgStrip + curPulse.pulse_Integral*curPulse.hit.strip;
+            fClusterMPV = fClusterMPV + curPulse.pulse_Integral * curPulse.pulse_MPV;
+            fClusterSigma = fClusterSigma + curPulse.pulse_Integral * curPulse.pulse_Sigma;
+            fAvgStrip = fAvgStrip + curPulse.pulse_Integral * curPulse.hit.strip;
 
-            if ( curPulse.pulse_Integral > fSeedPulseIntegral ) {
+            if (curPulse.pulse_Integral > fSeedPulseIntegral) {
                 fSeedPulseIntegral = curPulse.pulse_Integral;
                 fSeedMPV = curPulse.pulse_MPV;
                 fSeedSigma = curPulse.pulse_Sigma;
@@ -413,44 +413,54 @@ namespace uRwellTools {
             }
         }
 
-        fClusterMPV = fClusterMPV/fClusterPulseIntegral;
-        fClusterSigma = fClusterSigma/fClusterPulseIntegral;
-        fAvgStrip = fAvgStrip/fClusterPulseIntegral;
-    }
-
-    double PulseCluster::getSeedMPV() const {
-        return fSeedMPV;
-    }
-
-    double PulseCluster::getClusterMPV() const {
-        return fClusterMPV;
-    }
-    double PulseCluster::getSeedSigma() const {
-        return fSeedSigma;
-    }
-    double PulseCluster::getClusterSigma() const {
-        return fClusterSigma;
-    }
-    double PulseCluster::getSeedPulseIntegral() const {
-        return fSeedPulseIntegral;
-    }
-    double PulseCluster::getClusterPulseIntegral() const {
-        return fClusterPulseIntegral;
-    }
-    double PulseCluster::getClusterCenter() const {
-        return fAvgStrip;
-    }
-
-    double PulseCluster::getSeedStrip() const {
-        return fSeedStrip;
-    }
-    APV25Pulse PulseCluster::getSeedPulse() const {
-        return fSeedPulse;
+        fClusterMPV = fClusterMPV / fClusterPulseIntegral;
+        fClusterSigma = fClusterSigma / fClusterPulseIntegral;
+        fAvgStrip = fAvgStrip / fClusterPulseIntegral;
     }
 
 
-    uRwellCross::uRwellCross() {
+    APV25Pulse uRwellTools::PulseCluster::getSeedNeighborPulse(bool &found) const {
+        found = false;
+        APV25Pulse best{};
+        if (fv_Pulses.size() < 2)
+            return best; // only the seed
+
+        const int seedStrip = fSeedPulse.hit.strip;
+        const APV25Pulse *left = nullptr, *right = nullptr;
+        for (const auto &p: fv_Pulses) {
+            const int s = p.hit.strip;
+            if (s < seedStrip) {
+                if (!left || s > left->hit.strip)
+                    left = &p;
+            } else if (s > seedStrip) {
+                if (!right || s < right->hit.strip)
+                    right = &p;
+            }
+        }
+        const APV25Pulse *chosen =
+                (left && right) ? (left->pulse_A0 >= right->pulse_A0 ? left : right) : (left ? left : right);
+        if (chosen) {
+            found = true;
+            best = *chosen;
+        }
+        return best;
     }
+
+
+    double PulseCluster::getSeedMPV() const { return fSeedMPV; }
+
+    double PulseCluster::getClusterMPV() const { return fClusterMPV; }
+    double PulseCluster::getSeedSigma() const { return fSeedSigma; }
+    double PulseCluster::getClusterSigma() const { return fClusterSigma; }
+    double PulseCluster::getSeedPulseIntegral() const { return fSeedPulseIntegral; }
+    double PulseCluster::getClusterPulseIntegral() const { return fClusterPulseIntegral; }
+    double PulseCluster::getClusterCenter() const { return fAvgStrip; }
+
+    double PulseCluster::getSeedStrip() const { return fSeedStrip; }
+    APV25Pulse PulseCluster::getSeedPulse() const { return fSeedPulse; }
+
+
+    uRwellCross::uRwellCross() {}
 
     uRwellCross::uRwellCross(double stripU, double stripV) {
         try {
@@ -459,7 +469,7 @@ namespace uRwellTools {
                 cout << "Strip U is " << stripU << endl;
                 cout << "Strip V is " << stripV << endl;
 
-                throw ("One of strip is out of range");
+                throw("One of strip is out of range");
             }
 
             fStripU = stripU;
@@ -470,7 +480,8 @@ namespace uRwellTools {
 
             fSlotU = getURwellSlot(int(fStripU));
             fSlotV = getURwellSlot(int(1000 + fStripV));
-            // We add 1000, because the the getURwellSlot( ) function as an argument takes global strip number i, 1 to 1704
+            // We add 1000, because the the getURwellSlot( ) function as an argument takes global strip number i, 1 to
+            // 1704
 
             fgrU = (std::lower_bound(gr_UBounderies.begin(), gr_UBounderies.end(), fStripU) - gr_UBounderies.begin()) -
                    1;
@@ -501,9 +512,7 @@ namespace uRwellTools {
         // Let's 1st sort the vector of strips
         //
         vector<uRwellCluster> v_Clusters;
-        sort(v_Hits.begin(), v_Hits.end(), [ ](const auto &lhs, const auto &rhs) {
-            return lhs.strip < rhs.strip;
-        });
+        sort(v_Hits.begin(), v_Hits.end(), [](const auto &lhs, const auto &rhs) { return lhs.strip < rhs.strip; });
 
 
         double clEnergy = 0;
@@ -516,7 +525,7 @@ namespace uRwellTools {
             int curStrip = v_Hits.at(i).strip;
             double curHitEnergy = v_Hits.at(i).adc;
 
-            //cout << "v_Hits.at(i).strip = " << v_Hits.at(i).strip << "    curStrip =  " << curStrip << endl;
+            // cout << "v_Hits.at(i).strip = " << v_Hits.at(i).strip << "    curStrip =  " << curStrip << endl;
 
             /*
              * Since the v_Hits is sorted by Strip numbers, in the following if statement we
@@ -549,7 +558,7 @@ namespace uRwellTools {
             prev_Strip = curStrip;
         }
 
-        //cout<<"The size of the cluster is "<<v_Clusters.size()<<endl;
+        // cout<<"The size of the cluster is "<<v_Clusters.size()<<endl;
         return v_Clusters;
     }
 
@@ -560,9 +569,8 @@ namespace uRwellTools {
         //
         // Sorting Pulses by the strip number
         //
-        sort(v_Pulses.begin(), v_Pulses.end(), [ ](const auto &lhs, const auto &rhs) {
-            return lhs.hit.strip < rhs.hit.strip;
-        });
+        sort(v_Pulses.begin(), v_Pulses.end(),
+             [](const auto &lhs, const auto &rhs) { return lhs.hit.strip < rhs.hit.strip; });
 
         int prev_Strip = -10000; // Some number that clearly is not a real strip number
         //        vector<int> v_strips;
@@ -572,9 +580,9 @@ namespace uRwellTools {
             int curStrip = v_Pulses.at(i).hit.strip;
 
             /*
-            * Since the v_Pulses is sorted by Strip numbers, in the following if statement we
-            * don't need to chack for the absolute value of the curStrip - prev_Strip
-            */
+             * Since the v_Pulses is sorted by Strip numbers, in the following if statement we
+             * don't need to chack for the absolute value of the curStrip - prev_Strip
+             */
 
             if ((curStrip - prev_Strip <= (clStripGap + 1)) || i == 0) {
                 v_ClPulses.push_back(v_Pulses.at(i));
@@ -585,7 +593,6 @@ namespace uRwellTools {
                     curCluster.setPulses(v_ClPulses);
                     curCluster.FinalizeCluster();
                     v_PulseClusters.push_back(curCluster);
-
                 }
             } else {
                 PulseCluster curCluster;
@@ -603,9 +610,7 @@ namespace uRwellTools {
         return v_PulseClusters;
     }
 
-    double getCrossX(double strip_U, double strip_V) {
-        return pitch * (strip_U - strip_V) / (2 * sin(strip_alpha));
-    }
+    double getCrossX(double strip_U, double strip_V) { return pitch * (strip_U - strip_V) / (2 * sin(strip_alpha)); }
 
     double getCrossY(double strip_U, double strip_V) {
         double crs_x = getCrossX(strip_U, strip_V);
@@ -615,7 +620,7 @@ namespace uRwellTools {
 
     double getROLength_U(double xx, double yy) {
 
-        if ( !IsInsideDetector(xx, yy) ) {
+        if (!IsInsideDetector(xx, yy)) {
             return -1;
         }
 
@@ -637,20 +642,20 @@ namespace uRwellTools {
         double y_strEnd = 100000;
         double x_strEnd = 100000;
 
-        bool leftSide = yy > y1 + (xx - x1)*tan(strip_alpha);
+        bool leftSide = yy > y1 + (xx - x1) * tan(strip_alpha);
         if (leftSide) {
-            x_strEnd = (yy - b_left - xx*tan(strip_alpha))/(a_left - tan(strip_alpha));
-            y_strEnd = a_left*x_strEnd + b_left;
-        }else {
-            x_strEnd = (yy - b_right - xx*tan(strip_alpha))/(a_right - tan(strip_alpha));
-            y_strEnd = a_right*x_strEnd + b_right;
+            x_strEnd = (yy - b_left - xx * tan(strip_alpha)) / (a_left - tan(strip_alpha));
+            y_strEnd = a_left * x_strEnd + b_left;
+        } else {
+            x_strEnd = (yy - b_right - xx * tan(strip_alpha)) / (a_right - tan(strip_alpha));
+            y_strEnd = a_right * x_strEnd + b_right;
         }
-        return sqrt( (xx - x_strEnd)*(xx - x_strEnd) + (yy - y_strEnd)*(yy - y_strEnd) );
+        return sqrt((xx - x_strEnd) * (xx - x_strEnd) + (yy - y_strEnd) * (yy - y_strEnd));
     }
 
-     double getROLength_V(double xx, double yy) {
+    double getROLength_V(double xx, double yy) {
 
-        if ( !IsInsideDetector(xx, yy) ) {
+        if (!IsInsideDetector(xx, yy)) {
             return -1;
         }
 
@@ -673,17 +678,16 @@ namespace uRwellTools {
         double y_strEnd = 100000;
         double x_strEnd = 100000;
 
-        bool rightSide = yy > y1 - (xx - x1)*tan(strip_alpha);
+        bool rightSide = yy > y1 - (xx - x1) * tan(strip_alpha);
         if (rightSide) {
-            x_strEnd = (yy - b_right + xx*tan(strip_alpha))/(a_right + tan(strip_alpha));
-            y_strEnd = a_right*x_strEnd + b_right;
-        }else {
-            x_strEnd = (yy - b_left + xx*tan(strip_alpha))/(a_left + tan(strip_alpha));
-            y_strEnd = a_left*x_strEnd + b_left;
+            x_strEnd = (yy - b_right + xx * tan(strip_alpha)) / (a_right + tan(strip_alpha));
+            y_strEnd = a_right * x_strEnd + b_right;
+        } else {
+            x_strEnd = (yy - b_left + xx * tan(strip_alpha)) / (a_left + tan(strip_alpha));
+            y_strEnd = a_left * x_strEnd + b_left;
         }
-        return sqrt( (xx - x_strEnd)*(xx - x_strEnd) + (yy - y_strEnd)*(yy - y_strEnd) );
+        return sqrt((xx - x_strEnd) * (xx - x_strEnd) + (yy - y_strEnd) * (yy - y_strEnd));
     }
-
 
 
     bool fileExists(const char *filename) {

@@ -334,6 +334,12 @@ namespace uRwellTools {
 
         void FinalizeCluster();
 
+        // Neighbouring pulse to the seed: closest present strip on either side (gaps
+        // allowed); when both sides exist, the one with the larger pulse height
+        // (pulse_A0). found == false for a single-strip cluster.
+        APV25Pulse getSeedNeighborPulse(bool &found) const;
+
+
     private:
         std::vector<APV25Pulse> fv_Pulses;
         int fnStrips;
