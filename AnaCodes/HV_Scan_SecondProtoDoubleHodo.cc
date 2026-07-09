@@ -22,7 +22,7 @@
 //   Drift_Bot  : the bottom drift HV             (x = HV_Cathode_Bot - HV_MESH_Bot)
 // where Drift HV = Cathode HV - MESH HV.
 //
-// Two kinds of observable are produced:
+// Three kinds of observable are produced:
 //   * "U/V" observables  : the "h_U..." histogram comes from the Top detector
 //     and the "h_V..." from the Bottom detector. The U and V graphs of the same
 //     observable are drawn together on one figure (TMultiGraph). Registered in
@@ -31,6 +31,9 @@
 //     histograms of the same file (e.g. an efficiency that is the ratio of two
 //     histogram entry counts). Only one graph is drawn. Registered in
 //     buildCombinedObservables().
+//   * "multi-curve combined" observables : several combined quantities drawn on
+//     one figure (e.g. the cross efficiency together with the two single-plane
+//     efficiencies). Registered in buildMultiCombinedObservables().
 //
 // All figures are saved to the Figs/ sub-directory.
 //
@@ -47,7 +50,8 @@
 // failure can be understood.
 //
 // The list of observables is built in buildObservables() / buildCombined
-// Observables(); adding a new variable is just one more entry there.
+// Observables() / buildMultiCombinedObservables(); adding a new variable is just
+// one more entry there.
 //
 // Usage:
 //   ./HV_Scan_SecondProtoDoubleHodo.exe  <Series>  <ScanType>  [inputDir]
@@ -137,15 +141,20 @@ string hvAxisTitle(ScanType type) {
 
 // ----------------------------------------------------------------------------
 // Result of running an extractor on one histogram.
-//   ok   : whether a usable value was produced
-//   fit  : the attempted fit function (nullptr for non-fit extractors). It is
-//          owned by the caller, which uses it for the diagnostic plot and then
-//          deletes it.
+//   ok       : whether a usable value was produced
+//   fit      : the attempted fit function (nullptr for non-fit extractors). It
+//              is owned by the caller, which uses it for the diagnostic plot and
+//              then deletes it.
+//   drawHist : optional histogram to DISPLAY instead of the source histogram
+//              (e.g. a 1-D projection of a 2-D input, which carries the 1-D fit
+//              the source can not). When set it is drawn in the Distributions
+//              document / fit diagnostic and then deleted by the caller.
 // ----------------------------------------------------------------------------
 struct ExtractResult {
     double value = nan("");
     bool ok = false;
     TF1 *fit = nullptr;
+    TH1 *drawHist = nullptr;
 };
 
 using Extractor = function<ExtractResult(TH1 *)>;
@@ -170,6 +179,22 @@ struct CombinedObservable {
     string graphLabel; // legend label of the single graph, e.g. "Efficiency"
     vector<string> inputHists; // histograms shown in the Distributions document
     CombinedExtractor extract;
+};
+
+// A "multi-curve combined" observable: several combined quantities drawn on ONE
+// figure (e.g. the cross efficiency and the two single-plane efficiencies).
+struct CombinedCurve {
+    string label; // legend label, e.g. "U plane"
+    Color_t color;
+    int marker;
+    CombinedExtractor extract;
+};
+
+struct MultiCombinedObservable {
+    string tag; // file-name friendly id, e.g. "Efficiency"
+    string title; // axis title, e.g. "Efficiency [%]"
+    vector<string> inputHists; // histograms shown in the Distributions document
+    vector<CombinedCurve> curves;
 };
 
 // A point that could not be produced — collected for the final notification.
@@ -273,13 +298,66 @@ static ExtractResult extractLandauMPV(TH1 *h, double xLo, double xHi) {
     return res;
 }
 
-// Efficiency, in percent: the ratio of the number of reconstructed crosses
-// inside the fiducial region to the detector occupancy inside the same region,
-//   eff [%] = 100 * h_Cross_YXc_MaxIntegral_Fiducial1->GetEntries()
-//                 / h_Det0_Occupancy_Fiducial1->GetEntries()
-static ExtractResult extractEfficiency(TFile &f) {
+// Which 50-bin-wide slice in X of a 2-D histogram to project.
+enum class XRegion { First, Mid, Last };
+
+// Project a 2-D histogram onto Y over a 50-bin-wide slice in X (the first, the
+// middle, or the last 50 X bins) and fit the projection with a Gaussian in
+//   [peak - RMS, peak + RMS]
+// where 'peak' is the bin centre of the tallest bin of the projection. The fit
+// sigma is returned as the value. The projection is handed back via
+// res.drawHist so the caller can display / diagnose it (the source is 2-D and
+// can not carry the 1-D fit).
+static ExtractResult extractProjYGausSigma(TH1 *h, XRegion region) {
     ExtractResult res;
-    TH1 *hNum = dynamic_cast<TH1 *>(f.Get("h_Cross_YXc_MaxIntegral_Fiducial1"));
+    auto *h2 = dynamic_cast<TH2 *>(h);
+    if (h2 == nullptr) {
+        return res;
+    }
+
+    const int nx = h2->GetNbinsX();
+    const int win = 50;
+    int lo = 1;
+    int hi = win;
+    switch (region) {
+        case XRegion::First: lo = 1;                          hi = min(win, nx);         break;
+        case XRegion::Last:  hi = nx;                         lo = max(1, nx - win + 1); break;
+        case XRegion::Mid:   lo = max(1, nx / 2 - win / 2 + 1); hi = min(nx, lo + win - 1); break;
+    }
+
+    static int uid = 0;
+    static double ts2ns = 25;
+    TH1D *py = h2->ProjectionY(Form("projY_%s_%d", h2->GetName(), uid++), lo, hi);
+    py->SetDirectory(nullptr); // take ownership; detach from the input file
+    py->SetTitle(Form("%s  (X bins %d-%d)", h2->GetTitle(), lo, hi));
+    res.drawHist = py;
+
+    if (py->GetEntries() < 1 || py->GetRMS() <= 0.) {
+        return res; // ok stays false -> point dropped by the caller
+    }
+
+    const double peak = py->GetXaxis()->GetBinCenter(py->GetMaximumBin());
+    const double rms = py->GetRMS();
+
+    auto *f = new TF1("f_gaus", "gaus", peak - rms, peak + rms);
+    f->SetParameters(py->GetMaximum(), peak, rms);
+    f->SetLineColor(kRed);
+    f->SetLineWidth(2);
+
+    const int status = int(py->Fit(f, "QN", "", peak - rms, peak + rms));
+
+    res.fit = f;
+    res.value = ts2ns*fabs(f->GetParameter(2)); // Gaussian sigma
+    res.ok = (status == 0);
+    return res;
+}
+
+// Efficiency in percent: ratio of a numerator histogram's entry count to the
+// fiducial hodoscope-tag occupancy,
+//   eff [%] = 100 * N(<numHist>) / N(h_Det0_Occupancy_Fiducial1)
+static ExtractResult effRatio(TFile &f, const char *numHist) {
+    ExtractResult res;
+    TH1 *hNum = dynamic_cast<TH1 *>(f.Get(numHist));
     TH1 *hDen = dynamic_cast<TH1 *>(f.Get("h_Det0_Occupancy_Fiducial1"));
     if (hNum == nullptr || hDen == nullptr) {
         return res;
@@ -313,18 +391,57 @@ vector<Observable> buildObservables() {
                    "h_U_PulseHeight2", "h_V_PulseHeight2",
                    [](TH1 *h) { return extractLandauMPV(h, 0., 1000.); }});
 
+    // Gaussian sigma of the seed-vs-neighbour delta-start-time, from the Y
+    // projection of the 2-D (cluster integral vs delta-t) histogram over the
+    // first / middle / last 50 X bins.
+    obs.push_back({"DeltaStartTimeSigma_Xfirst50", "Nbr #Deltat_{start} #sigma, first 50 X bins [ns]",
+                   "h_U_Nbr_DeltaSTartTime_Fiducial1", "h_V_Nbr_DeltaSTartTime_Fiducial1",
+                   [](TH1 *h) { return extractProjYGausSigma(h, XRegion::First); }});
+
+    obs.push_back({"DeltaStartTimeSigma_Xmid50", "Nbr #Deltat_{start} #sigma, mid 50 X bins [ns]",
+                   "h_U_Nbr_DeltaSTartTime_Fiducial1", "h_V_Nbr_DeltaSTartTime_Fiducial1",
+                   [](TH1 *h) { return extractProjYGausSigma(h, XRegion::Mid); }});
+
+    obs.push_back({"DeltaStartTimeSigma_Xlast50", "Nbr #Deltat_{start} #sigma, last 50 X bins [ns]",
+                   "h_U_Nbr_DeltaSTartTime_Fiducial1", "h_V_Nbr_DeltaSTartTime_Fiducial1",
+                   [](TH1 *h) { return extractProjYGausSigma(h, XRegion::Last); }});
+
     return obs;
 }
 
 // ----------------------------------------------------------------------------
-// Combined observable registry  —  ADD NEW COMBINED VARIABLES HERE
+// Combined observable registry  —  ADD NEW SINGLE-CURVE COMBINED VARIABLES HERE
 // ----------------------------------------------------------------------------
 vector<CombinedObservable> buildCombinedObservables() {
     vector<CombinedObservable> obs;
 
-    obs.push_back({"Efficiency", "Efficiency [%]", "Efficiency",
-                   {"h_Cross_YXc_MaxIntegral_Fiducial1", "h_Det0_Occupancy_Fiducial1"},
-                   extractEfficiency});
+    // (single-value combined observables go here; the efficiencies are drawn
+    // together as one multi-curve figure — see buildMultiCombinedObservables)
+
+    return obs;
+}
+
+// ----------------------------------------------------------------------------
+// Multi-curve combined observable registry  —  ADD NEW OVERLAID VARIABLES HERE
+// ----------------------------------------------------------------------------
+vector<MultiCombinedObservable> buildMultiCombinedObservables() {
+    vector<MultiCombinedObservable> obs;
+
+    // The cross efficiency (U AND V) together with the two single-plane
+    // efficiencies. All three share the fiducial hodoscope-tag denominator
+    // (h_Det0_Occupancy_Fiducial1); the U and V curves require only a cluster in
+    // that plane, not a reconstructed cross.
+    obs.push_back({"Efficiency", "Efficiency [%]",
+                   {"h_Cross_YXc_MaxIntegral_Fiducial1", "h_UCl_Size_Fiducial1",
+                    "h_VCl_Size_Fiducial1", "h_Det0_Occupancy_Fiducial1"},
+                   {
+                       {"Cross (U#wedgeV)", kBlue, 20,
+                        [](TFile &f) { return effRatio(f, "h_Cross_YXc_MaxIntegral_Fiducial1"); }},
+                       {"U plane", kRed, 21,
+                        [](TFile &f) { return effRatio(f, "h_UCl_Size_Fiducial1"); }},
+                       {"V plane", kGreen + 2, 22,
+                        [](TFile &f) { return effRatio(f, "h_VCl_Size_Fiducial1"); }},
+                   }});
 
     return obs;
 }
@@ -487,6 +604,7 @@ void drawCombinedInputPage(MultiPagePdf &pdf, TH1 *h, const string &dispTitle,
 void writeDistributions(const vector<RunInfo> &runs, const string &inputDir,
                         const vector<Observable> &observables,
                         const vector<CombinedObservable> &combinedObservables,
+                        const vector<MultiCombinedObservable> &multiCombinedObservables,
                         ScanType type, const string &distPdfName, TCanvas *cDist) {
 
     MultiPagePdf distPdf{cDist, distPdfName, false};
@@ -513,15 +631,17 @@ void writeDistributions(const vector<RunInfo> &runs, const string &inputDir,
                     continue;
                 }
                 ExtractResult res = obs.extract(h);
-                drawDistributionPage(distPdf, h, res, obs.title, lay.label, r.run, hvTitle, hv);
+                TH1 *toDraw = (res.drawHist != nullptr) ? res.drawHist : h;
+                drawDistributionPage(distPdf, toDraw, res, obs.title, lay.label, r.run, hvTitle, hv);
                 delete res.fit;
+                delete res.drawHist;
             }
         }
     }
 
-    // ---- combined observables: show their input histograms ----
-    for (const auto &cobs : combinedObservables) {
-        for (const auto &histName : cobs.inputHists) {
+    // ---- combined + multi-curve combined observables: show their input hists ----
+    auto showInputs = [&](const string &title, const vector<string> &inputHists) {
+        for (const auto &histName : inputHists) {
             for (const auto &r : runs) {
                 const double hv = r.hvAxis(type);
                 const string fn = inputDir + "/AnaSecondHodoDoubleHodo_" + to_string(r.run) + ".root";
@@ -533,9 +653,16 @@ void writeDistributions(const vector<RunInfo> &runs, const string &inputDir,
                 if (h == nullptr) {
                     continue;
                 }
-                drawCombinedInputPage(distPdf, h, cobs.title, histName, r.run, hvTitle, hv);
+                drawCombinedInputPage(distPdf, h, title, histName, r.run, hvTitle, hv);
             }
         }
+    };
+
+    for (const auto &cobs : combinedObservables) {
+        showInputs(cobs.title, cobs.inputHists);
+    }
+    for (const auto &mobs : multiCombinedObservables) {
+        showInputs(mobs.title, mobs.inputHists);
     }
 
     distPdf.close();
@@ -594,7 +721,8 @@ TGraph *buildGraph(const vector<RunInfo> &runs, const string &inputDir,
         if (!res.ok) {
             string diag;
             if (res.fit != nullptr) {
-                diag = writeFitDiagnostic(cDiag, h, res.fit, varLabel, scanTypeStr, hv);
+                TH1 *toDraw = (res.drawHist != nullptr) ? res.drawHist : h;
+                diag = writeFitDiagnostic(cDiag, toDraw, res.fit, varLabel, scanTypeStr, hv);
             }
             drop(res.fit != nullptr ? "fit did not converge" : "extractor failed", diag);
         } else {
@@ -603,6 +731,7 @@ TGraph *buildGraph(const vector<RunInfo> &runs, const string &inputDir,
         }
 
         delete res.fit;
+        delete res.drawHist;
     }
 
     if (xs.empty()) {
@@ -694,6 +823,7 @@ int main(int argc, char *argv[]) {
 
     const vector<Observable> observables = buildObservables();
     const vector<CombinedObservable> combinedObservables = buildCombinedObservables();
+    const vector<MultiCombinedObservable> multiCombinedObservables = buildMultiCombinedObservables();
     const string xTitle = hvAxisTitle(scanType);
 
     auto *c1 = new TCanvas("c1", "", 1000, 700);
@@ -802,12 +932,66 @@ int main(int argc, char *argv[]) {
     }
 
     // ------------------------------------------------------------------
+    // Phase 1c: build multi-curve combined graphs (several quantities
+    // overlaid on one figure, e.g. the cross and single-plane efficiencies).
+    // ------------------------------------------------------------------
+    for (const auto &mobs : multiCombinedObservables) {
+
+        auto *mg = new TMultiGraph();
+        mg->SetTitle(Form("%s;%s;%s", mobs.title.c_str(), xTitle.c_str(), mobs.title.c_str()));
+
+        auto *leg = new TLegend(0.70, 0.75, 0.89, 0.89);
+        leg->SetBorderSize(0);
+        leg->SetFillStyle(0);
+
+        int nCurves = 0;
+        for (const auto &cur : mobs.curves) {
+            TGraph *g = buildCombinedGraph(runs, inputDir, cur.extract, scanType,
+                                           mobs.tag + "_" + cur.label, dropped);
+            if (g == nullptr) {
+                continue;
+            }
+            g->SetMarkerStyle(cur.marker);
+            g->SetMarkerColor(cur.color);
+            g->SetLineColor(cur.color);
+            g->SetMarkerSize(1.2);
+            mg->Add(g, "PL");
+            leg->AddEntry(g, cur.label.c_str(), "pl");
+            ++nCurves;
+        }
+
+        if (nCurves == 0) {
+            cerr << "No valid points for observable " << mobs.tag << " — skipping." << endl;
+            delete mg;
+            delete leg;
+            continue;
+        }
+
+        c1->Clear();
+        c1->cd();
+        mg->Draw("A");
+        leg->Draw();
+        c1->Update();
+
+        const string base = "Figs/HVScan_" + mobs.tag + "_" + scanTypeStr
+                            + "_Series" + to_string(series);
+        c1->Print((base + ".pdf").c_str());
+        c1->Print((base + ".png").c_str());
+        c1->Print((base + ".root").c_str());
+
+        cout << "Wrote " << base << ".{pdf,png,root}" << endl;
+
+        delete mg; // also deletes the graphs it owns
+        delete leg;
+    }
+
+    // ------------------------------------------------------------------
     // Phase 2: collect all the input distributions into one multi-page PDF.
     // Kept separate so no other PDF is open while it is being written.
     // ------------------------------------------------------------------
     const string distPdfName = "Figs/Distributions_HV_Scan_" + to_string(series) + ".pdf";
-    writeDistributions(runs, inputDir, observables, combinedObservables, scanType,
-                       distPdfName, cDist);
+    writeDistributions(runs, inputDir, observables, combinedObservables, multiCombinedObservables,
+                       scanType, distPdfName, cDist);
 
     // ------------------------------------------------------------------
     // Final, clearly-visible notification about the dropped points.

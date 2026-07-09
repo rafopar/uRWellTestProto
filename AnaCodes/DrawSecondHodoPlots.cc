@@ -27,6 +27,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH2D.h>
+#include <TLine.h>
 #include <TLatex.h>
 #include <TStyle.h>
 
@@ -50,6 +51,10 @@ int main(int argc, const char *argv[]) {
     TLatex lat1;
     lat1.SetNDC();
     lat1.SetTextFont(42);
+
+    auto line1 = new TLine();
+    line1->SetLineColor(2);
+    line1->SetLineWidth(2);
 
     TF1 *f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", -25., 25);
     f_Gaus->SetNpx(4500);
@@ -78,6 +83,9 @@ int main(int argc, const char *argv[]) {
     TH2D h_pixel_deltaT_sigm("h_pixel_deltaT_sigm", "", 150, -900., 900, 50, -500., 500.);
     h_pixel_deltaT_sigm.SetTitle("; uRwell X [mm]; uRwell Y [mm] ");
 
+    auto c_uRwellCross_pixels = new TCanvas("c_uRwellCross_pixels", "", 1800., 1000.);
+    c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf[", run));
+
     auto *c_2d_dtFit = new TCanvas("c_2d_dtFit", "", 1800, 1000);
     c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf[", run));
 
@@ -90,8 +98,8 @@ int main(int argc, const char *argv[]) {
             }
 
             // (i, j)-dependent integration window.
-            const double x_min = -850. + i * 45.;
-            const double x_max = -650. + i * 45.;
+            const double x_min = -830. + i * 45.;
+            const double x_max = -655. + i * 45.;
             const double y_min = -325. + j * 45.;
             const double y_max = -150. + j * 45.;
 
@@ -106,17 +114,28 @@ int main(int argc, const char *argv[]) {
             if (n_tags <= 0) {
                 continue;
             }
+            c_uRwellCross_pixels->cd();
+            h_uRwell_Cross_YXc1->Draw();
+            line1->DrawLine(x_min, y_min, x_max, y_min);
+            line1->DrawLine(x_min, y_min, x_min, y_max);
+            line1->DrawLine(x_max, y_min, x_max, y_max);
+            line1->DrawLine(x_min, y_max, x_max, y_max);
+
+            c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf", run));
 
             const double eff = n_uRwell / n_tags;
+            double eff_error = sqrt(eff*(1-eff)/n_tags);
 
             // Place the efficiency at the centre of the (i, j) window.
             const double xc = 0.5 * (x_min + x_max);
             const double yc = 0.5 * (y_min + y_max);
             h_SecondProt_2DEff.Fill(xc, yc, eff);
+            h_SecondProt_2DEff.SetBinError(h_SecondProt_2DEff.FindBin(xc, yc),  eff_error);
 
             auto h_DeltaStartTime_UV1 = dynamic_cast<TH1D*>(file_in.Get(Form("h_DeltaStartTime_UV1_%d_%d", i, j)));
 
             if ( h_DeltaStartTime_UV1->GetEntries() > 80 ) {
+                c_2d_dtFit->cd();
                 double mean = h_DeltaStartTime_UV1->GetMean();
                 double rms = h_DeltaStartTime_UV1->GetRMS();
                 f_Gaus->SetParameters( h_DeltaStartTime_UV1->GetMaximum(), mean, rms );
@@ -134,6 +153,7 @@ int main(int argc, const char *argv[]) {
     }
 
     c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf]", run));
+    c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf]", run));
 
     gStyle->SetPalette(kBird);
     gStyle->SetNumberContours(99);
