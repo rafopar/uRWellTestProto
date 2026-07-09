@@ -24,7 +24,16 @@ bool EVReader::Open(const char *filename) {
         return false;
     }
 
-    fEntries = fReader->getEntries();
+    // Cache every event's raw buffer for random access. hipo's gotoEvent()
+    // binary search is unreliable on some files (it can crash), so the file is
+    // read once sequentially and each event's bytes are kept in memory; a later
+    // ReadEvent(index) re-initialises the working event from the cached bytes.
+    fEventBuffers.clear();
+    while (fReader->next()) {
+        fReader->read(fHipoEvent);
+        fEventBuffers.push_back(fHipoEvent.getEventBuffer());
+    }
+    fEntries = static_cast<int>(fEventBuffers.size());
     return true;
 }
 
@@ -54,19 +63,8 @@ bool EVReader::ReadEvent(int index, EVEvent &ev) {
         return false;
     }
 
-    /*
-     * hipo::reader::gotoEvent(i) positions the reader on the 0-based event "i",
-     * but it crashes for i == 0 (its internal binary search produces record
-     * number -1). The first event is therefore read by reopening the file and
-     * calling next() once.
-     */
-    if (index == 0) {
-        Reopen();
-        fReader->next();
-    } else {
-        fReader->gotoEvent(index);
-    }
-    fReader->read(fHipoEvent);
+    // Re-load the working event from its cached bytes (see Open()).
+    fHipoEvent.init(fEventBuffers[index]);
 
     FillEvent(ev, index);
     return true;

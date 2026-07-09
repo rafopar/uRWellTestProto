@@ -3,21 +3,26 @@
 //
 // The main window of the event viewer. It owns the file reader, the cut
 // engine, the event navigation/cut controls and the hierarchy of tabs:
-//   uRwell     -> Pulses | Hits | Clusters
-//   Hodoscope  -> (placeholder)
+//   uRwell     -> Pulses | Hits | Clusters | Raw data (EVIO only)
+//   Hodoscope  -> Hits | Crosses
 //   Combined   -> (placeholder)
+//
+// The reader is chosen by file type: a HIPO file is read by EVReader, a raw
+// EVIO file (urwell_maroc_00<run>.evio.<idx>) by EVEvioReader (decoded on the
+// fly). Both are used through the EVReaderBase interface.
 //
 
 #ifndef EVMAINFRAME_H
 #define EVMAINFRAME_H
 
+#include <memory>
 #include <vector>
 
 #include <TGFrame.h>
 
 #include "EVCutEngine.h"
 #include "EVEvent.h"
-#include "EVReader.h"
+#include "EVReaderBase.h"
 
 class EVTab;
 class TGLabel;
@@ -46,6 +51,10 @@ private:
         kBtnExit = 9
     };
 
+    // Builds the reader that matches the file type and opens the file.
+    // Returns nullptr if the file can not be opened.
+    static std::unique_ptr<EVReaderBase> MakeReader(const char *filename);
+
     void BuildControls();
     void BuildTabs();
 
@@ -65,7 +74,7 @@ private:
     void UpdateTabs();
     void SetStatus(const char *text);
 
-    EVReader fReader;
+    std::unique_ptr<EVReaderBase> fReader;
     EVCutEngine fCuts;
 
     EVEvent fRawEvent; // the current event as read from the file

@@ -18,14 +18,28 @@ set_target_properties(uRwellEvio PROPERTIES POSITION_INDEPENDENT_CODE ON)
 # installed (no dev symlink), so link it by soname.
 set(SQLITE3_LIB "-l:libsqlite3.so.0")
 
+# --- reusable decode core (shared by the decoder exe and the event viewer) ---
+# Static (like uRwellEvio) so both executables stay self-contained. It holds the
+# per-tag raw decoders, the CCDB translation table, and the in-memory pulse
+# builder (PulseBuilder), so the viewer can decode EVIO on the fly. It needs ROOT
+# (TF1 Landau fit) and uRWellLib (getURwellSlot/getGEMSlot/slot_Offset + structs).
+add_library(uRwellDecodeCore STATIC
+  uRwellSRSDecoder.cpp
+  MarocHodoDecoder.cpp
+  TranslationTable.cpp
+  PulseBuilder.cpp)
+target_include_directories(uRwellDecodeCore PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${CMAKE_SOURCE_DIR}/include
+  ${ROOT_INCLUDE_DIRS})
+target_link_libraries(uRwellDecodeCore PUBLIC uRWellLib ${ROOT_LIBRARIES})
+set_target_properties(uRwellDecodeCore PROPERTIES POSITION_INDEPENDENT_CODE ON)
+
 # --- the decoder ------------------------------------------------------------
 # The --pulse path reproduces AnaCodes/Skim_PulseFit.cc, so it needs ROOT (TF1
 # Landau fit) and uRWellLib (getURwellSlot/getGEMSlot/slot_Offset + structs).
 add_executable(uRwellDecoder.exe
   uRwellDecoder.cc
-  uRwellSRSDecoder.cpp
-  MarocHodoDecoder.cpp
-  TranslationTable.cpp
   HipoBankWriter.cpp
   PulseFitWriter.cpp)
 target_include_directories(uRwellDecoder.exe PRIVATE
@@ -34,7 +48,7 @@ target_include_directories(uRwellDecoder.exe PRIVATE
   ${CMAKE_SOURCE_DIR}/include
   ${ROOT_INCLUDE_DIRS})
 target_link_libraries(uRwellDecoder.exe
-  uRwellEvio Hipo4 ${SQLITE3_LIB} uRWellLib ${ROOT_LIBRARIES} pthread)
+  uRwellEvio uRwellDecodeCore Hipo4 ${SQLITE3_LIB} uRWellLib ${ROOT_LIBRARIES} pthread)
 
 # --- validation tools -------------------------------------------------------
 # CompareDecoded: URWELL::adc / XYHODO::tdc multisets of two decoded files.

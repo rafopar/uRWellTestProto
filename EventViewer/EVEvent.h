@@ -21,8 +21,30 @@ struct EVEvent {
     long trueEventNumber = -1; // The event number from the RUN::config bank (if present)
     int runNumber = -1; // The run number from the RUN::config bank (if present)
 
+    bool isEvio = false; // true when decoded from a raw EVIO file (enables raw ADC)
+
     std::vector<uRwellTools::APV25Pulse> v_U_Pulses; // uRwell U-layer pulses
     std::vector<uRwellTools::APV25Pulse> v_V_Pulses; // uRwell V-layer pulses
+
+    /*
+     * Raw SRS-APV information, only filled for EVIO input. For each APV hybrid
+     * present in the event it holds the endianness-corrected 16-bit word
+     * sequence of the bank (metadata words + 128 raw, NON-common-mode-subtracted
+     * samples per time sample) and, per time sample, the common mode together
+     * with the word range that time-sample frame spans. Consumed by EVRawDataTab.
+     */
+    struct RawSRSFrame {
+        int ts;
+        double commonMode;
+        int wordLo;
+        int wordHi;
+    };
+    struct RawSRSHybrid {
+        int slot;
+        std::vector<short> words;
+        std::vector<RawSRSFrame> frames;
+    };
+    std::vector<RawSRSHybrid> rawSRS;
 
     /*
      * Raw rows of the XYHODO::tdc bank.

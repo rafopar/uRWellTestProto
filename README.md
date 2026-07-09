@@ -335,9 +335,15 @@ the ratio defined above.
 # Standalone C++ Decoder (`Decoder/`)
 
 `Decoder/` is a self-contained C++ EVIO→HIPO decoder for the μRwell test-prototype data
-(single crate / single FEC). It reproduces the relevant coatjava decoding bit-for-bit but
-**without the coatjava/Java dependency**, and it is faster. It vendors a minimal EVIO-5.2 C
-library and reads the CCDB translation tables directly from the sqlite file (no `libccdb`).
+(single crate / single FEC). It reproduces the relevant coatjava decoding **without the
+coatjava/Java dependency**, and it is faster. It vendors a minimal EVIO-5.2 C library and
+reads the CCDB translation tables directly from the sqlite file (no `libccdb`).
+
+> **One intentional deviation from coatjava:** for the half-populated edge APVs (slots 0 and
+> 6, which carry 64 μRwell sector-6 strips + 64 sector-7 strips), the common mode is built
+> only from the sector-6 strips (`mask >= 64`) for **both** slots. The coatjava
+> `getDataEntries_57631` used the sector-7 half for slot 6, biasing its common mode high; this
+> decoder fixes that, so its decoded slot-6 ADC values differ from coatjava by design.
 
 It builds as part of the normal `cmake --build build` and installs to its own subdirectory
 `${CMAKE_INSTALL_PREFIX}/decoder/bin`:
@@ -364,9 +370,10 @@ uRwellDecoder.exe -i inpFile.evio -o Data/decoded_<RUN>_<FileNo>.hipo
 | `--ccdb <conn>` | `sqlite:////group/clas12/users/rafopar/uRWellImportant/clas12SecondProto.sqlite` | CCDB connection string |
 | `-c <n>` | ignored | Accepted for coatjava CLI compatibility (compression type) |
 
-The output banks (`URWELL::adc`, `XYHODO::tdc`, `RUN::config`) are identical to the coatjava
-decoder **when the same CCDB is used**. Verified for run 3208 with the default
-`clas12SecondProto.sqlite` via `CompareDecoded.exe` (0 mismatching events).
+The output banks (`URWELL::adc`, `XYHODO::tdc`, `RUN::config`) match the coatjava decoder
+**when the same CCDB is used**, except for the intentional slot-0/6 common-mode fix noted
+above (which shifts slot-6 `URWELL::adc` values). Verified for run 3208 with the default
+`clas12SecondProto.sqlite` via `CompareDecoded.exe`.
 
 > The CCDB must contain the μRwell translation table. The built-in default
 > `clas12SecondProto.sqlite` is the one used by `RunSecondProtoAnaChain.py`; override with

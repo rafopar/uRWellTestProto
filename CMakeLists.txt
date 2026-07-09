@@ -51,7 +51,9 @@ message("ROOT_INCLUDE_DIR is " ${ROOT_INCLUDE_DIRS})
 add_subdirectory(hipo/hipo4)
 #add_subdirectory(hipo)
 #find_package(hipo4 REQUIRED)
+# Decoder is configured before EventViewer because the viewer links the decode
+# libraries (uRwellEvio, uRwellDecodeCore) defined there.
+add_subdirectory(Decoder)
 add_subdirectory(AnaCodes)
 add_subdirectory(EventViewer)
 add_subdirectory(misc/HVScans)
-add_subdirectory(Decoder)

@@ -22,4 +22,16 @@ struct HodoRawHit {
     int tdc;        // rawtdc & 0x7FFF
 };
 
+// A translated ADC row (post-CCDB): the input to pulse building / hipo writing.
+// Structurally identical to HipoBankWriter::AdcRow but declared here so the
+// decode-core library (PulseBuilder) does not need the hipo writer headers.
+struct DecodedAdcRow {
+    int sector, layer, component, order, adc, ped;
+};
+
+// A translated hodoscope TDC row (post-CCDB).
+struct DecodedTdcRow {
+    int sector, layer, component, order, tdc;
+};
+
 #endif

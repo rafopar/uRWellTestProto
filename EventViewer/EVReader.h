@@ -11,24 +11,28 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <reader.h>
 
 #include "EVEvent.h"
+#include "EVReaderBase.h"
 
-class EVReader {
+class EVReader : public EVReaderBase {
 public:
     // Opens the file. Returns false if the file can not be opened or it
     // does not contain the uRwell::Pulse bank.
-    bool Open(const char *filename);
+    bool Open(const char *filename) override;
 
-    int GetEntries() const { return fEntries; }
+    int GetEntries() const override { return fEntries; }
 
-    const std::string &GetFileName() const { return fFileName; }
+    const std::string &GetFileName() const override { return fFileName; }
 
     // Reads the event with the given 0-based index and fills "ev".
     // Returns false if the index is out of range.
-    bool ReadEvent(int index, EVEvent &ev);
+    bool ReadEvent(int index, EVEvent &ev) override;
+
+    bool IsEvio() const override { return false; }
 
 private:
     void Reopen();
@@ -41,6 +45,10 @@ private:
     std::unique_ptr<hipo::bank> fPulseBank;
     std::unique_ptr<hipo::bank> fHodoBank;
     std::unique_ptr<hipo::bank> fConfBank;
+
+    // One raw event buffer per event, cached on Open() for robust random access
+    // (hipo's gotoEvent() binary search is unreliable on some files).
+    std::vector<std::vector<char>> fEventBuffers;
     int fEntries = 0;
 };
 

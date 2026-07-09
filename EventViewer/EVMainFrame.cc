@@ -19,15 +19,35 @@
 #include <WidgetMessageTypes.h>
 
 #include "EVClustersTab.h"
+#include "EVEvioReader.h"
 #include "EVHitsTab.h"
 #include "EVHodoCrossesTab.h"
 #include "EVHodoHitsTab.h"
 #include "EVPulsesTab.h"
+#include "EVRawDataTab.h"
+#include "EVReader.h"
 #include "EVTab.h"
+
+std::unique_ptr<EVReaderBase> EVMainFrame::MakeReader(const char *filename) {
+    // A raw EVIO file has ".evio" in its name (e.g. urwell_maroc_003101.evio.00000);
+    // anything else is treated as a decoded HIPO file.
+    const std::string name = filename;
+    std::unique_ptr<EVReaderBase> reader;
+    if (name.find(".evio") != std::string::npos) {
+        reader = std::make_unique<EVEvioReader>();
+    } else {
+        reader = std::make_unique<EVReader>();
+    }
+    if (!reader->Open(filename)) {
+        return nullptr;
+    }
+    return reader;
+}
 
 EVMainFrame::EVMainFrame(const TGWindow *p, const char *filename) : TGMainFrame(p, 1500, 950) {
 
-    if (!fReader.Open(filename)) {
+    fReader = MakeReader(filename);
+    if (fReader == nullptr) {
         throw std::runtime_error(std::string("Can not open the input file ") + filename);
     }
 
@@ -63,14 +83,14 @@ void EVMainFrame::BuildControls() {
                                        TGNumberFormat::kNESInteger,
                                        TGNumberFormat::kNEANonNegative,
                                        TGNumberFormat::kNELLimitMinMax,
-                                       0, fReader.GetEntries() - 1);
+                                       0, fReader->GetEntries() - 1);
     navFrame->AddFrame(fEventNumEntry, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 15, 5, 2, 2));
 
     auto *btnGo = new TGTextButton(navFrame, "Go", kBtnGoToEvent);
     btnGo->Associate(this);
     navFrame->AddFrame(btnGo, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 5, 5, 2, 2));
 
-    fEventLabel = new TGLabel(navFrame, Form("Event 0 / %d", fReader.GetEntries() - 1));
+    fEventLabel = new TGLabel(navFrame, Form("Event 0 / %d", fReader->GetEntries() - 1));
     navFrame->AddFrame(fEventLabel, new TGLayoutHints(kLHintsLeft | kLHintsCenterY, 20, 5, 2, 2));
 
     auto *btnExit = new TGTextButton(navFrame, "Exit", kBtnExit);
@@ -119,6 +139,13 @@ void EVMainFrame::BuildTabs() {
     TGCompositeFrame *uRwellContainer = topTab->AddTab("uRwell");
     auto *uRwellTab = new TGTab(uRwellContainer);
     uRwellContainer->AddFrame(uRwellTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY, 2, 2, 2, 2));
+
+    // Raw ADC waveforms first (leftmost); only populated for EVIO input,
+    // placeholder otherwise.
+    TGCompositeFrame *rawContainer = uRwellTab->AddTab("Raw data");
+    auto *rawTab = new EVRawDataTab(rawContainer);
+    rawContainer->AddFrame(rawTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY));
+    AddViewerTab(rawTab);
 
     TGCompositeFrame *pulsesContainer = uRwellTab->AddTab("Pulses");
     auto *pulsesTab = new EVPulsesTab(pulsesContainer);
@@ -196,9 +223,9 @@ Bool_t EVMainFrame::ProcessMessage(Longptr_t msg, Longptr_t parm1, Longptr_t) {
 
 void EVMainFrame::LoadEvent(int index) {
 
-    index = std::max(0, std::min(index, fReader.GetEntries() - 1));
+    index = std::max(0, std::min(index, fReader->GetEntries() - 1));
 
-    if (!fReader.ReadEvent(index, fRawEvent)) {
+    if (!fReader->ReadEvent(index, fRawEvent)) {
         SetStatus(Form("Could not read event %d", index));
         return;
     }
@@ -207,7 +234,7 @@ void EVMainFrame::LoadEvent(int index) {
     fFilteredEvent = fCuts.FilterEvent(fRawEvent);
 
     fEventLabel->SetText(Form("Event %d / %d   (run %d, event number %ld)",
-                              fCurrentIndex, fReader.GetEntries() - 1,
+                              fCurrentIndex, fReader->GetEntries() - 1,
                               fRawEvent.runNumber, fRawEvent.trueEventNumber));
     fEventNumEntry->SetNumber(fCurrentIndex);
     Layout();
@@ -223,14 +250,14 @@ void EVMainFrame::StepEvent(int dir) {
 
     int index = fCurrentIndex + dir;
 
-    while (index >= 0 && index < fReader.GetEntries()) {
+    while (index >= 0 && index < fReader->GetEntries()) {
         if (!fCuts.HasEventCut()) {
             LoadEvent(index);
             return;
         }
 
         EVEvent raw;
-        if (!fReader.ReadEvent(index, raw)) {
+        if (!fReader->ReadEvent(index, raw)) {
             break;
         }
         EVEvent filtered = fCuts.FilterEvent(raw);
@@ -247,8 +274,9 @@ void EVMainFrame::StepEvent(int dir) {
 
 void EVMainFrame::OpenNewFile() {
 
-    static const char *filetypes[] = {"HIPO files", "*.hipo",
-                                      "All files", "*",
+    static const char *filetypes[] = {"All files", "*",
+                                      "HIPO files", "*.hipo",
+                                      "EVIO files", "*.evio*",
                                       nullptr, nullptr};
 
     TGFileInfo fileInfo;
@@ -259,18 +287,18 @@ void EVMainFrame::OpenNewFile() {
         return; // the dialog was cancelled
     }
 
-    // Keep the current file name to be able to fall back to it
-    const std::string oldFile = fReader.GetFileName();
-
-    if (!fReader.Open(fileInfo.fFilename)) {
-        SetStatus(Form("Can not open %s (no uRwell::Pulse bank?). Staying with the current file.",
+    // A failed open keeps the current file (fReader is left untouched).
+    std::unique_ptr<EVReaderBase> newReader = MakeReader(fileInfo.fFilename);
+    if (newReader == nullptr) {
+        SetStatus(Form("Can not open %s (unsupported/empty file, or missing pedestals/CCDB for EVIO). "
+                       "Staying with the current file.",
                        fileInfo.fFilename));
-        fReader.Open(oldFile.c_str());
         return;
     }
 
+    fReader = std::move(newReader);
     SetWindowName(Form("uRwell Event Viewer  -  %s", fileInfo.fFilename));
-    fEventNumEntry->SetLimitValues(0, fReader.GetEntries() - 1);
+    fEventNumEntry->SetLimitValues(0, fReader->GetEntries() - 1);
     LoadEvent(0);
 }
 
