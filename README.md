@@ -19,9 +19,10 @@ for instructions on Software installation and running.
 5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
 6. [Automated Running](#automated-running)
 7. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
-8. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
-9. [Key Analysis Parameters](#key-analysis-parameters)
-10. [Data File Locations](#data-file-locations)
+8. [Event Viewer](#event-viewer)
+9. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
+10. [Key Analysis Parameters](#key-analysis-parameters)
+11. [Data File Locations](#data-file-locations)
 
 ---
 
@@ -633,6 +634,42 @@ executables and produce PDF/PNG plots in the `Figs/` directory.
 | `DrawEffWithHodo.cc` | `AnaPulseFits_<RUN>.root` | Detection efficiency with hodoscope tagging; also produces a TF2-based 2D map of the normalized U−V strip RO-length difference across the detector face (`Figs/Str_ROLength_Diff.*`) |
 | `DrawNoise_Vs_StripCoorelations.cc` | `CheckDecoding_<RUN>_0.root` | Strip-to-strip noise correlations |
 | `UpdateStripSigmas.cc` | `AnaPulseFits_<RUN>.root` | Updates per-strip σ in `Pars/Pulse_Sigmas_<RUN>.dat` |
+
+---
+
+# Event Viewer
+
+`EventViewer/` builds `uRwellEventViewer.exe`, an interactive ROOT-GUI event display for browsing
+individual events. It reads **either** a skimmed HIPO file (with the `uRwell::Pulse` and
+`XYHODO::tdc` banks) **or** a raw EVIO file, which it decodes on the fly.
+
+```bash
+./uRwellEventViewer.exe <file>
+# e.g. a skimmed HIPO file
+./uRwellEventViewer.exe Skims/Skim_PulseFit_3208_403.hipo
+# e.g. a raw EVIO file (decoded on the fly)
+./uRwellEventViewer.exe /path/to/urwell_maroc_003208.evio.00000
+```
+
+The input type is chosen from the file name: any name containing `.evio` is treated as raw EVIO,
+otherwise it is read as HIPO. Decoding a raw EVIO file on the fly needs the same pedestals and CCDB
+as the standalone decoder (`PedFiles/Peds_<RUN>` and a reachable CCDB); the **Raw data** tab
+(raw ADC waveforms) is only populated for EVIO input.
+
+**Window layout** — a set of nested tabs, each redrawn as you step through events:
+
+| Tab | Sub-tab | Shows |
+|---|---|---|
+| uRwell | Raw data | Raw ADC waveforms per channel (EVIO input only) |
+| uRwell | Pulses | Per-strip pulse fits (strip, σ, χ²/ndf, …) |
+| uRwell | Hits | Reconstructed hits |
+| uRwell | Clusters | Reconstructed clusters |
+| Hodoscope | Hits | Hodoscope short/long-bar hits (PMT1 blue, PMT2 red) |
+| Hodoscope | Crosses | Reconstructed hodoscope crosses (including matched crosses) |
+
+Navigation and file controls (next/previous/goto event, **Open file…**, and **Exit**) are on the
+main frame; **Open file…** brings up a dialog that accepts both HIPO (`*.hipo`) and EVIO (`*.evio*`)
+files, so you can switch inputs without restarting.
 
 ---
 
