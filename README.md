@@ -15,6 +15,7 @@ for instructions on Software installation and running.
    - [Decoding](#decoding)
    - [Skimming & Pulse Fitting](#skimming--pulse-fitting)
    - [Analysis](#analysis)
+   - [Double-Hodoscope Analysis](#double-hodoscope-analysis)
    - [HV Dependence Scans](#hv-dependence-scans)
 5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
 6. [Automated Running](#automated-running)
@@ -419,6 +420,66 @@ efficiency[shortBarID][longBarID] =
 NOTE: with only single hodoscope, there will be non-negligible amount of cosmic tracks passing therough
 the hodoscope, but missing the μRwell. So actuall efficiency of the μRwell close to the edges will be higher
 the ratio defined above.
+
+---
+
+## Double-Hodoscope Analysis
+
+`AnaSecondProtoDoubleHodo.exe` is the analysis for the **second prototype**, which has **two**
+XY-hodoscopes (one above and one below the μRwell) instead of one. The two hodoscope crosses define
+a straight cosmic track, giving a much cleaner efficiency denominator than a single hodoscope (which
+suffers from cosmics that clip the hodoscope but miss the μRwell — see the note in
+[Efficiency Calculation](#efficiency-calculation)).
+
+The two hodoscopes sit above and below the trapezoidal μRwell, sharing a common (x, y) center
+axis. A hodoscope pixel is **fiducial** only if its vertical projection falls inside the μRwell
+active area; the blue region below is fiducial and the red region is not:
+
+![Double-hodoscope geometry and fiducial region](Doc/DoubleHodo_fiducial_overlay.png)
+
+A clean event has one matched cross in each hodoscope. The two crosses (one pixel per plane) define
+the cosmic track, which is required to be fiducial in **both** planes before it is used as an
+efficiency-denominator track:
+
+![Example track from a Hodoscope 1 pixel to a Hodoscope 2 pixel through the μRwell](Doc/DoubleHodo_track_pixel_example.png)
+
+**Run:**
+```bash
+./AnaSecondProtoDoubleHodo.exe -r <RUN> -f <FileNo>
+```
+
+**Input:** `Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo`
+
+**Output:** `AnaSecondHodoDoubleHodo_<RUN>_File_<FileNo>.root`
+
+### Analysis Steps
+
+1. **Both hodoscopes** — each `XYHODO::tdc` detector (det0 and det1) is analysed with its own
+   `XYHodoAnalyzer`, using the same time cuts as `AnaPulseFits.exe` (`T_OverThrCut`,
+   `deltaT_Cut_Cross`, `deltaT_Cut_PMT12_Match`, all 20 ns).
+
+2. **Clean event** — the event is kept only if **each** hodoscope has exactly one left–right matched
+   cross (`nLR_MatchesDet0 == 1 && nLR_MatchesDet1 == 1`). The two crosses' short/long bar IDs define
+   the track.
+
+3. **Fiducial (track) cut** — the track is required to project inside the μRwell active area for
+   **both** hodoscope crosses (`IsHodoPixelInsideuRwell` for det0 and det1). Fiducial tracks fill the
+   occupancy map `h_Det0_Occupancy_Fiducial1` — the efficiency **denominator**.
+
+4. **μRwell reconstruction** — `uRwell::Pulse` hits (sector 6) are split into U/V, quality-cut on the
+   seed pulse (1.2 ≤ σ ≤ 5.2), clustered (min 2 hits), and paired into the highest-integral U×V cross.
+   Fiducial events with a reconstructed cross fill `h_Cross_YXc_MaxIntegral_Fiducial1` — the efficiency
+   **numerator**.
+
+5. **Histogram filling** — cluster sizes (`h_UCl_Size2` / `h_VCl_Size2`), pulse height/integral
+   (`h_U/V_PulseHeight2`, `h_U/V_PulseIntegral2`), neighbour Δ-start-time distributions, and the
+   occupancy/cross maps. These are exactly the histograms the [HV scan](#hv-dependence-scans) reads.
+
+The efficiency is then `h_Cross_YXc_MaxIntegral_Fiducial1 / h_Det0_Occupancy_Fiducial1`.
+
+The per-file ROOT outputs are merged with `hadd` into `AnaSecondHodoDoubleHodo_<RUN>.root` — done for
+you by the [automated chain](#automated-running) (`--ana=doublehodo`) — which is the input consumed by
+`HV_Scan_SecondProtoDoubleHodo.exe`.
 
 ---
 
