@@ -14,7 +14,7 @@ for instructions on Software installation and running.
    - [Pedestal Runs](#pedestal-runs)
    - [Decoding](#decoding)
    - [Skimming & Pulse Fitting](#skimming--pulse-fitting)
-   - [Analysis: AnaPulseFits](#analysis-anapulsefits)
+   - [Analysis](#analysis)
 5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
 6. [Automated Running](#automated-running)
 7. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
@@ -49,8 +49,11 @@ uRWellTestProto/
 ├── AnaCodes/                       # Analysis executables and scripts
 │   ├── Skim_PulseFit.cc            # Zero-suppression + Landau pulse fitting
 │   ├── AnaPulseFits.cc             # Clustering, cross reconstruction, histogramming
+│   ├── AnaSecondProtoDoubleHodo.cc # Double-hodoscope analysis (second prototype)
+│   ├── HV_Scan_SecondProtoDoubleHodo.cc  # HV-dependence plots for double-hodo runs
 │   ├── CheckDecoding.cc            # Diagnostic check of decoded data
 │   ├── AnaClustering.cc            # Legacy clustering (zero-suppressed input)
+│   ├── CalcPedestals.py            # One-command pedestal calculation (decode → CheckDecoding → DrawPedestals)
 │   ├── DrawPedestals.cc            # Pedestal extraction and plots (ROOT macro)
 │   ├── DrawPulseFitPlots.cc        # Visualization of pulse fit results (ROOT macro)
 │   ├── DrawPlotsWithClustering.cc  # Cluster analysis visualization (ROOT macro)
@@ -126,30 +129,34 @@ The build also produces the standalone C++ decoder, installed under a separate
 
 ## Data Flow
 
+The recommended path uses the standalone C++ decoder in its fused `--pulse` mode, which
+**unifies decoding and skimming into a single pass** — the large `URWELL::adc` intermediate
+is never written to disk:
+
 ```
 Raw EVIO files
       │
       ▼
-[coatjava decoder]
-      │  Data/decoded_<RUN>_<FileNo>.hipo
+[uRwellDecoder.exe --pulse]    ← C++ decoder, requires PedFiles/Peds_<RUN>
+      │  Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo   (decode + pulse-fit fused)
       ▼
-[Skim_PulseFit.exe]          ← requires PedFiles/Peds_<RUN>
-      │  Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo
-      ▼
-[AnaPulseFits.exe]
-      │  AnaPulseFits_<RUN>_File_<FileNo>.root
+[analysis executable]          ← e.g. AnaPulseFits.exe or AnaSecondProtoDoubleHodo.exe
+      │  <Ana>_<RUN>_File_<FileNo>.root
       ▼
 [hadd]
-      │  AnaPulseFits_<RUN>.root  (final unified output)
+      │  <Ana>_<RUN>.root   (final unified output)
       ▼
 [ROOT plotting macros]
 ```
 
-> The decoding (and optionally the skimming) step above can also be done by the bundled
-> standalone C++ decoder (`Decoder/`), with no coatjava/Java dependency and faster runtime.
-> Its `--pulse` mode fuses decoding and pulse fitting into a single pass, producing
-> `Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo` directly from EVIO. See
-> [Standalone C++ Decoder](#standalone-c-decoder-decoder).
+> **Two-step alternative.** If you also need the full decoded `URWELL::adc` file (e.g. to
+> re-skim with a different threshold or pedestals), run decoding and skimming as separate steps
+> instead:
+>
+> ```
+> Raw EVIO → [uRwellDecoder.exe] → Data/decoded_<RUN>_<FileNo>.hipo
+>          → [Skim_PulseFit.exe]  → Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo → analysis → ...
+> ```
 
 ---
 
@@ -158,17 +165,45 @@ Raw EVIO files
 Pedestal runs are taken with a random trigger and lower HV so that no real signal is present.
 Approximately 2000 events are sufficient (< 1 minute of data taking).
 
-Decode the pedestal run the same way as a production run, then:
+### Recommended: one-command pedestal calculation
+
+`CalcPedestals.py` runs the entire pedestal chain — **decode → `CheckDecoding.exe` →
+`DrawPedestals.cc`** — for you. This is the default way to produce pedestals; you should not
+need to run the steps manually.
 
 ```bash
-./CheckDecoding.exe <RUN> <FILE>
-root -l 'DrawPedestals.cc(<RUN>)'
+python3 CalcPedestals.py <RUN> [-i <EVIO_DIR>] [-n <N_EVENTS>]
 ```
 
-`DrawPedestals.cc` calculates the mean and RMS (noise) for every channel, produces diagnostic
-plots in `Figs/`, and writes the results to:
+| Argument | Default | Description |
+|---|---|---|
+| `<RUN>` | — | Run number (required), e.g. `3261` |
+| `-i`, `--indir` | `/volatile/clas12/rafopar/uRwell/Data/BigProto/` | Directory holding the raw EVIO file |
+| `-n`, `--nevents` | `2000` | Number of events to decode (2000 is enough for pedestals) |
+
+Example:
+```bash
+python3 CalcPedestals.py 3261
+python3 CalcPedestals.py 3261 -i /path/to/evio/dir -n 5000
+```
+
+The final step (`DrawPedestals.cc`) calculates the mean and RMS (noise) for every channel,
+produces diagnostic plots in `Figs/`, and writes the results to:
 - `PedFiles/Peds_<RUN>` — μRwell pedestals and noise
 - `PedFiles/GEM_Peds_<RUN>` — GEM pedestals and noise
+
+### Manual steps (only if you need them individually)
+
+The three steps `CalcPedestals.py` automates are:
+
+```bash
+# 1) decode ~2000 events
+uRwellDecoder.exe -i <EVIO_DIR>/urwell_maroc_00<RUN>.evio.00000 -o Data/decoded_<RUN>_0.hipo -r <RUN> -n 2000
+# 2) diagnostic check of the decoded data
+./CheckDecoding.exe <RUN> 0
+# 3) extract and plot the pedestals
+root -l 'DrawPedestals.cc(<RUN>)'
+```
 
 **Linking pedestals to a production run:**
 If you want production run 3333 to use pedestals from run 1234:
@@ -181,8 +216,28 @@ ln -s GEM_Peds_1234 PedFiles/GEM_Peds_3333
 
 ## Decoding
 
-Raw EVIO files must be decoded using a special branch of coatjava optimised for the μRwell
-decoder (the standard branch is ~10× slower):
+The recommended decoder is the bundled **standalone C++ decoder** (`Decoder/`). It produces the
+same `URWELL::adc` and `XYHODO::tdc` banks as the old coatjava decoder, but with **no Java
+dependency** and a faster runtime, and it can fuse the skim step into the same pass (`--pulse`).
+
+```bash
+uRwellDecoder.exe -i inpFile.evio -o Data/decoded_<RUN>_<FileNo>.hipo
+```
+
+See [Standalone C++ Decoder](#standalone-c-decoder-decoder) for all options, the fused
+`--pulse` mode, and validation against coatjava.
+
+After decoding, the HIPO file contains two key banks:
+- `XYHODO::tdc` — hodoscope hits that pass threshold
+- `URWELL::adc` — raw ADC waveforms for all 1408 μRwell channels (no online zero-suppression)
+
+### Deprecated: coatjava (Java) decoder
+
+> **Deprecated.** The Java/coatjava decoder is retained for reference and cross-validation only.
+> New workflows should use the C++ decoder above.
+
+Historically, raw EVIO files were decoded with a special branch of coatjava optimised for the
+μRwell decoder (the standard branch is ~10× slower):
 
 ```bash
 git clone git@github.com:JeffersonLab/clas12-offline-software.git
@@ -200,17 +255,6 @@ Decode a single file:
 /path/to/decoder -i inpFile.evio -o Data/decoded_<RUN>_<FileNo>.hipo -c 1
 ```
 
-After decoding, the HIPO file contains two key banks:
-- `XYHODO::tdc` — hodoscope hits that pass threshold
-- `URWELL::adc` — raw ADC waveforms for all 1408 μRwell channels (no online zero-suppression)
-
-### Alternative: standalone C++ decoder
-
-The bundled `Decoder/` provides a self-contained C++ decoder (`uRwellDecoder.exe`) that produces
-the same `URWELL::adc` and `XYHODO::tdc` banks without the coatjava/Java dependency and runs
-faster. It can also fuse the skim step into the same pass (`--pulse`). See
-[Standalone C++ Decoder](#standalone-c-decoder-decoder).
-
 ---
 
 ## Skimming & Pulse Fitting
@@ -218,6 +262,11 @@ faster. It can also fuse the skim step into the same pass (`--pulse`). See
 Because all 1408 channels are read out every event, the raw files are large and slow to process.
 `Skim_PulseFit.exe` applies zero-suppression and fits each above-threshold pulse with a Landau function,
 producing compact HIPO files for downstream analysis.
+
+> **Note:** With the C++ decoder's fused `--pulse` mode this step is done as part of decoding and
+> you can skip `Skim_PulseFit.exe` entirely (see [Data Flow](#data-flow) and
+> [Fused Pulse-Fit Mode](#fused-pulse-fit-mode---pulse)). Run `Skim_PulseFit.exe` separately only
+> when you decoded to a full `URWELL::adc` file first.
 
 **Run:**
 ```bash
@@ -267,7 +316,31 @@ The picture below shows one example event from the `uRwell::Pulse` bank:
 
 ---
 
-## Analysis: AnaPulseFits
+## Analysis
+
+At this stage there are **several analysis executables**, each reading the skimmed
+`uRwell::Pulse` data and doing something different. Choose the one appropriate for your study:
+
+| Executable | Output | Purpose |
+|---|---|---|
+| `AnaPulseFits.exe` | `AnaPulseFits_<RUN>_File_<FileNo>.root` | Clustering, U×V cross reconstruction, hodoscope correlation, timing |
+| `AnaSecondProtoDoubleHodo.exe` | `AnaSecondHodoDoubleHodo_<RUN>_File_<FileNo>.root` | Double-hodoscope analysis for the second prototype |
+| `AnaClustering.exe` | `AnaClustering_<RUN>_*.root` | Legacy clustering on zero-suppressed input |
+
+They share the same basic invocation:
+
+```bash
+./<AnalysisExecutable> -r <RUN> -f <FileNo>
+```
+
+**Input:** `Skims/Skim_PulseFit_<RUN>_<FileNo>.hipo`
+
+The per-file ROOT outputs are then merged with `hadd` into a single `<Ana>_<RUN>.root` file.
+The [automated chain](#automated-running) runs the selected analysis and its `hadd` for you.
+
+The remainder of this section documents `AnaPulseFits.exe` as a representative example.
+
+### Example: AnaPulseFits
 
 `AnaPulseFits.exe` performs clustering, U×V cross reconstruction, hodoscope correlation, and
 timing analysis on the skimmed data.
@@ -281,7 +354,7 @@ timing analysis on the skimmed data.
 
 **Output:** `AnaPulseFits_<RUN>_File_<FileNo>.root`
 
-### Analysis Steps
+#### Analysis Steps
 
 1. **Hodoscope analysis** — reconstruct matched crosses from the XYHodoscope TDC bank.
    A "clean" event requires exactly 1 left-right matched cross (`nLR_MatchedCross == 1`).
@@ -314,7 +387,7 @@ timing analysis on the skimmed data.
    - Correlations with hodoscope bar IDs
    - Per-pixel timing maps (coarse 20×10 grid)
 
-### Efficiency Calculation
+#### Efficiency Calculation
 
 The detection efficiency per hodoscope pixel is.
 
@@ -446,7 +519,7 @@ tasks are:
 
 | Task name | Description | Typical time per file |
 |---|---|---|
-| `TASK_DECODE` | Decode EVIO → HIPO with coatjava | ~30 min |
+| `TASK_DECODE` | Decode EVIO → HIPO | ~30 min |
 | `TASK_SkimPulseFit` | Run `Skim_PulseFit.exe` | ~30 min |
 | `TASK_AnaPulseFit` | Run `AnaPulseFits.exe` → `AnaPulseFits_<RUN>_File_<FileNo>.root` | < 20 s |
 | `TASK_Hadd_pulsefit` | Merge `AnaPulseFits_<RUN>_File_*.root` → `AnaPulseFits_<RUN>.root`, then remove inputs | seconds |
@@ -562,6 +635,5 @@ helps study any signal amplitude or timing dependence on the distance to the RO 
 [comment]: <> ( )
 [comment]: <> (``` )
 [comment]: <> (git clone --recurse-submodules git@github.com:rafopar/uRWellTestProto.git )
-[comment]: <> (``` )
 [comment]: <> ( )
 [comment]: <> (to clone the distribution. )

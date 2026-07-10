@@ -84,7 +84,7 @@ install( TARGETS SkimZeroSuppression.exe CheckDecoding.exe AnaClustering.exe Dra
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin )
 
 ################################ Installing Non target files ###############################
-install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py RunSecondProtoAnaChain.py jputDecodes.py jputSkims.py RunSecondProtoAnaChain_NewDecoder.py
+install( FILES DrawPedestals.cc Decode_Run.py RunAnaChain.py RunSecondProtoAnaChain.py jputDecodes.py jputSkims.py RunSecondProtoAnaChain_NewDecoder.py CalcPedestals.py
         DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ################################ Installing needed directores ##############################
