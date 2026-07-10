@@ -76,6 +76,21 @@ uRWellTestProto/
 │   ├── ComparePulse.cc             # Validate uRwell::Pulse vs another HIPO file
 │   ├── evio-5.2/                   # Vendored EVIO-5.2 C library
 │   └── CMakeLists.txt
+├── EventViewer/                    # Interactive ROOT-GUI event display (reads HIPO or raw EVIO)
+│   ├── uRwellEventViewer.cc        # Main: builds the GUI and event loop
+│   ├── EVMainFrame.{h,cc}          # Top-level window, tab container, navigation/file controls
+│   ├── EVReader.{h,cc}             # HIPO event reader (EVReaderBase interface)
+│   ├── EVEvioReader.{h,cc}         # Raw-EVIO reader (decode-on-the-fly)
+│   ├── EVEvent.h                   # Per-event data passed to the tabs
+│   ├── EVHitsTab.{h,cc}            # Hits display tab
+│   ├── EVClustersTab.{h,cc}        # Clusters display tab
+│   ├── EVPulsesTab.{h,cc}          # Per-strip pulse-fit display tab
+│   ├── EVRawDataTab.{h,cc}         # Raw ADC waveform tab
+│   ├── EVHodoHitsTab.{h,cc}        # Hodoscope hits tab (short/long bars, PMT1/PMT2)
+│   ├── EVHodoCrossesTab.{h,cc}     # Hodoscope crosses tab (matched crosses)
+│   ├── EVCutEngine.{h,cc}          # Shared cut logic applied across tabs
+│   ├── EVGeometry.{h,cc}           # Drawing geometry helpers
+│   └── CMakeLists.txt
 ├── include/
 │   └── uRwellTools.h               # Core data structures, analysis utilities, and geometry tools
 ├── src/
