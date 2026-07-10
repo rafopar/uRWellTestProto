@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
     int evCounter = 0;
 
     hipo::bank buRWellADC(factory.getSchema("URWELL::adc"));
-    hipo::bank bRAWADc(factory.getSchema("RAW::adc"));
+    //hipo::bank bRAWADc(factory.getSchema("RAW::adc"));
     hipo::bank bRunConf(factory.getSchema("RUN::config"));
 
     const int crateID_test3 = 40; // the fADC is on ROC 40
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 
 
             event.getStructure(buRWellADC);
-            event.getStructure(bRAWADc);
+            //event.getStructure(bRAWADc);
             event.getStructure(bRunConf);
             int __bank_Sec_INDEX_ = buRWellADC.getSchema().getEntryOrder("sector");
             int __bank_Layer_INDEX_ = buRWellADC.getSchema().getEntryOrder("layer");
@@ -116,50 +116,50 @@ int main(int argc, char** argv) {
             int event = bRunConf.getInt("event", 0);
 
 
-            int n_fADC = bRAWADc.getRows();
+            // int n_fADC = bRAWADc.getRows();
+            //
+            // /**
+            //  * Only 4 channels on fADC are read out 0,1 and 9,10 . 0 and 1 are from Bottom scintillator, while 9 and 10 are from Top
+            //  */
+            // int ADC_SCTop = 0;
+            // int ADC_SCBot = 0;
+            //
+            //
+            // for (int ifADC = 0; ifADC < n_fADC; ifADC++) {
+            //
+            //     int crate = bRAWADc.getInt("crate", ifADC);
+            //     int slot = bRAWADc.getInt("slot", ifADC);
+            //
+            //     if (!(crate == crateID_test3 && slot == slot_fADC)) {
+            //         cout << "Wrong crate or slot. Should not be happen" << endl;
+            //         cout << "              crate = " << crate << "     slot = " << slot << endl;
+            //
+            //         continue;
+            //     }
+            //
+            //     int ch = bRAWADc.getInt("channel", ifADC);
+            //     int ADC = bRAWADc.getInt("ADC", ifADC);
+            //     double time = bRAWADc.getFloat("time", ifADC);
+            //
+            //     if (ch == 0 || ch == 1) {
+            //         ADC_SCBot = ADC_SCBot + ADC;
+            //     } else if (ch == 9 || ch == 10) {
+            //         ADC_SCTop = ADC_SCTop + ADC;
+            //     }
+            //
+            //     for (int jfADC = ifADC + 1; jfADC < n_fADC; jfADC++) {
+            //
+            //         int jch = bRAWADc.getInt("channel", jfADC);
+            //         int jADC = bRAWADc.getInt("ADC", jfADC);
+            //
+            //         if (jADC > 0 && ADC > 0) {
+            //             h_ch_Coorelation->Fill(ch, jch);
+            //         }
+            //     }
+            //
+            // }
 
-            /**
-             * Only 4 channels on fADC are read out 0,1 and 9,10 . 0 and 1 are from Bottom scintillator, while 9 and 10 are from Top
-             */
-            int ADC_SCTop = 0;
-            int ADC_SCBot = 0;
-
-
-            for (int ifADC = 0; ifADC < n_fADC; ifADC++) {
-
-                int crate = bRAWADc.getInt("crate", ifADC);
-                int slot = bRAWADc.getInt("slot", ifADC);
-
-                if (!(crate == crateID_test3 && slot == slot_fADC)) {
-                    cout << "Wrong crate or slot. Should not be happen" << endl;
-                    cout << "              crate = " << crate << "     slot = " << slot << endl;
-
-                    continue;
-                }
-
-                int ch = bRAWADc.getInt("channel", ifADC);
-                int ADC = bRAWADc.getInt("ADC", ifADC);
-                double time = bRAWADc.getFloat("time", ifADC);
-
-                if (ch == 0 || ch == 1) {
-                    ADC_SCBot = ADC_SCBot + ADC;
-                } else if (ch == 9 || ch == 10) {
-                    ADC_SCTop = ADC_SCTop + ADC;
-                }
-
-                for (int jfADC = ifADC + 1; jfADC < n_fADC; jfADC++) {
-
-                    int jch = bRAWADc.getInt("channel", jfADC);
-                    int jADC = bRAWADc.getInt("ADC", jfADC);
-
-                    if (jADC > 0 && ADC > 0) {
-                        h_ch_Coorelation->Fill(ch, jch);
-                    }
-                }
-
-            }
-
-            h_ADC_TopBot1->Fill(ADC_SCBot, ADC_SCTop);
+//            h_ADC_TopBot1->Fill(ADC_SCBot, ADC_SCTop);
 
             std::map< int, int > m_ADC_[n_ts]; // The key of the map is unique_channel, and the value is the ADC value
             std::map< int, int > m_ADC_GEM_[n_ts]; // The key of the map is unique_channel, and the value is the ADC value
