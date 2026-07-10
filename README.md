@@ -15,6 +15,7 @@ for instructions on Software installation and running.
    - [Decoding](#decoding)
    - [Skimming & Pulse Fitting](#skimming--pulse-fitting)
    - [Analysis](#analysis)
+   - [HV Dependence Scans](#hv-dependence-scans)
 5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
 6. [Automated Running](#automated-running)
 7. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
@@ -417,6 +418,62 @@ efficiency[shortBarID][longBarID] =
 NOTE: with only single hodoscope, there will be non-negligible amount of cosmic tracks passing therough
 the hodoscope, but missing the μRwell. So actuall efficiency of the μRwell close to the edges will be higher
 the ratio defined above.
+
+---
+
+## HV Dependence Scans
+
+`HV_Scan_SecondProtoDoubleHodo.exe` builds high-voltage dependence plots for the second-prototype
+double-hodoscope runs. Given a scan **series**, it reads each run's merged analysis file
+`AnaSecondHodoDoubleHodo_<RUN>.root`, extracts a set of observables from the histograms, and plots
+each one as a function of the high voltage.
+
+**Run:**
+```bash
+./HV_Scan_SecondProtoDoubleHodo.exe <Series> <ScanType> [inputDir]
+# e.g.
+./HV_Scan_SecondProtoDoubleHodo.exe 1 MESH
+```
+
+The runs and their HV settings for a series are listed in `SecondProtoHVScan_<Series>.dat`, with columns:
+
+```
+<Run>  <HV_MESH_Top>  <HV_MESH_Bot>  <HV_Cathode_Top>  <HV_Cathode_Bot>
+```
+
+The meaning of the HV (x) axis is set by `<ScanType>` (Drift HV = Cathode HV − MESH HV):
+
+| ScanType | HV axis |
+|---|---|
+| `MESH` | common mesh HV (`HV_MESH_Top`, expects Top == Bot) |
+| `Drift` | common drift HV (`HV_Cathode_Top − HV_MESH_Top`) |
+| `MESH_Top` / `MESH_Bot` | top / bottom mesh HV |
+| `Drift_Top` / `Drift_Bot` | top / bottom drift HV |
+
+**Observables** are extracted per run. The `h_U...` histograms come from the Top detector and the
+`h_V...` from the Bottom detector, and the U/V graphs of an observable are drawn together on one
+figure. The currently registered observables are:
+
+| Observable | Source histogram(s) | Extracted quantity |
+|---|---|---|
+| Cluster size mean | `h_UCl_Size2` / `h_VCl_Size2` | histogram mean |
+| Cluster size peak | `h_UCl_Size2` / `h_VCl_Size2` | peak-bin position |
+| Pulse integral MPV | `h_U_PulseIntegral2` / `h_V_PulseIntegral2` | Landau-fit MPV (full range) |
+| Pulse height MPV | `h_U_PulseHeight2` / `h_V_PulseHeight2` | Landau-fit MPV (0–1000) |
+| Efficiency [%] | `h_Cross_YXc_MaxIntegral_Fiducial1`, `h_Det0_Occupancy_Fiducial1` | 100 × ratio of entries (single "combined" graph) |
+
+Adding a new variable is a single entry in `buildObservables()` (U/V observables) or
+`buildCombinedObservables()` (single-graph combined observables).
+
+**Outputs** (all in `Figs/`):
+- `HVScan_<Observable>_<ScanType>_Series<N>.{pdf,png,root}` — the HV dependence of each observable.
+- `Distributions_HV_Scan_<N>.pdf` — one multi-page document with every input distribution used
+  for the extractions (histogram, fit, and extracted value), for inspection at a glance.
+- `diagnostic_<Variable>_<ScanType>_<HVValue>.pdf` — written **only** when a fit fails, showing the
+  histogram with the attempted fit so the failure can be understood.
+
+Whenever a point cannot be produced (missing/empty histogram or a non-converging fit) it is dropped,
+the user is notified on the spot, and a summary of all dropped points is printed at the end.
 
 ---
 
