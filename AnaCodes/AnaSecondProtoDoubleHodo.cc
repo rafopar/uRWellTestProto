@@ -69,6 +69,7 @@ int main(int argc, char **argv) {
     const int layer_U_uRwell = 1;
     const int layer_V_uRwell = 2;
     const int sec_uRwell = 6;
+    const int sec_ITEM3 = 8;
     const double PulseSigmaMax = 5.2;
     const double PulseSigmaMin = 1.2;
 
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
 
     TH2D h_Det0_Occupancy_vertTrk1("h_Det0_Occupancy_vertTrk1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_Fiducial1("h_Det0_Occupancy_Fiducial1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+    TH2D h_Det0_Occupancy_Fiducial_hasItem3_1("h_Det0_Occupancy_Fiducial_hasItem3_1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
     TH2D h_Det0_Occupancy_vert_uRwell_Ucluster1("h_Det0_Occupancy_vert_uRwell_Ucluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_vert_uRwell_Vcluster1("h_Det0_Occupancy_vert_uRwell_Vcluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
@@ -120,6 +122,7 @@ int main(int argc, char **argv) {
     TH2D h_Cross_YXc_MaxIntegralInsideDet1("h_Cross_YXc_MaxIntegralInsideDet1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegral_vertTrk11("h_Cross_YXc_MaxIntegral_vertTrk1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegral_Fiducial1("h_Cross_YXc_MaxIntegral_Fiducial1", "", 1000, -900., 900., 200, -500., 500.);
+    TH2D h_Cross_YXc_MaxIntegral_Fiducial_HasItem3_1("h_Cross_YXc_MaxIntegral_Fiducial_HasItem3_1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXC_Weighted_deltaT_StTime1("h_Cross_YXC_Weighted_deltaT_StTime1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXC_Weighted_UClSize1("h_Cross_YXC_Weighted_UClSize1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXC_Weighted_VClSize1("h_Cross_YXC_Weighted_VClSize1", "", 1000, -900., 900., 200, -500., 500.);
@@ -170,6 +173,8 @@ int main(int argc, char **argv) {
             event.getStructure(bRunConf);
             event.getStructure(bXYHodoTDC);
 
+            int evNum = bRunConf.getInt("event", 0);
+
             XYHodoTools::XYHodoAnalyzer det0_analyzer(0);
             det0_analyzer.SetTOverThreshold(T_OverThrCut);
             det0_analyzer.SetCrossDeltaT(deltaT_Cut_Cross);
@@ -204,10 +209,6 @@ int main(int argc, char **argv) {
 
             bool fiducial_trk = IsHodoPixelInsideuRwell(det0_ShortBarID, det0_LongBarID) && IsHodoPixelInsideuRwell(det1_ShortBarID, det1_LongBarID);
 
-            if (fiducial_trk) {
-                h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
-            }
-
             bool vertical_trk = TMath::Abs(det0_ShortBarID - det1_ShortBarID) <= 2 && TMath::Abs(det0_LongBarID - det1_LongBarID) <= 2;
 
             //if (!vertical_trk) {continue;}
@@ -217,6 +218,9 @@ int main(int argc, char **argv) {
 
             std::vector<uRwellTools::APV25Pulse> v_U_Pulses;
             std::vector<uRwellTools::APV25Pulse> v_V_Pulses;
+
+            std::vector<uRwellTools::APV25Pulse> v_ITEM3_X_Pulses;
+            std::vector<uRwellTools::APV25Pulse> v_ITEM3_Y_Pulses;
 
             int nPulses = buRwellPulses.getRows();
 
@@ -250,7 +254,12 @@ int main(int argc, char **argv) {
                     }else if ( curPulse.hit.layer == layer_V_uRwell ) {
                         v_V_Pulses.push_back(curPulse);
                     }
-
+                }else if( curPulse.hit.sector == sec_ITEM3 ) {
+                    if ( curPulse.hit.strip < 128 ) {
+                        v_ITEM3_X_Pulses.push_back(curPulse);
+                    }else {
+                        v_ITEM3_Y_Pulses.push_back(curPulse);
+                    }
                 }
 
             }
@@ -260,9 +269,23 @@ int main(int argc, char **argv) {
             unsigned int n_U_Pulses = v_U_Pulses.size();
             unsigned int n_V_Pulses = v_V_Pulses.size();
 
+            unsigned int n_ITEM3_X_Pulses = v_ITEM3_X_Pulses.size();
+            unsigned int n_ITEM3_Y_Pulses = v_ITEM3_Y_Pulses.size();
+
             // --- We want to avoid these events where there is huge amount of hits in the uRwell.
             // --- Those are mostly caused by a bad noise, which is not direcly caused by the detector performance
-            if (MonsterEvent(n_U_Pulses, n_U_Pulses)) {continue;}
+            if (MonsterEvent(n_U_Pulses, n_V_Pulses)) {continue;}
+
+            if (fiducial_trk) {
+                h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
+            }
+
+            // -------------- Forming Item3 X and Y clusters ------------------
+            std::vector<uRwellTools::PulseCluster> v_ITEM3_Y_clusters = uRwellTools::getPulseClusters(v_ITEM3_Y_Pulses);
+            std::vector<uRwellTools::PulseCluster> v_ITEM3_X_clusters = uRwellTools::getPulseClusters(v_ITEM3_X_Pulses);
+
+            uRwellTools::PulseCluster Max_ITEM3_Y_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_Y_clusters, minHits);
+            uRwellTools::PulseCluster Max_ITEM3_X_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_X_clusters, minHits);
 
 
             //       Forming U and V Clusters
@@ -311,6 +334,8 @@ int main(int argc, char **argv) {
             bool has_V_cluster = !Max_V_PulseCluster.getPulses()->empty();
             bool has_U_AND_V_clusters =  has_U_cluster && has_V_cluster;
 
+            bool has_ITEM3_Cross = !Max_ITEM3_Y_Cluster.getPulses()->empty() && !Max_ITEM3_X_Cluster.getPulses()->empty();
+
             if (fiducial_trk) {
                 if (has_U_cluster) {
                     h_UCl_Size_Fiducial1.Fill(U_ClSize);
@@ -318,6 +343,14 @@ int main(int argc, char **argv) {
                 if (has_V_cluster) {
                     h_VCl_Size_Fiducial1.Fill(V_ClSize);
                 }
+
+                if ( has_ITEM3_Cross ) {
+                    h_Det0_Occupancy_Fiducial_hasItem3_1.Fill( det0_ShortBarID, det0_LongBarID );
+                }
+
+                // if ( !has_U_AND_V_clusters ) {
+                //     cout<<"Non Efficient event: #"<<evNum<<"   Has U cluster "<<has_U_cluster<<"    Has V cluster "<<has_V_cluster<<endl;
+                // }
             }
 
 
@@ -363,6 +396,11 @@ int main(int argc, char **argv) {
                         h_V_Nbr_DeltaSTartTime_Fiducial1.Fill( Max_V_PulseCluster.getClusterPulseIntegral(), deltaT_V_nbr );
                         h_V_NbrDeltaStartTime_vs_StrID_Fiducial1.Fill( Max_V_PulseCluster.getSeedPulse().hit.strip, deltaT_V_nbr );
                     }
+
+                    if ( has_ITEM3_Cross ) {
+                        h_Cross_YXc_MaxIntegral_Fiducial_HasItem3_1.Fill(crs_X, crs_Y);
+                    }
+
                 }
 
                 if (vertical_trk) {
