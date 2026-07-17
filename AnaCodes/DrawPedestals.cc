@@ -6,6 +6,7 @@
  */
 
 #include <cstdlib>
+#include <TSystem.h>
 
 using namespace std;
 
@@ -20,6 +21,10 @@ void DrawPedestals(int run) {
         cout << "Run number has to be above 0. End program " << endl;
         exit(1);
     }
+
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
+
     const int n_ts = 15;
 
     TF1 *f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", 1000, 3500);
@@ -111,9 +116,9 @@ void DrawPedestals(int run) {
     gr_Mean->SetMarkerColor(4);
     gr_Mean->GetYaxis()->SetTitleOffset(0.5);
     gr_Mean->Draw("APl");
-    c1->Print(Form("Figs/ped_Mean_%d.pdf", run));
-    c1->Print(Form("Figs/ped_Mean_%d.png", run));
-    c1->Print(Form("Figs/ped_Mean_%d.root", run));
+    c1->Print(Form("%s/ped_Mean_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_Mean_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_Mean_%d.root", figDir.c_str(), run));
 
     gr_RMS->SetMarkerStyle(20);
     gr_RMS->SetTitle("; Channel # ; RMS of ADC");
@@ -123,9 +128,9 @@ void DrawPedestals(int run) {
     gr_RMS->GetYaxis()->SetTitleOffset(0.5);
     gr_RMS->Draw("APl");
     DrawHybridLimits(gr_RMS);
-    c1->Print(Form("Figs/ped_RMS_globalVew_%d.pdf", run));
-    c1->Print(Form("Figs/ped_RMS_globalVew_%d.png", run));
-    c1->Print(Form("Figs/ped_RMS_globalVew_%d.root", run));
+    c1->Print(Form("%s/ped_RMS_globalVew_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_globalVew_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_globalVew_%d.root", figDir.c_str(), run));
 
 
     gr_RMS->SetMaximum(35);
@@ -133,24 +138,24 @@ void DrawPedestals(int run) {
     c1->Modified();
     c1->Update();
     c1->SetGridy();
-    c1->Print(Form("Figs/ped_RMS_ZoomSmallValues_%d.pdf", run));
-    c1->Print(Form("Figs/ped_RMS_ZoomSmallValues_%d.png", run));
-    c1->Print(Form("Figs/ped_RMS_ZoomSmallValues_%d.root", run));
+    c1->Print(Form("%s/ped_RMS_ZoomSmallValues_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_ZoomSmallValues_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_ZoomSmallValues_%d.root", figDir.c_str(), run));
 
     h_ADC_chan->SetStats(0);
     h_ADC_chan->SetTitle("; Channel # ; ADC");
     h_ADC_chan->SetTitleOffset(0.7, "Y");
     h_ADC_chan->Draw("colz");
-    c1->Print(Form("Figs/ADC_vs_Channel_globalView_%d.pdf", run));
-    c1->Print(Form("Figs/ADC_vs_Channel_globalView_%d.png", run));
-    c1->Print(Form("Figs/ADC_vs_Channel_globalView_%d.root", run));
+    c1->Print(Form("%s/ADC_vs_Channel_globalView_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ADC_vs_Channel_globalView_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ADC_vs_Channel_globalView_%d.root", figDir.c_str(), run));
 
     h_ADC_chan->SetAxisRange(1160, 1220, "X");
     c1->Modified();
     c1->Update();
-    c1->Print(Form("Figs/ADC_vs_Channel_Zoom_onXaxis_%d.pdf", run));
-    c1->Print(Form("Figs/ADC_vs_Channel_Zoom_onXaxis_%d.png", run));
-    c1->Print(Form("Figs/ADC_vs_Channel_Zoom_onXaxis_%d.proot", run));
+    c1->Print(Form("%s/ADC_vs_Channel_Zoom_onXaxis_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ADC_vs_Channel_Zoom_onXaxis_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ADC_vs_Channel_Zoom_onXaxis_%d.proot", figDir.c_str(), run));
 
     c1->Clear();
     TMultiGraph *mtgr_mean = new TMultiGraph();
@@ -172,9 +177,9 @@ void DrawPedestals(int run) {
     gr_Mean_GEM->SetMarkerColor(4);
     gr_Mean_GEM->GetYaxis()->SetTitleOffset(0.5);
     gr_Mean_GEM->Draw("APl");
-    c1->Print(Form("Figs/ped_Mean_GEM_%d.pdf", run));
-    c1->Print(Form("Figs/ped_Mean_GEM_%d.png", run));
-    c1->Print(Form("Figs/ped_Mean_GEM_%d.root", run));
+    c1->Print(Form("%s/ped_Mean_GEM_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_Mean_GEM_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_Mean_GEM_%d.root", figDir.c_str(), run));
 
     gr_RMS_GEM->SetMarkerStyle(20);
     gr_RMS_GEM->SetTitle("; Channel # ; RMS of ADC");
@@ -184,9 +189,9 @@ void DrawPedestals(int run) {
     gr_RMS_GEM->SetMinimum(0);
     gr_RMS_GEM->GetYaxis()->SetTitleOffset(0.5);
     gr_RMS_GEM->Draw("APl");
-    c1->Print(Form("Figs/ped_RMS_GEM_globalVew_%d.pdf", run));
-    c1->Print(Form("Figs/ped_RMS_GEM_globalVew_%d.png", run));
-    c1->Print(Form("Figs/ped_RMS_GEM_globalVew_%d.root", run));
+    c1->Print(Form("%s/ped_RMS_GEM_globalVew_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_GEM_globalVew_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/ped_RMS_GEM_globalVew_%d.root", figDir.c_str(), run));
 }
 
 void DrawHybridLimits(TGraph* gr) {

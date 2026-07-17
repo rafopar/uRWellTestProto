@@ -12,6 +12,7 @@
 #include <TH1D.h>
 #include <TMath.h>
 #include <TFile.h>
+#include <TSystem.h>
 
 using namespace std;
 
@@ -25,6 +26,9 @@ int main( int argc, char* argv[] ) {
     }
 
     int run = atoi(argv[1]);
+
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
 
     auto c1 = new TCanvas("c1", "", 1200, 900);
 
@@ -43,9 +47,9 @@ int main( int argc, char* argv[] ) {
     h_Sliced_U_Sigmas.SetMarkerColor(2);
     h_Cross_UCluster_Sgima_vs_Strip1->Draw();
     h_Sliced_U_Sigmas.Draw("Same p");
-    c1->Print(Form("Figs/Sliced_U_Sigmas_%d.pdf", run));
-    c1->Print(Form("Figs/Sliced_U_Sigmas_%d.png", run));
-    c1->Print(Form("Figs/Sliced_U_Sigmas_%d.root", run));
+    c1->Print(Form("%s/Sliced_U_Sigmas_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Sliced_U_Sigmas_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Sliced_U_Sigmas_%d.root", figDir.c_str(), run));
 
 
     for ( int ib = 1; ib <= h_Sliced_U_Sigmas.GetNbinsX(); ib++ ) {
@@ -58,9 +62,9 @@ int main( int argc, char* argv[] ) {
     h_Sliced_V_Sigmas.SetMarkerColor(2);
     h_Cross_VCluster_Sgima_vs_Strip1->Draw();
     h_Sliced_V_Sigmas.Draw("Same p");
-    c1->Print(Form("Figs/Sliced_V_Sigmas_%d.pdf", run));
-    c1->Print(Form("Figs/Sliced_V_Sigmas_%d.png", run));
-    c1->Print(Form("Figs/Sliced_V_Sigmas_%d.root", run));
+    c1->Print(Form("%s/Sliced_V_Sigmas_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Sliced_V_Sigmas_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Sliced_V_Sigmas_%d.root", figDir.c_str(), run));
     for ( int ib = 1; ib <= h_Sliced_V_Sigmas.GetNbinsX(); ib++ ) {
         out_dat<<1000+ib<<"\t"<<h_Sliced_V_Sigmas.GetBinContent(ib)<<endl;
     }

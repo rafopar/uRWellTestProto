@@ -10,6 +10,7 @@
 #include <TFile.h>
 #include <TLatex.h>
 #include <TCanvas.h>
+#include <TSystem.h>
 
 #include <uRwellTools.h>
 #include <cxxopts.hpp>
@@ -37,6 +38,9 @@ int main( int argc, char *argv[] ) {
         exit(1);
     }
 
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
+
     const double ts2ns = 25; // Conversion factor from time sampe to ns
 
     TFile file_in(Form("AnaPulseFits_%d.root", run), "Read");
@@ -56,9 +60,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegral1->SetTitleSize(0.05, "X");
     h_Cross_YXc_MaxIntegral1->SetLabelSize(0.05, "X");
     h_Cross_YXc_MaxIntegral1->SetMaximum(h_Cross_YXc_MaxIntegral1->GetMaximum() / 2.);
-    c2->Print(Form("Figs/Cross_YXc_MaxIntegral1_%d.pdf", run));
-    c2->Print(Form("Figs/Cross_YXc_MaxIntegral1_%d.png", run));
-    c2->Print(Form("Figs/Cross_YXc_MaxIntegral1_%d.root", run));
+    c2->Print(Form("%s/Cross_YXc_MaxIntegral1_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cross_YXc_MaxIntegral1_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cross_YXc_MaxIntegral1_%d.root", figDir.c_str(), run));
 
 
     auto c1 = new TCanvas("c1", "", 900., 900.);
@@ -75,18 +79,18 @@ int main( int argc, char *argv[] ) {
     h_Cross_V_vs_U_ClusterMPV1->SetTitleSize(0.05, "X");
     h_Cross_V_vs_U_ClusterMPV1->SetLabelSize(0.05, "X");
     h_Cross_V_vs_U_ClusterMPV1->Draw();
-    c1->Print(Form("Figs/Cross_V_vs_U_ClusterMPV1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_V_vs_U_ClusterMPV1_%d.png", run));
-    c1->Print(Form("Figs/Cross_V_vs_U_ClusterMPV1_%d.root", run));
+    c1->Print(Form("%s/Cross_V_vs_U_ClusterMPV1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_V_vs_U_ClusterMPV1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_V_vs_U_ClusterMPV1_%d.root", figDir.c_str(), run));
 
     auto h_U_ClusterMPV1 = h_Cross_V_vs_U_ClusterMPV1->ProjectionX("h_U_ClusterMPV1", 1, h_Cross_V_vs_U_ClusterMPV1->GetNbinsX());
     h_U_ClusterMPV1->SetStats(0);
     h_U_ClusterMPV1->SetTitleSize(0.05, "Y");
     h_U_ClusterMPV1->SetLabelSize(0.05, "Y");
     h_U_ClusterMPV1->Draw();
-    c1->Print(Form("Figs/U_ClusterMPV1_%d.pdf", run));
-    c1->Print(Form("Figs/U_ClusterMPV1_%d.png", run));
-    c1->Print(Form("Figs/U_ClusterMPV1_%d.root", run));
+    c1->Print(Form("%s/U_ClusterMPV1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_ClusterMPV1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_ClusterMPV1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_V_vs_U_SeedMPV1 = dynamic_cast<TH2D *>(file_in.Get("h_Cross_V_vs_U_SeedMPV1"));
     h_Cross_V_vs_U_SeedMPV1->SetStats(0);
@@ -97,18 +101,18 @@ int main( int argc, char *argv[] ) {
     h_Cross_V_vs_U_SeedMPV1->SetTitleSize(0.05, "X");
     h_Cross_V_vs_U_SeedMPV1->SetLabelSize(0.05, "X");
     h_Cross_V_vs_U_SeedMPV1->Draw();
-    c1->Print(Form("Figs/Cross_V_vs_U_SeedMPV1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_V_vs_U_SeedMPV1_%d.png", run));
-    c1->Print(Form("Figs/Cross_V_vs_U_SeedMPV1_%d.root", run));
+    c1->Print(Form("%s/Cross_V_vs_U_SeedMPV1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_V_vs_U_SeedMPV1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_V_vs_U_SeedMPV1_%d.root", figDir.c_str(), run));
 
     auto h_U_SeedMPV1 = h_Cross_V_vs_U_SeedMPV1->ProjectionX("h_U_SeedMPV1", 1, h_Cross_V_vs_U_SeedMPV1->GetNbinsY() );
     h_U_SeedMPV1->SetStats(0);
     h_U_SeedMPV1->SetTitleSize(0.05, "Y");
     h_U_SeedMPV1->SetLabelSize(0.05, "Y");
     h_U_SeedMPV1->Draw();
-    c1->Print(Form("Figs/U_SeedMPV1_%d.pdf", run));
-    c1->Print(Form("Figs/U_SeedMPV1_%d.png", run));
-    c1->Print(Form("Figs/U_SeedMPV1_%d.root", run));
+    c1->Print(Form("%s/U_SeedMPV1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_SeedMPV1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_SeedMPV1_%d.root", figDir.c_str(), run));
 
     auto f_Gaus = new TF1("f_Gaus", "[0]*TMath::Gaus(x, [1], [2])", -15., 15.);
     f_Gaus->SetNpx(4500);
@@ -133,9 +137,9 @@ int main( int argc, char *argv[] ) {
     double sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff1_%d.root", figDir.c_str(), run));
 
 
     auto h_Cross_SeedTimeDiff1 = dynamic_cast<TH1D*>(file_in.Get("h_Cross_SeedTimeDiff1"));
@@ -154,9 +158,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/Cross_SeedTimeDiff1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_SeedTimeDiff1_%d.png", run));
-    c1->Print(Form("Figs/Cross_SeedTimeDiff1_%d.root", run));
+    c1->Print(Form("%s/Cross_SeedTimeDiff1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_SeedTimeDiff1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_SeedTimeDiff1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_ClusterStartTimeDiff1 = dynamic_cast<TH1D*>(file_in.Get("h_Cross_ClusterStartTimeDiff1"));
     h_Cross_ClusterStartTimeDiff1->SetStats(0);
@@ -173,9 +177,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_SeedStartTimeDiff1 = dynamic_cast<TH1D*>(file_in.Get("h_Cross_SeedStartTimeDiff1"));
     h_Cross_SeedStartTimeDiff1->SetStats(0);
@@ -192,9 +196,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/Cross_Seed_StartTimeDiff1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_Seed_StartTimeDiff1_%d.png", run));
-    c1->Print(Form("Figs/Cross_Seed_StartTimeDiff1_%d.root", run));
+    c1->Print(Form("%s/Cross_Seed_StartTimeDiff1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_Seed_StartTimeDiff1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_Seed_StartTimeDiff1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1"));
     h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->SetStats(0);
@@ -206,9 +210,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->GetXaxis()->SetNdivisions(404);
     h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->SetTitle("; U Cluster Pulse Integral; Cluster time difference [25 ns]");
     h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->Draw();
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterTimeDiff_vs_U_clPulseIntegral1_%d.root", figDir.c_str(), run));
 
     int nbinsX = h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->GetNbinsX();
     auto h_U_lowADC_ClustTimeDifference1 = h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->ProjectionY("h_U_lowADC_ClustTimeDifference1", 1, 50);
@@ -220,9 +224,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_lowADC_ClustTimeDifference1_%d.pdf", run));
-    c1->Print(Form("Figs/U_lowADC_ClustTimeDifference1_%d.png", run));
-    c1->Print(Form("Figs/U_lowADC_ClustTimeDifference1_%d.root", run));
+    c1->Print(Form("%s/U_lowADC_ClustTimeDifference1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustTimeDifference1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustTimeDifference1_%d.root", figDir.c_str(), run));
 
     auto h_U_highADC_ClustTimeDifference1 = h_Cross_ClusterTimeDiff_vs_U_clPulseIntegral1->ProjectionY("h_U_highADC_ClustTimeDifference1", nbinsX - 50, nbinsX);
     mean = h_U_highADC_ClustTimeDifference1->GetMean();
@@ -233,9 +237,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_highADC_ClustTimeDifference1_%d.pdf", run));
-    c1->Print(Form("Figs/U_highADC_ClustTimeDifference1_%d.png", run));
-    c1->Print(Form("Figs/U_highADC_ClustTimeDifference1_%d.root", run));
+    c1->Print(Form("%s/U_highADC_ClustTimeDifference1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustTimeDifference1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustTimeDifference1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1"));
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->SetStats(0);
@@ -247,9 +251,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->SetTitle("; U Cluster Pulse Integral; Cluster Start Time difference [25 ns]");
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->GetXaxis()->SetNdivisions(404);
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->Draw();
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1_%d.root", figDir.c_str(), run));
 
     auto h_U_lowADC_ClustStartTimeDifference1 = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->ProjectionY("h_U_lowADC_ClustStartTimeDifference1", 1, 50);
     h_U_lowADC_ClustStartTimeDifference1->Draw();
@@ -261,9 +265,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference1_%d.pdf", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference1_%d.png", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference1_%d.root", run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference1_%d.root", figDir.c_str(), run));
 
     nbinsX = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->GetNbinsX();
     auto h_U_highADC_ClustStartTimeDifference1 = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral1->ProjectionY("h_U_highADC_ClustStartTimeDifference1", nbinsX - 50, nbinsX);
@@ -275,9 +279,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference1_%d.pdf", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference1_%d.png", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference1_%d.root", run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1"));
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->SetStats(0);
@@ -289,9 +293,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitle("; U Cluster Pulse Integral; Cluster Start Time difference [25 ns]");
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->GetXaxis()->SetNdivisions(404);
     h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->Draw();
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.root", figDir.c_str(), run));
 
     auto h_U_lowADC_ClustStartTimeDifference_GoodWidth1 = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_lowADC_ClustStartTimeDifference_GoodWidth1", 1, 50);
     h_U_lowADC_ClustStartTimeDifference_GoodWidth1->Draw();
@@ -303,9 +307,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeDifference_GoodWidth1_%d.root", figDir.c_str(), run));
 
     nbinsX = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->GetNbinsX();
     auto h_U_highADC_ClustStartTimeDifference_GoodWidth1 = h_Cross_ClusterStartTimeDiff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_highADC_ClustStartTimeDifference_GoodWidth1",
@@ -319,9 +323,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeDifference_GoodWidth1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1"));
     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetStats(0);
@@ -333,9 +337,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->SetTitle("; U Cluster Pulse Integral; Cluster Start Time (table) difference [25 ns]");
     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->GetXaxis()->SetNdivisions(404);
     h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->Draw();
-    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Cross_ClusterStartTimeTableDiff_vs_U_cl_PulseIntegral_GoodWidth1_%d.root", figDir.c_str(), run));
 
     auto h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1 = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_lowADC_ClustStartTimeDifference_GoodWidth1", 1, 50);
     h_U_lowADC_ClustStartTimeTableDifference_GoodWidth1->Draw();
@@ -347,9 +351,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_lowADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", figDir.c_str(), run));
 
     nbinsX = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->GetNbinsX();
     auto h_U_highADC_ClustStartTimeTableDifference_GoodWidth1 = h_Cross_ClusterStartTimeTable_Diff_vs_U_cl_PulseIntegral_GoodWidth1->ProjectionY("h_U_highADC_ClustStartTimeDifference_GoodWidth1", nbinsX-50, nbinsX);
@@ -362,9 +366,9 @@ int main( int argc, char *argv[] ) {
     sigma = f_Gaus->GetParameter(2);
     lat1->DrawLatex(0.15, 0.9, Form("#mu = %1.2f ns", mean*ts2ns));
     lat1->DrawLatex(0.15, 0.8, Form("#sigma = %1.2f ns", sigma*ts2ns));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", run));
-    c1->Print(Form("Figs/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_highADC_ClustStartTimeTableDifference_GoodWidth1_%d.root", figDir.c_str(), run));
 
     /// ******** Distribution of hit properties (time, Pulse integral, cl_size) over the uRwell surface
     c2->cd()->SetRightMargin(0.08);
@@ -373,9 +377,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->SetTitle("; Cross X [mm]; Cross Y [mm]");
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->SetMaximum(0.25*h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->GetMaximum());
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma1->Draw();
-    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.pdf", run));
-    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.png", run));
-    c2->Print(Form("Figs/Cross_YXc_GoodPulseSigma1_%d.root", run));
+    c2->Print(Form("%s/Cross_YXc_GoodPulseSigma1_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cross_YXc_GoodPulseSigma1_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cross_YXc_GoodPulseSigma1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1"));
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetStats(0);
@@ -384,9 +388,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetMaximum(10);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->SetMinimum(0.1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UStartTime1->Draw("colz");
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UStartTtime1_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UStartTtime1_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UStartTtime1_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UStartTtime1_%d.root", figDir.c_str(), run));
 
     auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1"));
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetStats(0);
@@ -395,9 +399,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetMaximum(10);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->SetMinimum(0.1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->Draw("colz");
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VStartTtime1_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VStartTtime1_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VStartTtime1_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VStartTtime1_%d.root", figDir.c_str(), run));
 
     c1->cd();
     int binx1 = h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VStartTime1->GetXaxis()->FindBin(-150.);
@@ -406,9 +410,9 @@ int main( int argc, char *argv[] ) {
     h_avgStartTime_vs_Y1->Scale(1./double(binx2 - binx1));
     h_avgStartTime_vs_Y1->SetMinimum(0.);
     h_avgStartTime_vs_Y1->Draw();
-    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.pdf", run));
-    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.png", run));
-    c1->Print(Form("Figs/avgStartTime_VCl_vs_Y1_%d.root", run));
+    c1->Print(Form("%s/avgStartTime_VCl_vs_Y1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/avgStartTime_VCl_vs_Y1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/avgStartTime_VCl_vs_Y1_%d.root", figDir.c_str(), run));
 
     c2->cd()->Clear();
 
@@ -418,9 +422,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->SetMaximum(10);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClSize1->Draw("colz");
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UClSize_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UClSize_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UClSize_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UClSize_%d.root", figDir.c_str(), run));
 
     auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1"));
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->SetStats(0);
@@ -428,9 +432,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->SetMaximum(10);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClSize1->Draw("colz");
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VClSize_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VClSize_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VClSize_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VClSize_%d.root", figDir.c_str(), run));
 
     c2->SetRightMargin(0.1);
     auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1"));
@@ -439,9 +443,9 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->Draw("colz");
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_UClPulseIntegral1->SetMaximum(80000);
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_UPulseIntegral_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UPulseIntegral_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UPulseIntegral_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_UPulseIntegral_%d.root", figDir.c_str(), run));
 
     auto h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1 = dynamic_cast<TH2D*>(file_in.Get("h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1"));
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->SetStats(0);
@@ -449,7 +453,7 @@ int main( int argc, char *argv[] ) {
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->Divide(h_Cross_YXc_MaxIntegrall_GoodPulseSigma1);
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->Draw("colz");
     h_Cross_YXc_MaxIntegrall_GoodPulseSigma_Weght_VClPulseIntegral1->SetMaximum(80000);
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.pdf", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.png", run));
-    c2->Print(Form("Figs/Cros_YXC_Weigted_VPulseIntegral_%d.root", run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VPulseIntegral_%d.pdf", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VPulseIntegral_%d.png", figDir.c_str(), run));
+    c2->Print(Form("%s/Cros_YXC_Weigted_VPulseIntegral_%d.root", figDir.c_str(), run));
 }

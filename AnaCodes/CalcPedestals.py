@@ -1,4 +1,5 @@
 import argparse
+import os
 import subprocess
 import sys
 
@@ -67,9 +68,13 @@ if __name__ == "__main__":
     print("  # events   : %d" % nevents)
 
     # -- Step 1: decode the raw EVIO file --
-    cmd_decode = "%s -i %s -o %s -r %d -n %d" % (
-        DECODER, evio_file, hipo_file, run, nevents)
-    run_step("Step 1/3: Decoding", cmd_decode)
+    if os.path.exists(hipo_file):
+        print("\n*** WARNING: '%s' already exists. Skipping decoding and reusing "
+              "the existing file. Delete it first if you want a fresh decode. ***" % hipo_file)
+    else:
+        cmd_decode = "%s -i %s -o %s -r %d -n %d" % (
+            DECODER, evio_file, hipo_file, run, nevents)
+        run_step("Step 1/3: Decoding", cmd_decode)
 
     # -- Step 2: CheckDecoding --
     cmd_check = "./CheckDecoding.exe %d %d" % (run, FILE_INDEX)
@@ -80,3 +85,4 @@ if __name__ == "__main__":
     run_step("Step 3/3: DrawPedestals", cmd_draw)
 
     print("\n* All done. Pedestals for run %d have been calculated." % run)
+    print("  Pedestal plots written to Figs/%d/" % run)

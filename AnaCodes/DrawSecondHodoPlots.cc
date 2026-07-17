@@ -30,6 +30,7 @@
 #include <TLine.h>
 #include <TLatex.h>
 #include <TStyle.h>
+#include <TSystem.h>
 
 #include <XYHodoTools.h>
 
@@ -44,6 +45,9 @@ int main(int argc, const char *argv[]) {
     }
 
     const int run = atoi(argv[1]);
+
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
 
     static constexpr double ts2ns = 25.;
     auto c1 = new TCanvas("c1", "", 1800., 1000.);
@@ -84,10 +88,10 @@ int main(int argc, const char *argv[]) {
     h_pixel_deltaT_sigm.SetTitle("; uRwell X [mm]; uRwell Y [mm] ");
 
     auto c_uRwellCross_pixels = new TCanvas("c_uRwellCross_pixels", "", 1800., 1000.);
-    c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf[", run));
+    c_uRwellCross_pixels->Print(Form("%s/uRwell_cross_Pxesls_Run_%d.pdf[", figDir.c_str(), run));
 
     auto *c_2d_dtFit = new TCanvas("c_2d_dtFit", "", 1800, 1000);
-    c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf[", run));
+    c_2d_dtFit->Print(Form("%s/2d_dtMean_Run_%d.pdf[", figDir.c_str(), run));
 
     for (int i = 0; i < XYHodoTools::nShortBars; i++) {
         for (int j = 0; j < XYHodoTools::nLongBars; j++) {
@@ -121,7 +125,7 @@ int main(int argc, const char *argv[]) {
             line1->DrawLine(x_max, y_min, x_max, y_max);
             line1->DrawLine(x_min, y_max, x_max, y_max);
 
-            c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf", run));
+            c_uRwellCross_pixels->Print(Form("%s/uRwell_cross_Pxesls_Run_%d.pdf", figDir.c_str(), run));
 
             const double eff = n_uRwell / n_tags;
             double eff_error = sqrt(eff*(1-eff)/n_tags);
@@ -140,7 +144,7 @@ int main(int argc, const char *argv[]) {
                 double rms = h_DeltaStartTime_UV1->GetRMS();
                 f_Gaus->SetParameters( h_DeltaStartTime_UV1->GetMaximum(), mean, rms );
                 h_DeltaStartTime_UV1->Fit(f_Gaus, "Me", "", mean - 2.5*rms, mean + 2.5*rms);
-                c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf", run));
+                c_2d_dtFit->Print(Form("%s/2d_dtMean_Run_%d.pdf", figDir.c_str(), run));
 
                 mean = f_Gaus->GetParameter(1)*ts2ns;
                 double sigm = f_Gaus->GetParameter(2)*ts2ns;
@@ -152,8 +156,8 @@ int main(int argc, const char *argv[]) {
         }
     }
 
-    c_2d_dtFit->Print(Form("Figs/2d_dtMean_Run_%d.pdf]", run));
-    c_uRwellCross_pixels->Print(Form("Figs/uRwell_cross_Pxesls_Run_%d.pdf]", run));
+    c_2d_dtFit->Print(Form("%s/2d_dtMean_Run_%d.pdf]", figDir.c_str(), run));
+    c_uRwellCross_pixels->Print(Form("%s/uRwell_cross_Pxesls_Run_%d.pdf]", figDir.c_str(), run));
 
     gStyle->SetPalette(kBird);
     gStyle->SetNumberContours(99);
@@ -165,24 +169,24 @@ int main(int argc, const char *argv[]) {
     h_SecondProt_2DEff.Draw("colz");
     lat1.DrawLatex(0.12, 0.91, Form("Run %d", run));
 
-    c1->Print(Form("Figs/SecondProt_2DEff_%d.pdf", run));
-    c1->Print(Form("Figs/SecondProt_2DEff_%d.png", run));
-    c1->Print(Form("Figs/SecondProt_2DEff_%d.root", run));
+    c1->Print(Form("%s/SecondProt_2DEff_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2DEff_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2DEff_%d.root", figDir.c_str(), run));
 
     h_pixel_deltaT_mean.SetMaximum(25.);
     h_pixel_deltaT_mean.SetMinimum(-25.);
     h_pixel_deltaT_mean.Draw("colz");
     lat1.DrawLatex(0.12, 0.91, Form("Run %d #Delta t mean", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.pdf", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.png", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_mean_%d.root", run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_mean_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_mean_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_mean_%d.root", figDir.c_str(), run));
 
     h_pixel_deltaT_sigm.SetMaximum(45);
     h_pixel_deltaT_sigm.Draw("colz");
     lat1.DrawLatex(0.12, 0.91, Form("Run %d #Delta t #sigma", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.pdf", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.png", run));
-    c1->Print(Form("Figs/SecondProt_2D_dEltaT_sigm_%d.root", run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_sigm_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_sigm_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/SecondProt_2D_dEltaT_sigm_%d.root", figDir.c_str(), run));
 
     file_in.Close();
     return 0;
