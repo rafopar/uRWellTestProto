@@ -11,6 +11,7 @@
 #include <TGraph2D.h>
 #include <XYHodoTools.h>
 #include <TStyle.h>
+#include <TSystem.h>
 
 #include  <uRwellTools.h>
 
@@ -26,6 +27,9 @@ int main(int argc, const char *argv[]) {
     auto c1 = new TCanvas("c1", "", 1800., 1000.);
 
     int run = atoi(argv[1]);
+
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
 
     TLatex lat1;
     lat1.SetNDC();
@@ -45,9 +49,9 @@ int main(int argc, const char *argv[]) {
     h_Hodo_XY_BarID_Tag1->SetTitle("; Short Bar ID; Long Bar ID");
 
     h_Hodo_XY_BarID_Tag1->Draw();
-    c1->Print(Form("Figs/Hodo_XY_BarID_Tag1_%d.pdf", run));
-    c1->Print(Form("Figs/Hodo_XY_BarID_Tag1_%d.png", run));
-    c1->Print(Form("Figs/Hodo_XY_BarID_Tag1_%d.root", run));
+    c1->Print(Form("%s/Hodo_XY_BarID_Tag1_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Hodo_XY_BarID_Tag1_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Hodo_XY_BarID_Tag1_%d.root", figDir.c_str(), run));
 
     TGraph2D gr_Hodo_Eff;
     TH2D h_uRwell_YXc1 ("h_uRwell_YXc1", "", 80, -902.5, 897.5, 44, -492.5, 497.5);
@@ -66,9 +70,9 @@ int main(int argc, const char *argv[]) {
 
     const int n_uRWell_CoarsBinsX = 20;
     const int n_uRWell_CoarsBinsY = 10;
-    c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf[", run));
-    c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf[", run));
-    c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf[", run));
+    c1->Print(Form("%s/HighUPulse_DeltaTFits_%d.pdf[", figDir.c_str(), run));
+    c1->Print(Form("%s/LowUPulse_DeltaTFits_%d.pdf[", figDir.c_str(), run));
+    c1->Print(Form("%s/AvgUPulse_DeltaTFits_%d.pdf[", figDir.c_str(), run));
     TH2D *h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[n_uRWell_CoarsBinsX][n_uRWell_CoarsBinsY];
     for ( int ixBin = 0; ixBin < n_uRWell_CoarsBinsX; ixBin++ ) {
         for (int iyBin = 0; iyBin < n_uRWell_CoarsBinsY; iyBin++ ) {
@@ -103,7 +107,7 @@ int main(int argc, const char *argv[]) {
                 lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
 
 
-                c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf", run));
+                c1->Print(Form("%s/AvgUPulse_DeltaTFits_%d.pdf", figDir.c_str(), run));
             }
 
             auto h_dT_StartTime_HighUPusle = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->ProjectionY( Form("h_dT_StartTime_HighUPusle_%d_%d", ixBin, iyBin), nbinsX - 50, nbinsX);
@@ -127,7 +131,7 @@ int main(int argc, const char *argv[]) {
                 lat1.DrawLatex(0.65, 0.8, Form("#sigma = %1.2f ns", sigma));
                 lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
 
-                c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf", run));
+                c1->Print(Form("%s/HighUPulse_DeltaTFits_%d.pdf", figDir.c_str(), run));
             }
 
             auto h_dT_StartTime_LowUPusle = h_Cross_Cl_St_Time_Diff_vs_U_cl_PulseInt_GoodWidth_ActiveArea1_[ixBin][iyBin]->ProjectionY( Form("h_dT_StartTime_LowUPusle_%d_%d", ixBin, iyBin), 1, 50);
@@ -151,19 +155,19 @@ int main(int argc, const char *argv[]) {
                 lat1.DrawLatex(0.12, 0.91, Form("X = %1.2f mm; Y = %1.2f mm", x, y));
                 lat1.DrawLatex(0.65, 0.8, Form("#sigma = %1.2f ns", sigma));
                 lat1.DrawLatex(0.65, 0.75, Form("#mu = %1.2f ns", mean));
-                c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf", run));
+                c1->Print(Form("%s/LowUPulse_DeltaTFits_%d.pdf", figDir.c_str(), run));
             }
 
 
         }
     }
-    c1->Print(Form("Figs/HighUPulse_DeltaTFits_%d.pdf]", run));
-    c1->Print(Form("Figs/AvgUPulse_DeltaTFits_%d.pdf]", run));
-    c1->Print(Form("Figs/LowUPulse_DeltaTFits_%d.pdf]", run));
+    c1->Print(Form("%s/HighUPulse_DeltaTFits_%d.pdf]", figDir.c_str(), run));
+    c1->Print(Form("%s/AvgUPulse_DeltaTFits_%d.pdf]", figDir.c_str(), run));
+    c1->Print(Form("%s/LowUPulse_DeltaTFits_%d.pdf]", figDir.c_str(), run));
 
     TH2D *h_Cross_YXC_Max1_[XYHodoTools::nShortBars][XYHodoTools::nLongBars];
 
-    c1->Print(Form("Figs/uRwell_Cross_WithHodoTags_%d.pdf[", run));
+    c1->Print(Form("%s/uRwell_Cross_WithHodoTags_%d.pdf[", figDir.c_str(), run));
 
     for ( auto ishortBar = 0; ishortBar < XYHodoTools::nShortBars; ishortBar++ ) {
         for (auto ilongBar = 0; ilongBar < XYHodoTools::nLongBars; ilongBar++ ) {
@@ -171,7 +175,7 @@ int main(int argc, const char *argv[]) {
             h_Cross_YXC_Max1_[ishortBar][ilongBar]->SetTitle("; Cross X [mm]; Cross Y [mm]");
             h_Cross_YXC_Max1_[ishortBar][ilongBar]->Draw();
             lat1.DrawLatex(0.12, 0.91, Form("Hodo pixel (%d, %d)", ishortBar, ilongBar));
-            c1->Print(Form("Figs/uRwell_Cross_WithHodoTags_%d.pdf", run));
+            c1->Print(Form("%s/uRwell_Cross_WithHodoTags_%d.pdf", figDir.c_str(), run));
 
             double x_avg = h_Cross_YXC_Max1_[ishortBar][ilongBar]->GetMean(1);
             double y_avg = h_Cross_YXC_Max1_[ishortBar][ilongBar]->GetMean(2);
@@ -196,43 +200,43 @@ int main(int argc, const char *argv[]) {
             }
         }
     }
-    c1->Print(Form("Figs/uRwell_Cross_WithHodoTags_%d.pdf]", run));
+    c1->Print(Form("%s/uRwell_Cross_WithHodoTags_%d.pdf]", figDir.c_str(), run));
 
     c1->Clear();
     gr_Hodo_Eff.Draw("pcol");
-    c1->Print(Form("Figs/Hodo_2DEff_%d.pdf", run));
-    c1->Print(Form("Figs/Hodo_2DEff_%d.png", run));
-    c1->Print(Form("Figs/Hodo_2DEff_%d.root", run));
+    c1->Print(Form("%s/Hodo_2DEff_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/Hodo_2DEff_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/Hodo_2DEff_%d.root", figDir.c_str(), run));
 
     c1->Clear();
     h_uRwell_YXc_Eff1.Divide(&h_uRwell_YXc1);
     h_uRwell_YXc_Eff1.SetMaximum(1.);
     h_uRwell_YXc_Eff1.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.pdf", run));
-    c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.png", run));
-    c1->Print(Form("Figs/uRwell_2DEff_WithHodoTags_%d.root", run));
+    c1->Print(Form("%s/uRwell_2DEff_WithHodoTags_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/uRwell_2DEff_WithHodoTags_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/uRwell_2DEff_WithHodoTags_%d.root", figDir.c_str(), run));
 
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.SetStats(0);
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Avg.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Avg_%d.root", figDir.c_str(), run));
 
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.SetStats(0);
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_High.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_High_%d.root", figDir.c_str(), run));
 
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.SetStats(0);
     h_uRwell_YXC1_Sgima_deltaT_UClPulseIntegral_Low.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_UClPulseIntegral_Low_%d.root", figDir.c_str(), run));
 
     gStyle->SetPalette(kBird); // or kViridis, kRainBow, kSunset, etc.
     gStyle->SetNumberContours(99);
@@ -240,23 +244,23 @@ int main(int argc, const char *argv[]) {
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_Avg.SetStats(0);
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_Avg.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Avg_%d.root", figDir.c_str(), run));
 
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_High.SetStats(0);
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_High.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_High_%d.root", figDir.c_str(), run));
 
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_Low.SetStats(0);
     h_uRwell_YXC1_Mean_deltaT_UClPulseIntegral_Low.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.pdf", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.png", run));
-    c1->Print(Form("Figs/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.root", run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/cl_StartTime_DeltaT_Mean_UClPulseIntegral_Low_%d.root", figDir.c_str(), run));
 
 
     TF2 f_UVStrROLengthDiff("f_UVStrROLengthDiff", [](double *x, double *p){ return (1./300.)*(uRwellTools::getROLength_U(x[0], x[1]) - uRwellTools::getROLength_V(x[0], x[1])); }, -900, 900, -500, 500);
@@ -266,9 +270,9 @@ int main(int argc, const char *argv[]) {
     c1->Clear();
     f_UVStrROLengthDiff.Draw("colz");
     uRwellTools::DrawActiveArea();
-    c1->Print("Figs/Str_ROLength_Diff.pdf");
-    c1->Print("Figs/Str_ROLength_Diff.png");
-    c1->Print("Figs/Str_ROLength_Diff.root");
+    c1->Print(Form("%s/Str_ROLength_Diff.pdf", figDir.c_str()));
+    c1->Print(Form("%s/Str_ROLength_Diff.png", figDir.c_str()));
+    c1->Print(Form("%s/Str_ROLength_Diff.root", figDir.c_str()));
 
     file_in.Close();
     return 0;

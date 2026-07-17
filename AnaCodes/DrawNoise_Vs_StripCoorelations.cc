@@ -7,6 +7,7 @@
 
 #include <cstdlib>
 
+#include <TSystem.h>
 #include <TH1D.h>
 #include <TH2D.h>
 #include <TFile.h>
@@ -25,6 +26,10 @@ using namespace std;
 int main() {
 
     int run = 2153;
+
+    gSystem->Exec(Form("mkdir -p Figs/%d", run));
+    const std::string figDir = Form("Figs/%d", run);
+
     const int nSlot = 12;
 
     TCanvas *c1 = new TCanvas("c1", "", 1800, 950);
@@ -129,18 +134,18 @@ int main() {
 
     mtgr_U_Noise_vs_StrLength->Draw("AP");
     leg_U_Noise_vs_StrLength->Draw();
-    c1->Print(Form("Figs/U_Noise_vs_StrLength_%d.pdf", run));
-    c1->Print(Form("Figs/U_Noise_vs_StrLength_%d.png", run));
-    c1->Print(Form("Figs/U_Noise_vs_StrLength_%d.root", run));
+    c1->Print(Form("%s/U_Noise_vs_StrLength_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_Noise_vs_StrLength_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_Noise_vs_StrLength_%d.root", figDir.c_str(), run));
 
     for (auto gr : v_gr_U_Noise_vs_strArea) {
         mtgr_U_Noise_vs_StrArea->Add(gr);
     }
     mtgr_U_Noise_vs_StrArea->Draw("AP");
     leg_U_Noise_vs_StrArea->Draw();
-    c1->Print(Form("Figs/U_Noise_vs_StrArea_%d.pdf", run));
-    c1->Print(Form("Figs/U_Noise_vs_StrArea_%d.png", run));
-    c1->Print(Form("Figs/U_Noise_vs_StrArea_%d.root", run));
+    c1->Print(Form("%s/U_Noise_vs_StrArea_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/U_Noise_vs_StrArea_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/U_Noise_vs_StrArea_%d.root", figDir.c_str(), run));
     
     
     TMultiGraph *mtgr_V_Noise_vs_StrLength = new TMultiGraph();
@@ -153,18 +158,18 @@ int main() {
 
     mtgr_V_Noise_vs_StrLength->Draw("AP");
     leg_V_Noise_vs_StrLength->Draw();
-    c1->Print(Form("Figs/V_Noise_vs_StrLength_%d.pdf", run));
-    c1->Print(Form("Figs/V_Noise_vs_StrLength_%d.png", run));
-    c1->Print(Form("Figs/V_Noise_vs_StrLength_%d.root", run));
+    c1->Print(Form("%s/V_Noise_vs_StrLength_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/V_Noise_vs_StrLength_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/V_Noise_vs_StrLength_%d.root", figDir.c_str(), run));
 
     for (auto gr : v_gr_V_Noise_vs_strArea) {
         mtgr_V_Noise_vs_StrArea->Add(gr);
     }
     mtgr_V_Noise_vs_StrArea->Draw("AP");
     leg_V_Noise_vs_StrArea->Draw();
-    c1->Print(Form("Figs/V_Noise_vs_StrArea_%d.pdf", run));
-    c1->Print(Form("Figs/V_Noise_vs_StrArea_%d.png", run));
-    c1->Print(Form("Figs/V_Noise_vs_StrArea_%d.root", run));
+    c1->Print(Form("%s/V_Noise_vs_StrArea_%d.pdf", figDir.c_str(), run));
+    c1->Print(Form("%s/V_Noise_vs_StrArea_%d.png", figDir.c_str(), run));
+    c1->Print(Form("%s/V_Noise_vs_StrArea_%d.root", figDir.c_str(), run));
     
     
     
