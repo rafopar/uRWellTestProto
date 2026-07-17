@@ -204,10 +204,6 @@ int main(int argc, char **argv) {
 
             bool fiducial_trk = IsHodoPixelInsideuRwell(det0_ShortBarID, det0_LongBarID) && IsHodoPixelInsideuRwell(det1_ShortBarID, det1_LongBarID);
 
-            if (fiducial_trk) {
-                h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
-            }
-
             bool vertical_trk = TMath::Abs(det0_ShortBarID - det1_ShortBarID) <= 2 && TMath::Abs(det0_LongBarID - det1_LongBarID) <= 2;
 
             //if (!vertical_trk) {continue;}
@@ -263,6 +259,10 @@ int main(int argc, char **argv) {
             // --- We want to avoid these events where there is huge amount of hits in the uRwell.
             // --- Those are mostly caused by a bad noise, which is not direcly caused by the detector performance
             if (MonsterEvent(n_U_Pulses, n_U_Pulses)) {continue;}
+
+            if (fiducial_trk) {
+                h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
+            }
 
 
             //       Forming U and V Clusters
