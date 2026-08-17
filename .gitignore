@@ -31,5 +31,4 @@ Latex/Figs
 
 # generated figures
 misc/HVScans/Figs/
-misc/HV_Section_Quality/*.png
-misc/HV_Section_Quality/*.pdf
+misc/HV_Section_Quality/Figs/

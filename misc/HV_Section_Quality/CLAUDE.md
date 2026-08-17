@@ -14,10 +14,18 @@ measurements and the code that draws them on top of the real detector geometry.
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
-| `CMakeLists.txt` | installs the scripts + data under `<prefix>/misc/HV_Section_Quality` |
+| `CMakeLists.txt` | installs the scripts + geometry under `<prefix>/misc/HV_Section_Quality` |
 
-Generated figures (`HV_Section_MaxStableHV.png` / `.pdf`) are git ignored, same
-convention as `misc/HVScans/Figs/`.
+**The two measurement files are deliberately not installed.**  They are edited in
+place in the install directory while measuring, and having them in `install(FILES ...)`
+made every `make install` overwrite those edits.  Only the scripts, the geometry and
+an empty `Figs/` are installed; the measured values live wherever they are edited, and
+have to be copied back into the repository by hand to be committed.
+
+Figures are written into `Figs/` (created by the script if missing), same convention
+as `misc/HVScans/`.  `Figs/` is git ignored; the copy shown in the top level README
+lives in `Doc/HVSection_MaxStableHV.png` and has to be refreshed by hand when the
+measurements change.
 
 ## Data file format
 
@@ -78,8 +86,8 @@ convention used in the lab -- it was confirmed by Rafayel.
 ## Usage
 
 ```bash
-./plot_HV_sections.py                                  # -> HV_Section_MaxStableHV.png/.pdf
-./plot_HV_sections.py --cmap RdYlGn --vmin 440 --vmax 530
+./plot_HV_sections.py                                  # -> Figs/HV_Section_MaxStableHV.png/.pdf
+./plot_HV_sections.py --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```
 

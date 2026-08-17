@@ -12,10 +12,13 @@ and one for the BOTTOM detector:
     ...
     9           -1        <-- negative value = section not measured yet
 
+The figures are written into the 'Figs' sub directory, which is created if it
+does not exist yet.
+
 Usage:
     ./plot_HV_sections.py                                # uses the default files
     ./plot_HV_sections.py --top TOP_...dat --bot BOT_...dat --out HV_sections
-    ./plot_HV_sections.py --cmap RdYlGn --vmin 440 --vmax 530
+    ./plot_HV_sections.py --output-dir Figs --cmap RdYlGn --vmin 440 --vmax 530
 """
 
 import argparse
@@ -34,6 +37,7 @@ DEF_GEOM = "uRwell_HV_section_geometry.dat"
 DEF_TOP = "TOP_HV_Sections_90Ar_7Iso_3CO2.dat"
 DEF_BOT = "BOT_HV_Sections_90Ar_7Iso_3CO2.dat"
 DEF_GAS = r"90% Ar + 7% iso-C$_4$H$_{10}$ + 3% CO$_2$"
+DEF_OUTDIR = "Figs"
 
 NA_COLOR = "0.87"       # fill color of the sections that are not measured yet
 
@@ -142,8 +146,10 @@ def main():
     ap.add_argument("--geometry", default=DEF_GEOM, help="section geometry file")
     ap.add_argument("--top", default=DEF_TOP, help="max stable HV of the TOP detector")
     ap.add_argument("--bot", default=DEF_BOT, help="max stable HV of the BOTTOM detector")
+    ap.add_argument("--output-dir", "-o", default=DEF_OUTDIR,
+                    help="directory the figures are written into (created if missing)")
     ap.add_argument("--out", default="HV_Section_MaxStableHV",
-                    help="output file name without extension")
+                    help="output file name without directory and without extension")
     ap.add_argument("--cmap", default="viridis", help="matplotlib color map")
     ap.add_argument("--vmin", type=float, default=None, help="lower end of the color scale [V]")
     ap.add_argument("--vmax", type=float, default=None, help="upper end of the color scale [V]")
@@ -192,9 +198,15 @@ def main():
                               hatch="///", label="section not measured yet")],
                loc="outside lower left", fontsize=10, frameon=False)
 
+    # the output directory is created on the fly, so that a fresh checkout or a
+    # fresh install directory works right away
+    if args.output_dir:
+        os.makedirs(args.output_dir, exist_ok=True)
+
     for ext in ("png", "pdf"):
-        fig.savefig("%s.%s" % (args.out, ext), dpi=200)
-        print("Wrote %s.%s" % (args.out, ext))
+        fname = os.path.join(args.output_dir, "%s.%s" % (args.out, ext))
+        fig.savefig(fname, dpi=200)
+        print("Wrote %s" % fname)
 
     n_top = sum(1 for v in hv_top.values() if v > 0.)
     n_bot = sum(1 for v in hv_bot.values() if v > 0.)

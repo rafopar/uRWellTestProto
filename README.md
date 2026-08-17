@@ -20,10 +20,11 @@ for instructions on Software installation and running.
 5. [Standalone C++ Decoder (`Decoder/`)](#standalone-c-decoder-decoder)
 6. [Automated Running](#automated-running)
 7. [Plotting & Visualization Scripts](#plotting--visualization-scripts)
-8. [Event Viewer](#event-viewer)
-9. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
-10. [Key Analysis Parameters](#key-analysis-parameters)
-11. [Data File Locations](#data-file-locations)
+8. [HV Section Quality](#hv-section-quality)
+9. [Event Viewer](#event-viewer)
+10. [Geometry Utilities in uRwellTools](#geometry-utilities-in-urwelltools)
+11. [Key Analysis Parameters](#key-analysis-parameters)
+12. [Data File Locations](#data-file-locations)
 
 ---
 
@@ -100,6 +101,9 @@ uRWellTestProto/
 │   └── uRwellTools.cc              # Implementation of uRwellTools
 ├── hipo/hipo4/                     # HIPO4 I/O library (header-only, included)
 ├── cmake_modules/                  # CMake find-modules (FindLZ4, etc.)
+├── misc/                           # Standalone tools, not part of the main analysis chain
+│   ├── HVScans/                    # HV scan plotter (HVScanPlotter.py)
+│   └── HV_Section_Quality/         # Max stable HV of the 31 HV sections, both detectors
 ├── Doc/                            # Documentation assets (images)
 ├── PedFiles/                       # Pedestal and noise files (generated)
 ├── Skims/                          # Skimmed HIPO files (generated)
@@ -695,6 +699,64 @@ executables and produce PDF/PNG plots in the `Figs/` directory.
 | `DrawEffWithHodo.cc` | `AnaPulseFits_<RUN>.root` | Detection efficiency with hodoscope tagging; also produces a TF2-based 2D map of the normalized U−V strip RO-length difference across the detector face (`Figs/Str_ROLength_Diff.*`) |
 | `DrawNoise_Vs_StripCoorelations.cc` | `CheckDecoding_<RUN>_0.root` | Strip-to-strip noise correlations |
 | `UpdateStripSigmas.cc` | `AnaPulseFits_<RUN>.root` | Updates per-strip σ in `Pars/Pulse_Sigmas_<RUN>.dat` |
+
+---
+
+# HV Section Quality
+
+The active area of the second prototype is divided into **31 HV sections**, and each of them is
+characterized separately: the section is ramped up and the highest voltage at which it stays stable
+(no leakage current developing, no trips) is recorded. `misc/HV_Section_Quality/` holds those
+measurements together with the code that draws them on the real detector geometry.
+
+![Maximum stable HV per HV section](Doc/HVSection_MaxStableHV.png)
+
+**Measurements** are two-column text files, one per detector
+(`TOP_HV_Sections_90Ar_7Iso_3CO2.dat`, `BOT_HV_Sections_90Ar_7Iso_3CO2.dat`), where a negative value
+means the section has not been measured yet. A `#` starts a comment, also at the end of a line,
+which is used to record observations about individual sections:
+
+```
+# SECTION	MAX_STABLE_HV [V]
+1		490
+9		-1
+20		470  # held 510 for ~30 min, later did not hold 480 for long
+```
+
+**Run:**
+```bash
+cd misc/HV_Section_Quality
+./plot_HV_sections.py                                # -> Figs/HV_Section_MaxStableHV.{png,pdf}
+./plot_HV_sections.py --cmap RdYlGn --vmin 440 --vmax 530
+```
+
+The figures are written into the `Figs/` sub directory, which is created if it does not exist yet.
+Both detectors are drawn to scale and share one color scale, so that they can be compared directly.
+Sections that are not measured yet are drawn hatched and labelled `n/a`. Further options are
+`--top`, `--bot`, `--geometry`, `--output-dir`, `--out`, `--gas` and `--mirror` (the latter flips the
+detector in x, for the case it is viewed from the other side). Only `numpy` and `matplotlib` are
+needed. To add new measurements, edit the two `.dat` files and re-run the script — nothing else has
+to be touched.
+
+**Section geometry** comes from the CAD export `DFS3381_activearea.dxf`, which is *not* part of this
+repository. `extract_section_geometry.py` reads it and writes `uRwell_HV_section_geometry.dat`, which
+*is* committed, so plotting does not need the CAD file at run time; the extractor has to be re-run
+only if the CAD export changes. The active area is a 1453 × 495 mm² trapezoid cut into 31 vertical
+sections of ~41 mm pitch, the two outermost ones on each side being clipped by the slanted edges.
+
+**Section numbering** follows the HV connections of `DFS3381_TOP.pdf`. Sections 1–16 are powered from
+the right side and 17–31 from the left side, and **both groups are counted from the outer edge of the
+detector inwards**, so the numbering is mirror symmetric and the two innermost sections 16 (the
+central one) and 31 are neighbours:
+
+```
+sec:   17  18  19  ...  30  31 | 16  15  14  ...   2   1
+x:   -727 -602 -538     -81 -40 |  0  +40  +81      +602 +727   [mm]
+```
+
+**Status** with 90% Ar + 7% iso-C₄H₁₀ + 3% CO₂: TOP sections 1–8 and 17–24 are measured (470–520 V),
+BOTTOM sections 2–8 and 17–24 (450–510 V). The whole central band, sections 9–16 and 25–31, is still
+to be done on both detectors.
 
 ---
 
