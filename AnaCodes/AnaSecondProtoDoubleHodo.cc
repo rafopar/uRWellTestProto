@@ -79,6 +79,7 @@ int main(int argc, char **argv) {
     constexpr double deltaT_Cut_PMT12_Match = 20;
 
     const int minHits = 2;
+    const int minHitsITEM3 = 3;
 
     const double chi2NDF_cut = 40;
 
@@ -111,6 +112,7 @@ int main(int argc, char **argv) {
     TH2D h_LongBarID_Det01_1("h_LongBarID_Det01_1", "", XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
     TH2D h_Det0_Occupancy_vertTrk1("h_Det0_Occupancy_vertTrk1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+    TH2D h_Det0_Occupancy_vertTrk_hasItem3_1("h_Det0_Occupancy_vertTrk_hasItem3_1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_Fiducial1("h_Det0_Occupancy_Fiducial1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_Fiducial_hasItem3_1("h_Det0_Occupancy_Fiducial_hasItem3_1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
 
@@ -284,8 +286,8 @@ int main(int argc, char **argv) {
             std::vector<uRwellTools::PulseCluster> v_ITEM3_Y_clusters = uRwellTools::getPulseClusters(v_ITEM3_Y_Pulses);
             std::vector<uRwellTools::PulseCluster> v_ITEM3_X_clusters = uRwellTools::getPulseClusters(v_ITEM3_X_Pulses);
 
-            uRwellTools::PulseCluster Max_ITEM3_Y_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_Y_clusters, minHits);
-            uRwellTools::PulseCluster Max_ITEM3_X_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_X_clusters, minHits);
+            uRwellTools::PulseCluster Max_ITEM3_Y_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_Y_clusters, minHitsITEM3);
+            uRwellTools::PulseCluster Max_ITEM3_X_Cluster = uRwellTools::getMaxIntegralPulseCluster(v_ITEM3_X_clusters, minHitsITEM3);
 
 
             //       Forming U and V Clusters
