@@ -20,7 +20,7 @@ import sys
 # Default directory where the raw EVIO files are searched for.
 DEFAULT_EVIODIR = "/volatile/clas12/rafopar/uRwell/Data/BigProto/"
 
-# The EVIO file index used for the pedestal decoding (matches Data/decoded_<RUN>_<IDX>.hipo).lt 
+# The EVIO file index used for the pedestal decoding (matches Data/decoded_<RUN>_<IDX>.hipo).lt
 FILE_INDEX = 0
 
 # Path to the decoder executable.

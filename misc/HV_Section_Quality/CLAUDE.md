@@ -5,6 +5,9 @@ is ramped up separately and the highest voltage at which it stays stable (no
 leakage current developing, no trips) is recorded.  This directory holds the
 measurements and the code that draws them on top of the real detector geometry.
 
+Documented in the top level `README.md`, section "HV Section Quality" -- keep the
+two in sync when something here changes.
+
 ## Files
 
 | file | what it is |
@@ -14,18 +17,24 @@ measurements and the code that draws them on top of the real detector geometry.
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
+| `Figs/` | output figures, git ignored, created by the script if missing |
 | `CMakeLists.txt` | installs the scripts + geometry under `<prefix>/misc/HV_Section_Quality` |
 
-**The two measurement files are deliberately not installed.**  They are edited in
-place in the install directory while measuring, and having them in `install(FILES ...)`
-made every `make install` overwrite those edits.  Only the scripts, the geometry and
-an empty `Figs/` are installed; the measured values live wherever they are edited, and
-have to be copied back into the repository by hand to be committed.
+## Where things are edited (easy to trip over)
 
-Figures are written into `Figs/` (created by the script if missing), same convention
-as `misc/HVScans/`.  `Figs/` is git ignored; the copy shown in the top level README
-lives in `Doc/HVSection_MaxStableHV.png` and has to be refreshed by hand when the
-measurements change.
+**The two measurement files are deliberately NOT installed.**  They are edited in
+place in the install directory while measuring, and having them in `install(FILES ...)`
+made every `make install` overwrite those edits (this already happened once and the
+edits were lost).  Only the scripts, the generated geometry and an empty `Figs/` are
+installed.
+
+The consequence: the repository copy and the install copy of the `.dat` files can
+drift apart silently.  Values measured in the install directory have to be copied
+back into the repository by hand before they can be committed.
+
+The figure embedded in the README lives in `Doc/HVSection_MaxStableHV.png`.  It is a
+manual snapshot of `Figs/HV_Section_MaxStableHV.png` and has to be refreshed by hand
+when the measurements change.
 
 ## Data file format
 
@@ -78,8 +87,13 @@ x:   -727 -602 -538     -81 -40 |  0  +40  +81      +602 +727   [mm]
 What is actually verifiable from the CAD: the 16/15 split, and that the central
 section's HV trace runs to the *right* (visible when zooming into the top center of
 `DFS3381_TOP.pdf`), which makes the central section number 16.  The gerber/DXF carry
-**no** section labels, so the inward direction within each side comes from the
-convention used in the lab -- it was confirmed by Rafayel.
+**no** section labels, so the direction within each side is a lab convention and
+cannot be derived from the drawing.
+
+The first implementation got this wrong: it numbered straight through from right to
+left, putting section 17 next to 16 and section 31 at the left edge.  That is **not**
+the convention -- it is the other way around, see the sketch above.  The mapping is
+built in `build_sections()` of `extract_section_geometry.py`.
 
 `plot_HV_sections.py --mirror` flips x if the detector is viewed from the other side.
 
@@ -96,7 +110,7 @@ Both detectors share one color scale so they can be compared directly.  Needs
 
 ## Status / next steps
 
-As of 2026-08-13, with 90% Ar + 7% iso-C4H10 + 3% CO2:
+As of 2026-08-17, with 90% Ar + 7% iso-C4H10 + 3% CO2 (unchanged since 2026-08-13):
 
 * TOP: sections 1-8 and 17-24 measured, 470-520 V.
 * BOTTOM: sections 2-8 and 17-24 measured, 450-510 V.  Section 1 was initially
@@ -107,5 +121,7 @@ As of 2026-08-13, with 90% Ar + 7% iso-C4H10 + 3% CO2:
 Measurements so far come in pairs of adjacent sections sharing the same value
 (1&2, 3&4, ... , 17&18, ...).
 
-To add new measurements just edit the two `.dat` files and re-run
-`plot_HV_sections.py`; nothing else needs to be touched.
+To add new measurements, edit the two `.dat` files and re-run `plot_HV_sections.py`.
+If they were edited in the install directory, copy them back into the repository
+first (see "Where things are edited" above), and refresh `Doc/HVSection_MaxStableHV.png`
+if the README figure should show the new values.
