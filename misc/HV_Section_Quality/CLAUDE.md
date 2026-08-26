@@ -17,6 +17,7 @@ two in sync when something here changes.
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
+| `plot_HV_initial_test_schematic.py` | schematic of the *initial* HV test (whole half of a detector on one channel) |
 | `Figs/` | output figures, git ignored, created by the script if missing |
 | `CMakeLists.txt` | installs the scripts + geometry under `<prefix>/misc/HV_Section_Quality` |
 
@@ -97,16 +98,53 @@ built in `build_sections()` of `extract_section_geometry.py`.
 
 `plot_HV_sections.py --mirror` flips x if the detector is viewed from the other side.
 
+## Initial HV test (not the section by section measurement)
+
+Before the sections were characterized one by one, both detectors were tested with
+**all HV jumpers in place**, i.e. one complete half of a detector -- all the sections
+that are powered from the same side -- hanging on a single CAEN channel:
+
+```
+CAEN HV pin -> MESH ,  RESIST -> Keithley picoammeter input ,  Keithley ground -> earth
+```
+
+Two picoammeters were available, so two halves were measured at a time, always one
+per detector and on opposite sides.  Because the BOTTOM detector is the same uRwell
+foil flipped left <-> right (BOTTOM: 1-16 on the left, 17-31 on the right, opposite
+to the TOP), the two configurations are
+
+| configuration | halves | sections |
+|---|---|---|
+| A | TOP-LEFT + BOTTOM-RIGHT | 17-31 of both detectors (15 each) |
+| B | TOP-RIGHT + BOTTOM-LEFT | 1-16 of both detectors (16 each) |
+
+`plot_HV_initial_test_schematic.py` draws one figure per configuration: a 3D sketch of
+the two stacked planes (TOP blue, BOTTOM red, the energized half filled, the rest grey)
+plus the wiring of both chains underneath.
+
+The 3D view is an orthographic projection computed by hand (`project()`) and drawn into
+an ordinary 2D axes.  **mplot3d is not used on purpose**: `Axes3D.apply_aspect` forces
+its axes into a square and clips everything outside it, which throws away most of the
+width for an object as elongated as this detector (the leads simply disappeared).  For
+the same kind of reason the axis limits are fitted by hand in `fit_limits()` instead of
+`set_aspect("equal")`: with `adjustable="datalim"` the two configurations came out at
+different scales.
+
 ## Usage
 
 ```bash
 ./plot_HV_sections.py                                  # -> Figs/HV_Section_MaxStableHV.png/.pdf
 ./plot_HV_sections.py --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
+./plot_HV_initial_test_schematic.py                    # -> Figs/HV_InitialTest_*.png/.pdf
+./plot_HV_initial_test_schematic.py --elev 20 --azim 17   # viewing angle of the 3D sketch
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```
 
 Both detectors share one color scale so they can be compared directly.  Needs
 `numpy` + `matplotlib` only (Agg backend, no display required).
+
+The two schematics are also snapshotted into `Doc/HVSection_InitialTest_*.png` for the
+README, by hand, exactly like `Doc/HVSection_MaxStableHV.png`.
 
 ## Status / next steps
 

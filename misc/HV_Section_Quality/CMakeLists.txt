@@ -1,5 +1,6 @@
 ################################ Installing Python scripts ################################
 install(FILES extract_section_geometry.py plot_HV_sections.py
+              plot_HV_initial_test_schematic.py
         DESTINATION ${CMAKE_INSTALL_PREFIX}/misc/HV_Section_Quality
         PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
                     GROUP_READ GROUP_EXECUTE

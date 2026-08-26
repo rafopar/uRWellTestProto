@@ -758,6 +758,36 @@ x:   -727 -602 -538     -81 -40 |  0  +40  +81      +602 +727   [mm]
 BOTTOM sections 2–8 and 17–24 (450–510 V). The whole central band, sections 9–16 and 25–31, is still
 to be done on both detectors.
 
+## Initial HV test (all jumpers in place)
+
+Before the section-by-section characterization, both detectors were tested with **all HV jumpers in
+place**, so that one complete half of a detector — every section powered from the same side — hangs
+on a single CAEN channel: the HV pin feeds the **MESH**, the **RESIST** layer goes into the input of
+a Keithley picoammeter and the picoammeter ground goes to earth. Two picoammeters were available, so
+two halves were measured at a time, always one per detector and on opposite sides.
+
+The BOTTOM detector is the same uRwell foil flipped left ↔ right, so its sections 1–16 sit on the
+**left** and 17–31 on the **right**, opposite to the TOP. The two measured configurations are
+therefore:
+
+| configuration | halves under HV | sections |
+|---|---|---|
+| A | TOP-LEFT + BOTTOM-RIGHT | 17–31 of both detectors (15 each) |
+| B | TOP-RIGHT + BOTTOM-LEFT | 1–16 of both detectors (16 each) |
+
+![Initial HV test, TOP-LEFT + BOTTOM-RIGHT](Doc/HVSection_InitialTest_TopLeft_BotRight.png)
+![Initial HV test, TOP-RIGHT + BOTTOM-LEFT](Doc/HVSection_InitialTest_TopRight_BotLeft.png)
+
+```bash
+cd misc/HV_Section_Quality
+./plot_HV_initial_test_schematic.py            # -> Figs/HV_InitialTest_{TopLeft_BotRight,TopRight_BotLeft}.{png,pdf}
+./plot_HV_initial_test_schematic.py --elev 20 --azim 17     # viewing angle of the 3D sketch
+```
+
+Each figure shows a 3D sketch of the two stacked planes in their true trapezoidal shape and section
+pitch (TOP blue, BOTTOM red, the energized half filled and the rest grey) together with the wiring of
+both measuring chains. The same section geometry file as above is used, nothing else is needed.
+
 ---
 
 # Event Viewer
