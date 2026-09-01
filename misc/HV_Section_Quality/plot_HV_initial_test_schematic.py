@@ -25,10 +25,17 @@ right, so there 1-16 sit on the left and 17-31 on the right.  Therefore
 "TOP-LEFT + BOTTOM-RIGHT" is the 17-31 group of both detectors and
 "TOP-RIGHT + BOTTOM-LEFT" is the 1-16 group of both.
 
+A third figure shows the *production* connection: the left and the right side
+of a detector are tied together by a 2 wire cable (MESH-MESH, RESIST-RESIST),
+so all 31 sections hang on one single CAEN channel per detector.  The core of
+the HV cable is soldered onto the MESH, the RESIST goes to earth ground; there
+is no picoammeter any more.  The TOP detector is fed from its right side, the
+BOTTOM detector from its left side.  That figure is the 3D sketch alone.
+
 Each figure has a 3D sketch of the two stacked detector planes (true trapezoid
-shape and section pitch, TOP drawn blue, BOTTOM drawn red, the half that is
-under HV filled with the strong color) and, below it, the wiring of the two
-measuring chains.
+shape and section pitch, TOP drawn blue, BOTTOM drawn red, the parts that are
+under HV filled with the strong color); the two initial test figures also have
+the wiring of the measuring chains underneath.
 
 The 3D view is an orthographic projection done by hand (see 'project') and
 drawn into an ordinary 2D axes.  mplot3d is not used on purpose: it forces its
@@ -50,6 +57,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon, Rectangle, FancyBboxPatch, Patch, FancyArrowPatch
 
+CAEN = "CAEN A1536HDM"       # the HV module both channels come from
+
 DEF_GEOM = "uRwell_HV_section_geometry.dat"
 DEF_OUTDIR = "Figs"
 
@@ -59,9 +68,15 @@ OFF_COLOR = "#dedede"        # grey  - half that is not powered in this test
 EDGE_COLOR = "#404040"
 
 Z_TOP, Z_BOT = 170., -170.   # [mm] drawing distance of the two planes, not to scale
+ZP_TOP, ZP_BOT = 300., -300.  # the same for the production sketch, which needs room
+                              # for the link cable running in front of each plane
+
+PAD_Y = (60., -50.)          # [mm] height of the MESH / RESIST solder points
+PAD_OUT = 20.                # [mm] they sit this far outside the active area
 
 LEFT_SECS = tuple(range(17, 32))    # 15 sections, outer edge -> center
 RIGHT_SECS = tuple(range(1, 17))    # 16 sections, outer edge -> center (16 = central)
+ALL_SECS = set(LEFT_SECS) | set(RIGHT_SECS)
 
 
 # ----------------------------------------------------------------------------- I/O
@@ -120,7 +135,7 @@ def project(pts, elev, azim):
                             + z * np.cos(e)))
 
 
-def draw_plane(ax, sections, z, powered, color, name, view, zorder):
+def draw_plane(ax, sections, z, powered, color, name, view, zorder, name_x=0.):
     """Draw one detector plane at height z, the sections in 'powered' filled."""
     for n in sorted(sections):
         p = sections[n]
@@ -137,8 +152,8 @@ def draw_plane(ax, sections, z, powered, color, name, view, zorder):
 
     # label the two halves rather than the 31 single sections, and keep the
     # labels small so that the section pattern stays visible underneath
-    off = [n for n in sections if n not in powered]
-    for group, col in ((sorted(powered), color), (sorted(off), "0.3")):
+    for group in (LEFT_SECS, RIGHT_SECS):
+        col = color if group[0] in powered else "0.3"
         cx = np.mean([centroid(sections[n])[0] for n in group])
         sx, sy = project((cx, 0., z), *view)[0]
         ax.text(sx, sy, "sections %d-%d" % (min(group), max(group)),
@@ -146,14 +161,36 @@ def draw_plane(ax, sections, z, powered, color, name, view, zorder):
                 color=col, zorder=zorder + .2,
                 bbox=dict(boxstyle="round,pad=0.25", fc="white", ec=col, alpha=.85))
 
-    # name of the detector, off the outer end of the half that is not powered
-    xoff = [centroid(sections[n])[0] for n in off]
-    xname = max(xoff) + 260. if np.mean(xoff) > 0. else min(xoff) - 260.
-    sxy = project((xname, 0., z), *view)[0]
+    off = [n for n in sections if n not in powered]
+    if off:
+        # name of the detector, off the outer end of the half that is not powered
+        xoff = [centroid(sections[n])[0] for n in off]
+        xname = max(xoff) + 260. if np.mean(xoff) > 0. else min(xoff) - 260.
+        sxy = project((xname, 0., z), *view)[0]
+    else:
+        # everything is powered (production connection) -> no free end, put the
+        # name behind the wide edge, the link cable runs in front of the plane
+        sxy = project((name_x, corner[:, 1].max() + 130., z), *view)[0]
     ax.text(sxy[0], sxy[1], name, ha="center", va="center", fontsize=15,
             fontweight="bold", color=color, zorder=zorder + .2)
 
     return np.vstack((project(xyz, *view), sxy))
+
+
+def edge_x(sections, side):
+    """x of the slanted outer edge of the given side, as a function of y."""
+    corner = outline(sections)
+    (x0, y0), (x1, y1) = (corner[1], corner[2]) if side > 0 else (corner[0], corner[3])
+    return lambda y: x0 + (y - y0) / (y1 - y0) * (x1 - x0)
+
+
+def pad_x(sections, side, y):
+    """x of a solder point at height y, PAD_OUT outside the active area."""
+    return edge_x(sections, side)(y) + side * PAD_OUT
+
+
+def solder_point(ax, xy, color, zorder):
+    ax.plot(xy[0], xy[1], "o", ms=6., mfc="white", mec=color, mew=1.6, zorder=zorder)
 
 
 def draw_leads(ax, sections, z, powered, color, side, ch, pico, view, zorder):
@@ -163,32 +200,94 @@ def draw_leads(ax, sections, z, powered, color, side, ch, pico, view, zorder):
     way they do on the detector; the two leads only separate once they have left
     the active area.
     """
-    corner = outline(sections)
-    (x0, y0), (x1, y1) = (corner[1], corner[2]) if side > 0 else (corner[0], corner[3])
-
-    def xedge(y):
-        """x of the slanted outer edge at height y."""
-        return x0 + (y - y0) / (y1 - y0) * (x1 - x0)
-
-    def xpad(y):
-        """x of the solder point at height y, 20 mm outside the active area."""
-        return xedge(y) + side * 20.
-
-    leads = ((60., 150., "MESH  " + r"$\leftarrow$" + "  CAEN HV, %s" % ch),
-             (-50., -150., "RESIST  " + r"$\rightarrow$" + "  Keithley %s" % pico))
+    xe = edge_x(sections, side)
+    leads = ((PAD_Y[0], 150., "MESH  " + r"$\leftarrow$" + "  %s, %s" % (CAEN, ch)),
+             (PAD_Y[1], -150., "RESIST  " + r"$\rightarrow$" + "  Keithley %s" % pico))
     anchors = []
     for y, dz, txt in leads:
-        path = project([(xpad(y), y, z), (xedge(y) + side * 110., y, z),
-                        (xedge(y) + side * 230., y, z + dz)], *view)
+        path = project([(pad_x(sections, side, y), y, z), (xe(y) + side * 110., y, z),
+                        (xe(y) + side * 230., y, z + dz)], *view)
         ax.plot(path[:, 0], path[:, 1], color=color, lw=2.,
                 solid_capstyle="round", zorder=zorder + .3)
-        ax.plot(path[0, 0], path[0, 1], "o", ms=6., mfc="white", mec=color,
-                mew=1.6, zorder=zorder + .3)
+        solder_point(ax, path[0], color, zorder + .3)
         ax.text(path[-1, 0] + side * 25., path[-1, 1], txt,
                 ha="left" if side > 0 else "right", va="center",
                 fontsize=10.5, color=color, zorder=zorder + .3)
         anchors.append((path[-1, 0] + side * 25., path[-1, 1]))
     return np.array(anchors)
+
+
+def earth_symbol(ax, xy, color, zorder, w=170.):
+    """Earth ground symbol hanging from the end of a wire."""
+    x, y = xy
+    ax.plot([x, x], [y, y - 70.], color=color, lw=2., solid_capstyle="round",
+            zorder=zorder)
+    for k, f in enumerate((1., .62, .3)):
+        ax.plot([x - .5 * f * w, x + .5 * f * w], [y - 70. - 32. * k] * 2,
+                color=color, lw=2.4 - .55 * k, solid_capstyle="butt", zorder=zorder)
+
+
+def draw_hv_cable(ax, sections, z, color, side, ch, view, zorder):
+    """Production connection: the HV cable soldered onto one side of the foil.
+
+    The core of the cable goes to the MESH, so the detector needs one single CAEN
+    channel; the RESIST goes to earth ground.
+    """
+    xe = edge_x(sections, side)
+    leads = ((PAD_Y[0], 150., "MESH  " + r"$\leftarrow$" + "  HV core\n%s, %s"
+              % (CAEN, ch)),
+             (PAD_Y[1], -150., "RESIST  " + r"$\rightarrow$" + "  earth ground"))
+    anchors = []
+    for y, dz, txt in leads:
+        path = project([(pad_x(sections, side, y), y, z), (xe(y) + side * 110., y, z),
+                        (xe(y) + side * 230., y, z + dz)], *view)
+        ax.plot(path[:, 0], path[:, 1], color=color, lw=2.,
+                solid_capstyle="round", zorder=zorder + .3)
+        anchors.append((path[-1, 0] + side * 30., path[-1, 1]))
+        if dz > 0.:
+            ax.text(anchors[-1][0], anchors[-1][1], txt, va="center",
+                    ha="left" if side > 0 else "right",
+                    fontsize=10.5, color=color, zorder=zorder + .3)
+        else:
+            earth_symbol(ax, path[-1], color, zorder + .3)
+            ax.text(anchors[-1][0], anchors[-1][1] + 12., txt, va="bottom",
+                    ha="left" if side > 0 else "right",
+                    fontsize=10.5, color=color, zorder=zorder + .3)
+            anchors.append((path[-1, 0], path[-1, 1] - 145.))
+    return np.array(anchors)
+
+
+def draw_link_cable(ax, sections, z, color, view, zorder):
+    """The 2 wire cable that ties the two sides of a detector together.
+
+    MESH(left) - MESH(right) and RESIST(left) - RESIST(right), so that all 31
+    sections end up on the same pair of nodes.  It is drawn running in front of
+    the plane, one lane per wire.
+    """
+    ylo = outline(sections)[:, 1].min()
+    pts = []
+    for k, y in enumerate(PAD_Y):
+        xr, xl = pad_x(sections, +1, y), pad_x(sections, -1, y)
+        # the cable hangs a bit below the foil, so that it passes under the
+        # leads of the HV cable instead of running into them
+        lane, zc = ylo - 90. - 50. * k, z - 55.
+        path = project([(xr, y, z), (xr + 60., y, zc), (xr + 60., lane, zc),
+                        (xl - 60., lane, zc), (xl - 60., y, zc), (xl, y, z)], *view)
+        ax.plot(path[:, 0], path[:, 1], color=color, lw=1.8,
+                solid_capstyle="round", zorder=zorder + .25)
+        solder_point(ax, path[0], color, zorder + .3)
+        solder_point(ax, path[-1], color, zorder + .3)
+        pts.append(path)
+
+    # the label runs parallel to the cable, otherwise it cuts through the wires
+    p0, p1 = project([(0., 0., z), (100., 0., z)], *view)
+    ang = np.degrees(np.arctan2(p1[1] - p0[1], p1[0] - p0[0]))
+    sxy = project((0., ylo - 340., z), *view)[0]
+    ax.text(sxy[0], sxy[1], "link cable, 2 wires:   MESH " + r"$-$" + " MESH,   "
+                            "RESIST " + r"$-$" + " RESIST",
+            ha="center", va="top", rotation=ang, rotation_mode="anchor",
+            fontsize=10.5, color=color, zorder=zorder + .3)
+    return np.vstack(pts + [sxy])
 
 
 def fit_limits(ax, pts, padx, pady):
@@ -220,16 +319,29 @@ def fit_limits(ax, pts, padx, pady):
 
 
 def make_sketch(ax, sec_top, sec_bot, cfg, view):
-    # the plane that is farther away is drawn first (painter's algorithm)
-    pts = [draw_plane(ax, sec_bot, Z_BOT, cfg["powered"], BOT_COLOR, "BOTTOM", view, 2),
-           draw_leads(ax, sec_bot, Z_BOT, cfg["powered"], BOT_COLOR, cfg["side_bot"],
-                      "ch. B", "# 2", view, 2),
-           draw_plane(ax, sec_top, Z_TOP, cfg["powered"], TOP_COLOR, "TOP", view, 4),
-           draw_leads(ax, sec_top, Z_TOP, cfg["powered"], TOP_COLOR, cfg["side_top"],
-                      "ch. A", "# 1", view, 4)]
+    """The 3D view; the plane that is farther away is drawn first."""
+    if cfg["mode"] == "production":
+        pts = [draw_plane(ax, sec_bot, ZP_BOT, ALL_SECS, BOT_COLOR, "BOTTOM", view, 2,
+                          name_x=-600. * cfg["side_bot"]),
+               draw_link_cable(ax, sec_bot, ZP_BOT, BOT_COLOR, view, 2),
+               draw_hv_cable(ax, sec_bot, ZP_BOT, BOT_COLOR, cfg["side_bot"],
+                             "ch. B", view, 2),
+               draw_plane(ax, sec_top, ZP_TOP, ALL_SECS, TOP_COLOR, "TOP", view, 4,
+                          name_x=-600. * cfg["side_top"]),
+               draw_link_cable(ax, sec_top, ZP_TOP, TOP_COLOR, view, 4),
+               draw_hv_cable(ax, sec_top, ZP_TOP, TOP_COLOR, cfg["side_top"],
+                             "ch. A", view, 4)]
+    else:
+        pts = [draw_plane(ax, sec_bot, Z_BOT, cfg["powered"], BOT_COLOR, "BOTTOM", view, 2),
+               draw_leads(ax, sec_bot, Z_BOT, cfg["powered"], BOT_COLOR, cfg["side_bot"],
+                          "ch. B", "# 2", view, 2),
+               draw_plane(ax, sec_top, Z_TOP, cfg["powered"], TOP_COLOR, "TOP", view, 4),
+               draw_leads(ax, sec_top, Z_TOP, cfg["powered"], TOP_COLOR, cfg["side_top"],
+                          "ch. A", "# 1", view, 4)]
 
     # padx has to hold the lead label, it is not decoration
-    fit_limits(ax, np.vstack(pts), padx=420., pady=70.)
+    fit_limits(ax, np.vstack(pts), padx=560. if cfg["mode"] == "production" else 420.,
+               pady=70.)
 
 
 # ------------------------------------------------------------------ the wiring
@@ -260,7 +372,7 @@ def ground(ax, x, y, color="0.15", label=None):
 
 def draw_chain(ax, yc, color, det, half, secs, nsec, ch, pico):
     """One measuring chain: CAEN channel -> MESH / RESIST -> picoammeter -> earth."""
-    box(ax, 2., yc - 9., 16., 18., "CAEN HV\n%s" % ch, fs=10.)
+    box(ax, 1., yc - 9., 19., 18., "%s\n%s" % (CAEN, ch), fs=9.5)
 
     # the detector half, drawn as its two electrodes with the gas gap in between
     ax.add_patch(Rectangle((31., yc - 11.), 30., 22., facecolor=color, alpha=.09,
@@ -282,8 +394,8 @@ def draw_chain(ax, yc, color, det, half, secs, nsec, ch, pico):
             ha="center", va="bottom", fontsize=9., color="0.35")
 
     # CAEN -> MESH
-    wire(ax, [(18., yc + 5.2), (36., yc + 5.2)])
-    ax.text(27., yc + 6.4, "HV", ha="center", va="bottom", fontsize=9.5)
+    wire(ax, [(20., yc + 5.2), (36., yc + 5.2)])
+    ax.text(28., yc + 6.4, "HV", ha="center", va="bottom", fontsize=9.5)
 
     # RESIST -> picoammeter input
     wire(ax, [(56., yc - 5.2), (68., yc - 5.2), (68., yc), (73., yc)])
@@ -317,24 +429,33 @@ def make_figure(sections, cfg, args):
     sec_top = sections
     sec_bot = {n: p * np.array([-1., 1.]) for n, p in sections.items()}
 
-    fig = plt.figure(figsize=(16., 11.))
-    ax3 = fig.add_axes([.01, .42, .98, .48])
-    ax2 = fig.add_axes([.02, .015, .96, .40])
+    if cfg["mode"] == "production":
+        # no measuring chain to draw -> the 3D sketch is the whole figure
+        fig = plt.figure(figsize=(16., 8.))
+        ax3 = fig.add_axes([.01, .02, .98, .82])
+        handles = [Patch(facecolor=TOP_COLOR, edgecolor=EDGE_COLOR,
+                         label="TOP detector, all 31 sections under HV"),
+                   Patch(facecolor=BOT_COLOR, edgecolor=EDGE_COLOR,
+                         label="BOTTOM detector, all 31 sections under HV")]
+    else:
+        fig = plt.figure(figsize=(16., 11.))
+        ax3 = fig.add_axes([.01, .42, .98, .48])
+        make_wiring(fig.add_axes([.02, .015, .96, .40]), cfg)
+        handles = [Patch(facecolor=TOP_COLOR, edgecolor=EDGE_COLOR,
+                         label="TOP detector, half under HV"),
+                   Patch(facecolor=BOT_COLOR, edgecolor=EDGE_COLOR,
+                         label="BOTTOM detector, half under HV"),
+                   Patch(facecolor=OFF_COLOR, edgecolor=EDGE_COLOR,
+                         label="not powered in this test")]
 
     make_sketch(ax3, sec_top, sec_bot, cfg, (args.elev, args.azim))
-    make_wiring(ax2, cfg)
 
-    fig.suptitle("uRwell 2$^{nd}$ prototype - initial HV test, all HV jumpers in "
-                 "place\n%s" % cfg["title"], fontsize=17, fontweight="bold", y=.99)
+    fig.suptitle("uRwell 2$^{nd}$ prototype - %s" % cfg["title"],
+                 fontsize=17, fontweight="bold", y=.99)
 
-    fig.legend(handles=[Patch(facecolor=TOP_COLOR, edgecolor=EDGE_COLOR,
-                              label="TOP detector, half under HV"),
-                        Patch(facecolor=BOT_COLOR, edgecolor=EDGE_COLOR,
-                              label="BOTTOM detector, half under HV"),
-                        Patch(facecolor=OFF_COLOR, edgecolor=EDGE_COLOR,
-                              label="not powered in this test")],
-               loc="upper center", bbox_to_anchor=(.5, .935), ncol=3,
-               fontsize=10.5, frameon=False)
+    fig.legend(handles=handles, loc="upper center",
+               bbox_to_anchor=(.5, .90 if cfg["mode"] == "production" else .935),
+               ncol=len(handles), fontsize=10.5, frameon=False)
 
     os.makedirs(args.output_dir, exist_ok=True)
     for ext in ("png", "pdf"):
@@ -365,16 +486,23 @@ def main():
     # TOP:    sections 17-31 left  (x < 0),  1-16 right (x > 0)
     # BOTTOM: mirrored, so       17-31 right (x > 0),  1-16 left  (x < 0)
     configs = [
-        dict(out="HV_InitialTest_TopLeft_BotRight",
-             title="configuration A:   TOP-LEFT  +  BOTTOM-RIGHT   "
-                   "(sections 17-31 of both detectors)",
+        dict(out="HV_InitialTest_TopLeft_BotRight", mode="half",
+             title="initial HV test, all HV jumpers in place\nconfiguration A:   "
+                   "TOP-LEFT  +  BOTTOM-RIGHT   (sections 17-31 of both detectors)",
              powered=set(LEFT_SECS), nsec=len(LEFT_SECS), side_top=-1, side_bot=+1,
              top_half="LEFT", bot_half="RIGHT", top_secs="17-31", bot_secs="17-31"),
-        dict(out="HV_InitialTest_TopRight_BotLeft",
-             title="configuration B:   TOP-RIGHT  +  BOTTOM-LEFT   "
-                   "(sections 1-16 of both detectors)",
+        dict(out="HV_InitialTest_TopRight_BotLeft", mode="half",
+             title="initial HV test, all HV jumpers in place\nconfiguration B:   "
+                   "TOP-RIGHT  +  BOTTOM-LEFT   (sections 1-16 of both detectors)",
              powered=set(RIGHT_SECS), nsec=len(RIGHT_SECS), side_top=+1, side_bot=-1,
              top_half="RIGHT", bot_half="LEFT", top_secs="1-16", bot_secs="1-16"),
+        # production: left and right side of a detector tied together by a 2 wire
+        # cable, one CAEN channel per detector, TOP fed from the right side and
+        # BOTTOM from the left side
+        dict(out="HV_Production_Connection", mode="production",
+             title="production HV connection\nboth sides bridged by a 2 wire cable, "
+                   "one %s channel per detector, no picoammeter" % CAEN,
+             powered=ALL_SECS, side_top=+1, side_bot=-1),
     ]
 
     for cfg in configs:

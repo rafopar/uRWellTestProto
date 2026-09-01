@@ -788,6 +788,24 @@ Each figure shows a 3D sketch of the two stacked planes in their true trapezoida
 pitch (TOP blue, BOTTOM red, the energized half filled and the rest grey) together with the wiring of
 both measuring chains. The same section geometry file as above is used, nothing else is needed.
 
+## Production HV connection
+
+In production the **left and the right side of a detector are tied together by a 2-wire cable**
+(MESH↔MESH and RESIST↔RESIST), so that all 31 sections end up on the same pair of nodes and each
+detector needs **one single HV channel**: the core of the HV cable is soldered onto the MESH and the
+RESIST goes to **earth ground**. There is no picoammeter any more. The TOP detector is fed from its
+**right** side, the BOTTOM detector from its **left** side.
+
+![Production HV connection](Doc/HVSection_ProductionConnection.png)
+
+The same script draws it as a third figure:
+
+```bash
+./plot_HV_initial_test_schematic.py     # -> Figs/HV_Production_Connection.{png,pdf} as well
+```
+
+The HV module is a **CAEN A1536HDM** and is named on all three figures.
+
 ---
 
 # Event Viewer

@@ -1,32 +1,32 @@
 # SECTION	MAX_STABLE_HV [V]
 1		490
-2		510
-3		520
+2		490
+3		490
 4		490
 5		520
 6		520
 7		520
 8		520
-9		510
+9		500
 10		500
 11		480
 12		480
-13		520
+13		470
 14		470    # First it developed current at 510 V, however lowering to 500V, then 490 then 400 it was showing current
 15		520
 16		520
 17		500
 18		500
-19		460
-20		520
-21		520
+19		480
+20		480
+21		470
 22		470
 23		510
 24		510	# Although it stayed at 520 V about 5hours then quickly developped a current and tripped
 25		500
 26		500
-27		500
-28		480
+27		490
+28		490
 29		480
-30		490	# Initially developed current at 500 V, but then also didn't hold at 490 V as well.
+30		480	# Initially developed current at 500 V, but then also didn't hold at 490 V as well.
 31		520

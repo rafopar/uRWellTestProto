@@ -14,11 +14,12 @@ two in sync when something here changes.
 |------|------------|
 | `TOP_HV_Sections_90Ar_7Iso_3CO2.dat` | measured max stable HV, TOP detector |
 | `BOT_HV_Sections_90Ar_7Iso_3CO2.dat` | measured max stable HV, BOTTOM detector |
+| `{TOP,BOT}_..._DoubleSections.dat` | the same, first iteration, 2 adjacent sections powered together |
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
-| `plot_HV_initial_test_schematic.py` | schematic of the *initial* HV test (whole half of a detector on one channel) |
-| `Figs/` | output figures, git ignored, created by the script if missing |
+| `plot_HV_initial_test_schematic.py` | schematics of the HV connections: 2 x initial test + production |
+| `Figs/` | output figures, git ignored, created by the scripts if missing |
 | `CMakeLists.txt` | installs the scripts + geometry under `<prefix>/misc/HV_Section_Quality` |
 
 ## Where things are edited (easy to trip over)
@@ -102,10 +103,10 @@ built in `build_sections()` of `extract_section_geometry.py`.
 
 Before the sections were characterized one by one, both detectors were tested with
 **all HV jumpers in place**, i.e. one complete half of a detector -- all the sections
-that are powered from the same side -- hanging on a single CAEN channel:
+that are powered from the same side -- hanging on a single CAEN A1536HDM channel:
 
 ```
-CAEN HV pin -> MESH ,  RESIST -> Keithley picoammeter input ,  Keithley ground -> earth
+HV pin -> MESH ,  RESIST -> Keithley picoammeter input ,  Keithley ground -> earth
 ```
 
 Two picoammeters were available, so two halves were measured at a time, always one
@@ -120,7 +121,35 @@ to the TOP), the two configurations are
 
 `plot_HV_initial_test_schematic.py` draws one figure per configuration: a 3D sketch of
 the two stacked planes (TOP blue, BOTTOM red, the energized half filled, the rest grey)
-plus the wiring of both chains underneath.
+plus the wiring of both chains underneath.  The two chains are completely independent --
+separate CAEN channel, separate picoammeter, only the picoammeter grounds go to earth.
+
+## Production connection
+
+The same script draws `HV_Production_Connection`, the way the detectors are wired in
+production.  That figure is the **3D sketch alone**, there is no wiring panel:
+
+* the LEFT and the RIGHT side of a detector are tied together by a **2 wire cable**,
+  MESH(left)-MESH(right) and RESIST(left)-RESIST(right), so all 31 sections end up on
+  the same pair of nodes,
+* each detector therefore needs **one single HV channel**: the core of the HV cable is
+  soldered onto the MESH, the RESIST goes to **earth ground**,
+* **no picoammeter** any more,
+* the TOP detector is fed from its **right** side, the BOTTOM detector from its
+  **left** side.
+
+The HV module is a **CAEN A1536HDM** (constant `CAEN` in the script); it is named on all
+three figures.  The script writes
+
+```
+Figs/HV_InitialTest_TopLeft_BotRight.png/.pdf     configuration A
+Figs/HV_InitialTest_TopRight_BotLeft.png/.pdf     configuration B
+Figs/HV_Production_Connection.png/.pdf            production, 3D panel only
+```
+
+The solder points are drawn `PAD_OUT` = 20 mm outside the slanted edge of the active
+area, at `PAD_Y` = +60 mm (MESH) and -50 mm (RESIST), i.e. next to each other, and the
+x of the edge at that height is interpolated along the trapezoid (`edge_x()`).
 
 The 3D view is an orthographic projection computed by hand (`project()`) and drawn into
 an ordinary 2D axes.  **mplot3d is not used on purpose**: `Axes3D.apply_aspect` forces
@@ -135,7 +164,7 @@ different scales.
 ```bash
 ./plot_HV_sections.py                                  # -> Figs/HV_Section_MaxStableHV.png/.pdf
 ./plot_HV_sections.py --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
-./plot_HV_initial_test_schematic.py                    # -> Figs/HV_InitialTest_*.png/.pdf
+./plot_HV_initial_test_schematic.py                    # -> Figs/HV_InitialTest_*, HV_Production_Connection
 ./plot_HV_initial_test_schematic.py --elev 20 --azim 17   # viewing angle of the 3D sketch
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```
@@ -143,21 +172,32 @@ different scales.
 Both detectors share one color scale so they can be compared directly.  Needs
 `numpy` + `matplotlib` only (Agg backend, no display required).
 
-The two schematics are also snapshotted into `Doc/HVSection_InitialTest_*.png` for the
-README, by hand, exactly like `Doc/HVSection_MaxStableHV.png`.
+The three schematics are also snapshotted into `Doc/HVSection_InitialTest_*.png` and
+`Doc/HVSection_ProductionConnection.png` for the README, by hand, exactly like
+`Doc/HVSection_MaxStableHV.png`.
 
 ## Status / next steps
 
-As of 2026-08-17, with 90% Ar + 7% iso-C4H10 + 3% CO2 (unchanged since 2026-08-13):
+As of the `.dat` files of 2026-08-22, with 90% Ar + 7% iso-C4H10 + 3% CO2:
 
-* TOP: sections 1-8 and 17-24 measured, 470-520 V.
-* BOTTOM: sections 2-8 and 17-24 measured, 450-510 V.  Section 1 was initially
-  entered as 500 V and later set back to -1.
-* Still to do on both detectors: the whole central band, sections **9-16** and
-  **25-31**.
+* TOP: **all 31 sections measured**, 460 - 520 V (lowest section 19 with 460 V).
+* BOTTOM: **30 of 31 measured**, 440 - 520 V (lowest section 14 with 440 V).  Only
+  section 1 is still `-1`; it was once entered as 500 V and later set back.
+* Nothing left to do except BOTTOM section 1.
 
-Measurements so far come in pairs of adjacent sections sharing the same value
-(1&2, 3&4, ... , 17&18, ...).
+The first iteration powered **two adjacent sections at a time**, so both members of a
+pair carry the same number; those values are kept in the `*_DoubleSections.dat` files.
+A few sections were re-measured alone afterwards, and only those differ between the two
+sets of files:
+
+| detector | section | pair | alone |
+|---|---|---|---|
+| TOP | 13 | 470 | 520 |
+| TOP | 19 | 480 | 460 |
+| TOP | 21 | 470 | 520 |
+| BOTTOM | 13 | 440 | 520 |
+| BOTTOM | 15 | 450 | 500 |
+| BOTTOM | 17 | 450 | 490 |
 
 To add new measurements, edit the two `.dat` files and re-run `plot_HV_sections.py`.
 If they were edited in the install directory, copy them back into the repository

@@ -1,0 +1,32 @@
+# SECTION	MAX_STABLE_HV [V]
+1		-1
+2		500
+3		470
+4		470
+5		510
+6		510
+7		490
+8		490
+9		450
+10		450
+11		460
+12		460
+13		440
+14		440
+15		450
+16		450
+17		450
+18		450
+19		470
+20		470  # Althoug initially it was holding at 510 for about ~30 min, but then hours later when recovered didn't hold 480 V for long
+21		480
+22		480
+23		470
+24		470
+25		490
+26		490
+27		490
+28		490
+29		460
+30		460
+31		480
