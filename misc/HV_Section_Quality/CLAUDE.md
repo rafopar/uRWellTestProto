@@ -178,7 +178,7 @@ The three schematics are also snapshotted into `Doc/HVSection_InitialTest_*.png`
 
 ## Status / next steps
 
-As of the `.dat` files of 2026-08-22, with 90% Ar + 7% iso-C4H10 + 3% CO2:
+As of the `.dat` files of 2026-09-01, with 90% Ar + 7% iso-C4H10 + 3% CO2:
 
 * TOP: **all 31 sections measured**, 460 - 520 V (lowest section 19 with 460 V).
 * BOTTOM: **30 of 31 measured**, 440 - 520 V (lowest section 14 with 440 V).  Only
@@ -187,17 +187,36 @@ As of the `.dat` files of 2026-08-22, with 90% Ar + 7% iso-C4H10 + 3% CO2:
 
 The first iteration powered **two adjacent sections at a time**, so both members of a
 pair carry the same number; those values are kept in the `*_DoubleSections.dat` files.
-A few sections were re-measured alone afterwards, and only those differ between the two
-sets of files:
+Most sections were re-measured alone afterwards, and the paired value was usually a
+lower bound -- measuring a section by itself typically let it hold a higher voltage.
+Sections that differ between the two sets of files:
 
 | detector | section | pair | alone |
 |---|---|---|---|
+| TOP | 2 | 490 | 510 |
+| TOP | 3 | 490 | 520 |
+| TOP | 9 | 500 | 510 |
 | TOP | 13 | 470 | 520 |
 | TOP | 19 | 480 | 460 |
+| TOP | 20 | 480 | 520 |
 | TOP | 21 | 470 | 520 |
+| TOP | 27 | 490 | 500 |
+| TOP | 28 | 490 | 480 |
+| TOP | 30 | 480 | 490 |
+| BOTTOM | 3 | 470 | 460 |
+| BOTTOM | 9 | 450 | 460 |
+| BOTTOM | 10 | 450 | 490 |
+| BOTTOM | 11 | 460 | 490 |
+| BOTTOM | 12 | 460 | 470 |
 | BOTTOM | 13 | 440 | 520 |
 | BOTTOM | 15 | 450 | 500 |
+| BOTTOM | 16 | 450 | 480 |
 | BOTTOM | 17 | 450 | 490 |
+| BOTTOM | 20 | 470 | 520 |
+| BOTTOM | 21 | 480 | 500 |
+| BOTTOM | 23 | 470 | 520 |
+| BOTTOM | 24 | 470 | 520 |
+| BOTTOM | 30 | 460 | 470 |
 
 To add new measurements, edit the two `.dat` files and re-run `plot_HV_sections.py`.
 If they were edited in the install directory, copy them back into the repository
