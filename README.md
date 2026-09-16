@@ -712,7 +712,7 @@ measurements together with the code that draws them on the real detector geometr
 ![Maximum stable HV per HV section](Doc/HVSection_MaxStableHV.png)
 
 **Measurements** are two-column text files, one per detector
-(`TOP_HV_Sections_90Ar_7Iso_3CO2.dat`, `BOT_HV_Sections_90Ar_7Iso_3CO2.dat`), where a negative value
+(`TOP_HV_Sections_90Ar_7CO2_3Iso.dat`, `BOT_HV_Sections_90Ar_7CO2_3Iso.dat`), where a negative value
 means the section has not been measured yet. A `#` starts a comment, also at the end of a line,
 which is used to record observations about individual sections:
 

@@ -34,9 +34,9 @@ from matplotlib.colors import Normalize, to_rgba
 from matplotlib.cm import ScalarMappable
 
 DEF_GEOM = "uRwell_HV_section_geometry.dat"
-DEF_TOP = "TOP_HV_Sections_90Ar_7Iso_3CO2.dat"
-DEF_BOT = "BOT_HV_Sections_90Ar_7Iso_3CO2.dat"
-DEF_GAS = r"90% Ar + 7% iso-C$_4$H$_{10}$ + 3% CO$_2$"
+DEF_TOP = "TOP_HV_Sections_90Ar_7CO2_3Iso.dat"
+DEF_BOT = "BOT_HV_Sections_90Ar_7CO2_3Iso.dat"
+DEF_GAS = r"90% Ar + 7% CO$_2$ + 3% iso-C$_4$H$_{10}$"
 DEF_OUTDIR = "Figs"
 
 NA_COLOR = "0.87"       # fill color of the sections that are not measured yet

@@ -12,8 +12,8 @@ two in sync when something here changes.
 
 | file | what it is |
 |------|------------|
-| `TOP_HV_Sections_90Ar_7Iso_3CO2.dat` | measured max stable HV, TOP detector |
-| `BOT_HV_Sections_90Ar_7Iso_3CO2.dat` | measured max stable HV, BOTTOM detector |
+| `TOP_HV_Sections_90Ar_7CO2_3Iso.dat` | measured max stable HV, TOP detector |
+| `BOT_HV_Sections_90Ar_7CO2_3Iso.dat` | measured max stable HV, BOTTOM detector |
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
@@ -110,7 +110,7 @@ Both detectors share one color scale so they can be compared directly.  Needs
 
 ## Status / next steps
 
-As of 2026-08-17, with 90% Ar + 7% iso-C4H10 + 3% CO2 (unchanged since 2026-08-13):
+As of 2026-08-17, with 90% Ar + 7% CO2 + 3% iso-C4H10 (unchanged since 2026-08-13):
 
 * TOP: sections 1-8 and 17-24 measured, 470-520 V.
 * BOTTOM: sections 2-8 and 17-24 measured, 450-510 V.  Section 1 was initially
