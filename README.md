@@ -709,10 +709,13 @@ characterized separately: the section is ramped up and the highest voltage at wh
 (no leakage current developing, no trips) is recorded. `misc/HV_Section_Quality/` holds those
 measurements together with the code that draws them on the real detector geometry.
 
-![Maximum stable HV per HV section](Doc/HVSection_MaxStableHV.png)
+![Maximum stable HV per HV section, 90% Ar + 7% CO₂ + 3% iso-C₄H₁₀](Doc/HVSection_MaxStableHV.png)
 
-**Measurements** are two-column text files, one per detector
-(`TOP_HV_Sections_90Ar_7CO2_3Iso.dat`, `BOT_HV_Sections_90Ar_7CO2_3Iso.dat`), where a negative value
+![Maximum stable HV per HV section, UHP N₂](Doc/HVSection_MaxStableHV_UHPN2.png)
+
+**Measurements** are done separately for every gas and stored in two-column text files, one per
+detector and gas, `TOP_HV_Sections_<gas>.dat` and `BOT_HV_Sections_<gas>.dat`, where `<gas>` is
+`90Ar_7CO2_3Iso` (90% Ar + 7% CO₂ + 3% iso-C₄H₁₀) or `UHPN2` (ultra high purity N₂). A negative value
 means the section has not been measured yet. A `#` starts a comment, also at the end of a line,
 which is used to record observations about individual sections:
 
@@ -726,17 +729,22 @@ which is used to record observations about individual sections:
 **Run:**
 ```bash
 cd misc/HV_Section_Quality
-./plot_HV_sections.py                                # -> Figs/HV_Section_MaxStableHV.{png,pdf}
-./plot_HV_sections.py --cmap RdYlGn --vmin 440 --vmax 530
+./plot_HV_sections.py                    # every gas -> Figs/HV_Section_MaxStableHV_<gas>.{png,pdf}
+./plot_HV_sections.py --gas UHPN2        # only the given gas(es)
+./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --cmap RdYlGn --vmin 440 --vmax 530
 ```
 
-The figures are written into the `Figs/` sub directory, which is created if it does not exist yet.
-Both detectors are drawn to scale and share one color scale, so that they can be compared directly.
+Without `--gas` one figure is drawn for every gas whose two files exist, a gas without files is
+skipped. The figures are written into the `Figs/` sub directory, which is created if it does not
+exist yet. Both detectors are drawn to scale and share one color scale, so that they can be compared
+directly. Every gas gets its own color scale, because the voltages differ by ~150 V between the
+gases (`--vmin`/`--vmax` apply to every gas drawn, so they are mostly useful together with `--gas`).
 Sections that are not measured yet are drawn hatched and labelled `n/a`. Further options are
-`--top`, `--bot`, `--geometry`, `--output-dir`, `--out`, `--gas` and `--mirror` (the latter flips the
-detector in x, for the case it is viewed from the other side). Only `numpy` and `matplotlib` are
-needed. To add new measurements, edit the two `.dat` files and re-run the script — nothing else has
-to be touched.
+`--geometry`, `--output-dir`, `--out` and `--mirror` (the latter flips the detector in x, for the case
+it is viewed from the other side). Only `numpy` and `matplotlib` are needed. To add new measurements,
+edit the `.dat` files and re-run the script. A new gas needs its two `.dat` files plus one line in the
+`GASES` table at the top of `plot_HV_sections.py` (the name used in the file names and the gas as it
+is written in the figure title).
 
 **Section geometry** comes from the CAD export `DFS3381_activearea.dxf`, which is *not* part of this
 repository. `extract_section_geometry.py` reads it and writes `uRwell_HV_section_geometry.dat`, which
@@ -754,9 +762,11 @@ sec:   17  18  19  ...  30  31 | 16  15  14  ...   2   1
 x:   -727 -602 -538     -81 -40 |  0  +40  +81      +602 +727   [mm]
 ```
 
-**Status** with 90% Ar + 7% iso-C₄H₁₀ + 3% CO₂: TOP sections 1–8 and 17–24 are measured (470–520 V),
-BOTTOM sections 2–8 and 17–24 (450–510 V). The whole central band, sections 9–16 and 25–31, is still
-to be done on both detectors.
+**Status:**
+- 90% Ar + 7% CO₂ + 3% iso-C₄H₁₀: all sections are measured except section 1 of
+  the BOTTOM detector, TOP 460–520 V, BOTTOM 440–520 V.
+- UHP N₂: TOP 640–670 V, BOTTOM 630–670 V. Sections 13–16 and 29–31 are still to be done on both
+  detectors, and section 1 on the BOTTOM one.
 
 ---
 

@@ -2,8 +2,9 @@
 
 Characterization of the 31 HV sections of the uRwell 2nd prototype.  Every section
 is ramped up separately and the highest voltage at which it stays stable (no
-leakage current developing, no trips) is recorded.  This directory holds the
-measurements and the code that draws them on top of the real detector geometry.
+leakage current developing, no trips) is recorded.  This is repeated for every gas.
+This directory holds the measurements and the code that draws them on top of the
+real detector geometry.
 
 Documented in the top level `README.md`, section "HV Section Quality" -- keep the
 two in sync when something here changes.
@@ -12,29 +13,55 @@ two in sync when something here changes.
 
 | file | what it is |
 |------|------------|
-| `TOP_HV_Sections_90Ar_7CO2_3Iso.dat` | measured max stable HV, TOP detector |
-| `BOT_HV_Sections_90Ar_7CO2_3Iso.dat` | measured max stable HV, BOTTOM detector |
+| `TOP_HV_Sections_<gas>.dat` | measured max stable HV, TOP detector, one file per gas |
+| `BOT_HV_Sections_<gas>.dat` | measured max stable HV, BOTTOM detector, one file per gas |
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
-| `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV |
+| `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV, one figure per gas |
 | `Figs/` | output figures, git ignored, created by the script if missing |
-| `CMakeLists.txt` | installs the scripts + geometry under `<prefix>/misc/HV_Section_Quality` |
+| `CMakeLists.txt` | installs the scripts, geometry and measurement files under `<prefix>/misc/HV_Section_Quality` |
+
+`<gas>` is `90Ar_7CO2_3Iso` (90% Ar + 7% CO2 + 3% iso-C4H10) or `UHPN2` (ultra
+high purity N2).
+
+## Gases
+
+The known gases are listed in the `GASES` table at the top of `plot_HV_sections.py`:
+the name used in the file names -> the gas as it is written in the figure title.
+A new gas needs its two `.dat` files plus one line in that table, and the two files
+added to the `install(FILES ...)` list in `CMakeLists.txt`.
+
+* Without `--gas` every gas of the table whose two files exist is drawn, one figure
+  per gas (`Figs/HV_Section_MaxStableHV_<gas>.png/.pdf`), a gas without files is
+  skipped with a message.  `--gas A [B ...]` draws only those, and then missing
+  files are an error.
+* The gases are deliberately taken from the table and **not** found by globbing
+  `TOP_HV_Sections_*.dat`: the install directory can hold stale files, because
+  `make install` never removes anything (e.g. the pre-rename `*_90Ar_7Iso_3CO2.dat`,
+  which had the CO2 and iso fractions swapped in the name), and a glob would
+  silently plot them as an extra gas.
+* TOP and BOTTOM share one color scale, but every gas gets its own: N2 needs
+  ~150 V more than the Ar mixture, a common scale would flatten both.
+  `--vmin`/`--vmax` apply to every gas drawn, so use them together with `--gas`.
 
 ## Where things are edited (easy to trip over)
 
-**The two measurement files are deliberately NOT installed.**  They are edited in
-place in the install directory while measuring, and having them in `install(FILES ...)`
-made every `make install` overwrite those edits (this already happened once and the
-edits were lost).  Only the scripts, the generated geometry and an empty `Figs/` are
-installed.
+**The measurement files are installed, so edit them in the repository, not in the
+install directory.**  Every `make install` overwrites the installed copies with the
+repository ones (CMake copies whenever the time stamps differ, so an edited installed
+copy is always overwritten).  An earlier version deliberately did not install them,
+because they used to be edited in place in the install directory and a
+`make install` had already wiped such edits once.  If values are ever entered in the
+install directory again, copy them back into the repository **before** the next
+`make install`.
 
-The consequence: the repository copy and the install copy of the `.dat` files can
-drift apart silently.  Values measured in the install directory have to be copied
-back into the repository by hand before they can be committed.
+The figures embedded in the README are manual snapshots in `Doc/` and have to be
+refreshed by hand when the measurements change:
 
-The figure embedded in the README lives in `Doc/HVSection_MaxStableHV.png`.  It is a
-manual snapshot of `Figs/HV_Section_MaxStableHV.png` and has to be refreshed by hand
-when the measurements change.
+| README figure | snapshot of |
+|---------------|-------------|
+| `Doc/HVSection_MaxStableHV.png` | `Figs/HV_Section_MaxStableHV_90Ar_7CO2_3Iso.png` |
+| `Doc/HVSection_MaxStableHV_UHPN2.png` | `Figs/HV_Section_MaxStableHV_UHPN2.png` |
 
 ## Data file format
 
@@ -100,28 +127,25 @@ built in `build_sections()` of `extract_section_geometry.py`.
 ## Usage
 
 ```bash
-./plot_HV_sections.py                                  # -> Figs/HV_Section_MaxStableHV.png/.pdf
-./plot_HV_sections.py --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
+./plot_HV_sections.py                                  # every gas -> Figs/HV_Section_MaxStableHV_<gas>.png/.pdf
+./plot_HV_sections.py --gas UHPN2                      # only the given gas(es)
+./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```
 
-Both detectors share one color scale so they can be compared directly.  Needs
-`numpy` + `matplotlib` only (Agg backend, no display required).
+Needs `numpy` + `matplotlib` only (Agg backend, no display required).
 
 ## Status / next steps
 
-As of 2026-08-17, with 90% Ar + 7% CO2 + 3% iso-C4H10 (unchanged since 2026-08-13):
+As of 2026-09-28:
 
-* TOP: sections 1-8 and 17-24 measured, 470-520 V.
-* BOTTOM: sections 2-8 and 17-24 measured, 450-510 V.  Section 1 was initially
-  entered as 500 V and later set back to -1.
-* Still to do on both detectors: the whole central band, sections **9-16** and
-  **25-31**.
+* 90% Ar + 7% CO2 + 3% iso-C4H10: done.  All sections measured except BOTTOM
+  section 1 (initially entered as 500 V, later set back to -1).  TOP 460-520 V,
+  BOTTOM 440-520 V.
+* UHP N2: TOP 640-670 V, BOTTOM 630-670 V.  Still to do on both detectors:
+  sections **13-16** and **29-31**, plus BOTTOM section 1.  So far measured in pairs
+  of adjacent sections sharing the same value (1&2, 3&4, ... , 17&18, ...).
 
-Measurements so far come in pairs of adjacent sections sharing the same value
-(1&2, 3&4, ... , 17&18, ...).
-
-To add new measurements, edit the two `.dat` files and re-run `plot_HV_sections.py`.
-If they were edited in the install directory, copy them back into the repository
-first (see "Where things are edited" above), and refresh `Doc/HVSection_MaxStableHV.png`
-if the README figure should show the new values.
+To add new measurements, edit the `.dat` files in the repository, re-run
+`plot_HV_sections.py` (or `make install` and run it in the install directory), and
+refresh the README figures in `Doc/` (table above) if they should show the new values.
