@@ -13,8 +13,8 @@ two in sync when something here changes.
 
 | file | what it is |
 |------|------------|
-| `TOP_HV_Sections_<gas>.dat` | measured max stable HV, TOP detector, one file per gas |
-| `BOT_HV_Sections_<gas>.dat` | measured max stable HV, BOTTOM detector, one file per gas |
+| `TOP_HV_Sections_<gas>.dat` | measured max stable HV (+ trip limit), TOP detector, one file per gas |
+| `BOT_HV_Sections_<gas>.dat` | measured max stable HV (+ trip limit), BOTTOM detector, one file per gas |
 | `uRwell_HV_section_geometry.dat` | polygons of the 31 sections, generated (see below) |
 | `extract_section_geometry.py` | CAD (DXF) -> `uRwell_HV_section_geometry.dat` |
 | `plot_HV_sections.py` | the plot: both detectors, color coded by max stable HV, one figure per gas |
@@ -41,8 +41,16 @@ added to the `install(FILES ...)` list in `CMakeLists.txt`.
   which had the CO2 and iso fractions swapped in the name), and a glob would
   silently plot them as an extra gas.
 * TOP and BOTTOM share one color scale, but every gas gets its own: N2 needs
-  ~150 V more than the Ar mixture, a common scale would flatten both.
+  ~150 V more than the Ar mixture, a common scale would flatten both.  By default
+  it runs from the lowest HV - 10 V to the highest HV + 10 V of the gas.
   `--vmin`/`--vmax` apply to every gas drawn, so use them together with `--gas`.
+* `--delta DELTA` gives every gas a scale of the same width instead, so that the
+  colors of different gases can be compared: from the highest HV of the gas (no
+  +10 V margin, the highest sections get the top color) down to highest - DELTA.
+  `--delta` without a value takes the widest range (highest - lowest + 10 V) of all
+  gases that have files, drawn or not, so no gas is clipped and a figure does not
+  depend on `--gas` (80 V as of 2026-10-28, set by the Ar mixture).  It can not be
+  combined with `--vmin`/`--vmax`.
 
 ## Where things are edited (easy to trip over)
 
@@ -65,15 +73,49 @@ refreshed by hand when the measurements change:
 
 ## Data file format
 
-Two whitespace separated columns, `#` starts a comment (also at the end of a line,
+Whitespace separated columns, `#` starts a comment (also at the end of a line,
 which is used to record observations about individual sections):
 
 ```
-# SECTION	MAX_STABLE_HV [V]
-1		490
-9		-1     <- negative = not measured yet, drawn hatched as 'n/a'
-20		470  # held 510 for ~30 min, later did not hold 480 for long
+# SECTION	MAX_STABLE_HV [V]	TRIP_LIMIT [uA]
+1		490		15
+9		-1             <- negative = not measured yet, drawn hatched as 'n/a'
+20		470		10  # held 510 for ~30 min, later did not hold 480 for long
 ```
+
+The third column, the HV trip limit the section was measured with, is optional (the
+Ar files do not have it, a not measured section leaves it empty).
+
+## HV trip limit (red 'x')
+
+During the N2 scan the trip limit was raised from 10 uA to 15 uA on 2026-09-25, the
+first setting with 15 uA is setting #6.  With 10 uA a section can trip below the HV
+it could hold, so its value is only a lower limit.  `plot_HV_sections.py` puts a
+small red 'x' at the top of every measured section whose trip limit is lower than
+the highest one in the two files of that gas (no legend entry, deliberately).
+
+Which section had which limit comes from the lab log `EEL_Runs.xlsx` (not in git),
+tab "HV settings " (with a trailing space), N2 block from row 29 on:
+
+* Settings #1-#5 (rows 30-34, 10 uA) measured pairs: TOP 1-10 and 17-26, BOTTOM
+  2-10 and 17-26.
+* From setting #9 (row 38) sections are measured one by one, all with 15 uA.  A
+  section of a 10 uA pair that was re-measured there is 15 uA, its partner stays
+  10 uA unless it was re-measured too (e.g. BOTTOM 3 & 4: 640 V in #2, then BOTTOM 3
+  alone 670 V in #10 -> 3 became 15 uA, 4 stayed 10 uA until it was re-measured
+  alone later, 680 V with 15 uA).
+* Not counted as re-measurements: setting #16 TOP right (section 8, not connected)
+  and setting #17 (60 V on every channel, not a max HV measurement).
+
+Result as of 2026-11-02, still 10 uA: TOP 10, 18, 21, 22, 26 and BOTTOM 2, 24, 26
+(TOP 5, 6, 8 and BOTTOM 4, 10, 20, 22 were re-measured with 15 uA in the meantime).
+When one of them is re-measured, update its HV **and** set its trip limit to 15 in
+the `.dat` file, the 'x' then disappears.
+
+The same kind of trap exists for the pair measurements in general: when a section
+is re-measured alone, its old pair value has to be replaced (BOTTOM 14 with the Ar
+mixture kept the 440 V of the 13 & 14 pair, setting #7, although it held 450 V
+alone in setting #10 -- fixed in commit b61dce2).
 
 ## Geometry
 
@@ -129,6 +171,8 @@ built in `build_sections()` of `extract_section_geometry.py`.
 ```bash
 ./plot_HV_sections.py                                  # every gas -> Figs/HV_Section_MaxStableHV_<gas>.png/.pdf
 ./plot_HV_sections.py --gas UHPN2                      # only the given gas(es)
+./plot_HV_sections.py --delta                          # same color scale width for every gas (widest range)
+./plot_HV_sections.py --delta 100                      # ... with a given width [V]
 ./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```
@@ -137,14 +181,15 @@ Needs `numpy` + `matplotlib` only (Agg backend, no display required).
 
 ## Status / next steps
 
-As of 2026-09-28:
+As of 2026-11-02:
 
 * 90% Ar + 7% CO2 + 3% iso-C4H10: done.  All sections measured except BOTTOM
   section 1 (initially entered as 500 V, later set back to -1).  TOP 460-520 V,
-  BOTTOM 440-520 V.
-* UHP N2: TOP 640-670 V, BOTTOM 630-670 V.  Still to do on both detectors:
-  sections **13-16** and **29-31**, plus BOTTOM section 1.  So far measured in pairs
-  of adjacent sections sharing the same value (1&2, 3&4, ... , 17&18, ...).
+  BOTTOM 450-520 V.
+* UHP N2: all sections measured except BOTTOM section 1.  TOP 660-680 V, BOTTOM
+  640-680 V.  Settings #1-#8 measured pairs of adjacent sections, from #9 on single
+  sections.  Still only with the 10 uA trip limit: the 8 sections listed in
+  "HV trip limit" above.
 
 To add new measurements, edit the `.dat` files in the repository, re-run
 `plot_HV_sections.py` (or `make install` and run it in the install directory), and
