@@ -742,6 +742,7 @@ cd misc/HV_Section_Quality
 ./plot_HV_sections.py --gas UHPN2        # only the given gas(es)
 ./plot_HV_sections.py --delta            # same color scale width for every gas
 ./plot_HV_sections.py --delta 100        # ... with a given width [V]
+./plot_HV_sections.py --flip-bottom      # BOTTOM detector as mounted -> ..._<gas>_BotFlipped.{png,pdf}
 ./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --cmap RdYlGn --vmin 440 --vmax 530
 ```
 
@@ -754,7 +755,12 @@ gases. By default it runs from the lowest HV − 10 V to the highest HV + 10 V o
 To compare the colors of different gases, `--delta DELTA` gives every gas a scale of the same width,
 from the highest HV of the gas down to highest − DELTA. `--delta` without a value takes the widest
 range (highest − lowest + 10 V) of all gases, so that no gas is clipped; it can not be combined with
-`--vmin`/`--vmax`. Sections that are not measured yet are drawn hatched and labelled `n/a`. Further
+`--vmin`/`--vmax`. Sections that are not measured yet are drawn hatched and labelled `n/a`.
+By default both detectors are drawn with the same orientation. The BOTTOM detector is however mounted
+flipped in x with respect to the TOP one: `--flip-bottom` draws it the way it actually sits under the
+TOP detector, section 17 under section 1, 18 under 2, …, 31 under 15, the central section 16 stays
+in the center. The BOTTOM panel title then says that it is flipped, and the figures get `_BotFlipped`
+appended to their name, so that they do not overwrite the default ones. Further
 options are `--geometry`, `--output-dir`, `--out` and `--mirror` (the latter flips the detector in x,
 for the case it is viewed from the other side). Only `numpy` and `matplotlib` are needed. To add new
 measurements, edit the `.dat` files and re-run the script. A new gas needs its two `.dat` files plus

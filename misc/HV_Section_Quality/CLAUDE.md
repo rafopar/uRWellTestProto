@@ -166,6 +166,24 @@ built in `build_sections()` of `extract_section_geometry.py`.
 
 `plot_HV_sections.py --mirror` flips x if the detector is viewed from the other side.
 
+## BOTTOM detector as mounted (`--flip-bottom`)
+
+The BOTTOM detector is mounted flipped in x with respect to the TOP one.  By default
+both are drawn with the same orientation (section 1 on the right), `--flip-bottom`
+draws the BOTTOM one as it actually sits under the TOP detector: section 17 under
+section 1, 18 under 2, ..., 31 under 15, 16 stays in the center.  This is a plain x
+mirror of the BOTTOM polygons (`mirror_x()`), which is exact because the geometry is
+symmetric around x = 0 (checked: the centroids of 1+k and 17+k mirror onto each other
+to 0.1 mm).  The "powered from this side" labels swap sides with it.
+
+* The BOTTOM panel title says that it is flipped and how the sections line up, that
+  is the requested "the figure has to show clearly that it is flipped".
+* The figures get `_BotFlipped` appended (`FLIP_SUFFIX`):
+  `Figs/HV_Section_MaxStableHV_<gas>_BotFlipped.png/.pdf`, so they never overwrite the
+  default figures that the README snapshots in `Doc/` are taken from.
+* Combined with `--mirror` both panels are mirrored first, i.e. the BOTTOM one ends up
+  in its original orientation; "17 under 1" stays true.
+
 ## Usage
 
 ```bash
@@ -173,6 +191,7 @@ built in `build_sections()` of `extract_section_geometry.py`.
 ./plot_HV_sections.py --gas UHPN2                      # only the given gas(es)
 ./plot_HV_sections.py --delta                          # same color scale width for every gas (widest range)
 ./plot_HV_sections.py --delta 100                      # ... with a given width [V]
+./plot_HV_sections.py --flip-bottom                    # BOTTOM detector as mounted -> ..._<gas>_BotFlipped.png/.pdf
 ./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --output-dir SomeOtherDir --cmap RdYlGn --vmin 440 --vmax 530
 ./extract_section_geometry.py [dxf] [out]              # only if the CAD changed
 ```

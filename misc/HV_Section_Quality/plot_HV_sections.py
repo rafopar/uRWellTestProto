@@ -27,11 +27,17 @@ highest HV + 10 V.  With --delta the scale of every gas has the same width inste
 from its highest HV down to highest HV - DELTA, so the colors of different gases can
 be compared.  --delta without a value takes the widest range of all gases.
 
+With --flip-bottom the BOTTOM detector is drawn flipped in x, the way it is
+actually mounted under the TOP detector: section 17 under section 1 of the TOP
+detector, 18 under 2, ..., 31 under 15, the central section 16 stays in the center.
+The figures then get '_BotFlipped' appended to their name.
+
 Usage:
     ./plot_HV_sections.py                                # all gases
     ./plot_HV_sections.py --gas UHPN2                    # only one gas
     ./plot_HV_sections.py --delta                        # same color scale width for all gases
     ./plot_HV_sections.py --delta 100                    # ... with a given width [V]
+    ./plot_HV_sections.py --flip-bottom                  # BOTTOM detector as mounted
     ./plot_HV_sections.py --gas 90Ar_7CO2_3Iso --cmap RdYlGn --vmin 440 --vmax 530
 """
 
@@ -57,6 +63,7 @@ GASES = {
 }
 
 NA_COLOR = "0.87"       # fill color of the sections that are not measured yet
+FLIP_SUFFIX = "_BotFlipped"     # appended to the figure names with --flip-bottom
 
 
 # ----------------------------------------------------------------------------- I/O
@@ -105,6 +112,12 @@ def measured_hv(gas):
 
 
 # ----------------------------------------------------------------- small helpers
+def mirror_x(sections):
+    """The section polygons mirrored in x.  The geometry is symmetric around x = 0,
+    so section 17 lands exactly on section 1, 18 on 2, ..., 31 on 15, 16 on itself."""
+    return {n: p * np.array([-1., 1.]) for n, p in sections.items()}
+
+
 def centroid(poly):
     """Area weighted centroid of a closed polygon."""
     x, y = poly[:, 0], poly[:, 1]
@@ -216,11 +229,19 @@ def plot_gas(gas, sections, cmap, args):
     low_top = sorted(n for n, t in trip_top.items() if t < max_trip and hv_top[n] > 0.)
     low_bot = sorted(n for n, t in trip_bot.items() if t < max_trip and hv_bot[n] > 0.)
 
+    # --flip-bottom: the BOTTOM detector is mounted flipped in x with respect to the
+    # TOP one, draw it as it really sits under the TOP detector
+    bot_sections, bot_mirror, bot_title = sections, args.mirror, "BOTTOM detector"
+    if args.flip_bottom:
+        bot_sections, bot_mirror = mirror_x(sections), not args.mirror
+        bot_title = ("BOTTOM detector  -  FLIPPED as mounted: section 17 under section 1"
+                     " of the TOP detector, 18 under 2, ..., 31 under 15")
+
     # the active area is 1453 x 495 mm^2, keep the true aspect ratio of the
     # detector and size the canvas such that no space is wasted
     fig, axes = plt.subplots(2, 1, figsize=(17., 13.2), layout="constrained")
     draw_detector(axes[0], sections, hv_top, cmap, norm, "TOP detector", args.mirror, low_top)
-    draw_detector(axes[1], sections, hv_bot, cmap, norm, "BOTTOM detector", args.mirror, low_bot)
+    draw_detector(axes[1], bot_sections, hv_bot, cmap, norm, bot_title, bot_mirror, low_bot)
 
     fig.suptitle("uRwell 2$^{nd}$ prototype - maximum stable HV per section\n%s"
                  % GASES[gas], fontsize=15, fontweight="bold")
@@ -236,8 +257,9 @@ def plot_gas(gas, sections, cmap, args):
                               hatch="///", label="section not measured yet")],
                loc="outside lower left", fontsize=10, frameon=False)
 
+    suffix = FLIP_SUFFIX if args.flip_bottom else ""
     for ext in ("png", "pdf"):
-        fname = os.path.join(args.output_dir, "%s_%s.%s" % (args.out, gas, ext))
+        fname = os.path.join(args.output_dir, "%s_%s%s.%s" % (args.out, gas, suffix, ext))
         fig.savefig(fname, dpi=200)
         print("Wrote %s" % fname)
     plt.close(fig)
@@ -275,6 +297,11 @@ def main():
     ap.add_argument("--mirror", action="store_true",
                     help="mirror the detector in x, i.e. draw section 1 on the left "
                          "(use it if you look at the chamber from the other side)")
+    ap.add_argument("--flip-bottom", action="store_true",
+                    help="draw the BOTTOM detector flipped in x, as it is actually "
+                         "mounted: section 17 under section 1 of the TOP detector, 18 "
+                         "under 2, ..., 31 under 15, 16 stays in the center.  '%s' is "
+                         "appended to the figure names" % FLIP_SUFFIX)
     args = ap.parse_args()
 
     if args.delta is not None and (args.vmin is not None or args.vmax is not None):
@@ -312,7 +339,7 @@ def main():
 
     sections = read_geometry(args.geometry)
     if args.mirror:
-        sections = {n: p * np.array([-1., 1.]) for n, p in sections.items()}
+        sections = mirror_x(sections)
     cmap = plt.get_cmap(args.cmap)
 
     # the output directory is created on the fly, so that a fresh checkout or a
