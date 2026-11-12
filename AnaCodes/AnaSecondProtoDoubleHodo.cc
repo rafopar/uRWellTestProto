@@ -155,6 +155,9 @@ int main(int argc, char **argv) {
     TH1D h_HVSel_DeltaT("h_HVSel_DeltaT_UV", "", 100, -8., 8.);
     TH2D h_HVS_UV_Det0ix_Det1ix("h_HVS_UV_Det0ix_Det1ix", ";Det0 ix;Det1 ix", nSB + 1, -0.5, nSB + 0.5, nSB + 1, -0.5, nSB + 0.5);
 
+    TH2D h_Det0_Occupancy_WithuRwellCross1("h_Det0_Occupancy_WithuRwellCross1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+    TH2D h_Det1_Occupancy_WithuRwellCross1("h_Det1_Occupancy_WithuRwellCross1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+
     TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegralInsideDet1("h_Cross_YXc_MaxIntegralInsideDet1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegral_vertTrk11("h_Cross_YXc_MaxIntegral_vertTrk1", "", 1000, -900., 900., 200, -500., 500.);
@@ -399,6 +402,9 @@ int main(int argc, char **argv) {
 
                 h_Cross_YXc_MaxIntegral1.Fill(crs_X, crs_Y);
                 if (!isInsiDeDetector) {continue;}
+
+                h_Det0_Occupancy_WithuRwellCross1.Fill(det0_ShortBarID, det0_LongBarID);
+                h_Det1_Occupancy_WithuRwellCross1.Fill(det1_ShortBarID, det1_LongBarID);
 
                 h_Cross_YXc_MaxIntegralInsideDet1.Fill(crs_X, crs_Y);
 
