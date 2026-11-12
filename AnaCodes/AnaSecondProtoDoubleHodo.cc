@@ -16,6 +16,7 @@
 
 #include <TH1D.h>
 #include <TH2D.h>
+#include <TH3D.h>
 #include <TFile.h>
 
 using namespace std;
@@ -41,7 +42,8 @@ int main(int argc, char **argv) {
     cxxopts::Options options("AnaPulseFits", "Performs clustering and also does analysis on cosmic data");
 
     options.add_options()("r,Run", "Run number", cxxopts::value<int>())("f,FileNo", "File number",
-                                                                        cxxopts::value<int>());
+                                                                        cxxopts::value<int>())
+        ("vetoV", "Noise veto on U OR V pulse count (fixes MonsterEvent(n_U, n_U)); default keeps the official U-only veto");
 
     auto parsed_options = options.parse(argc, argv);
 
@@ -61,6 +63,10 @@ int main(int argc, char **argv) {
         cout << "The file number is not provided. Exiting..." << endl;
         exit(1);
     }
+
+    // Default (no flag) reproduces the official behaviour, where the V count is never checked.
+    const bool vetoV = parsed_options.count("vetoV") > 0;
+    if (vetoV) { cout << "Noise veto applied to U and V pulse counts (--vetoV)" << endl; }
 
     sprintf(inputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
 
@@ -115,6 +121,39 @@ int main(int argc, char **argv) {
     TH2D h_Det0_Occupancy_vert_uRwell_Ucluster1("h_Det0_Occupancy_vert_uRwell_Ucluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_vert_uRwell_Vcluster1("h_Det0_Occupancy_vert_uRwell_Vcluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
     TH2D h_Det0_Occupancy_vert_uRwell_UVcluster1("h_Det0_Occupancy_vert_uRwell_UVcluster1", "", XYHodoTools::nShortBars + 1, -0.5, XYHodoTools::nShortBars + 0.5, XYHodoTools::nLongBars + 1, -0.5, XYHodoTools::nLongBars + 0.5);
+
+    // ---- HV-section geometry: hodoscope bar of each plane vs the uRwell cross position.
+    // ---- Clean hodo event (one L/R match per plane) + U&V cross inside the detector, no other cut.
+    const int nSB = XYHodoTools::nShortBars, nLB = XYHodoTools::nLongBars;
+    TH2D h_HVS_CrsX_vs_Det0ix("h_HVS_CrsX_vs_Det0ix", ";Det0 ix;cross x [mm]", nSB + 1, -0.5, nSB + 0.5, 360, -900., 900.);
+    TH2D h_HVS_CrsX_vs_Det1ix("h_HVS_CrsX_vs_Det1ix", ";Det1 ix;cross x [mm]", nSB + 1, -0.5, nSB + 0.5, 360, -900., 900.);
+    TH2D h_HVS_CrsY_vs_Det0iy("h_HVS_CrsY_vs_Det0iy", ";Det0 iy;cross y [mm]", nLB + 1, -0.5, nLB + 0.5, 200, -500., 500.);
+    TH2D h_HVS_CrsY_vs_Det1iy("h_HVS_CrsY_vs_Det1iy", ";Det1 iy;cross y [mm]", nLB + 1, -0.5, nLB + 0.5, 200, -500., 500.);
+    // (Det0 bar, Det1 - Det0 bar, cross coordinate): pick "Det0 = a, Det1 within a +- k" at plot time
+    TH3D h_HVS_CrsX_Det0ix_dix("h_HVS_CrsX_Det0ix_dix", ";Det0 ix;Det1 ix - Det0 ix;cross x [mm]", nSB + 1, -0.5, nSB + 0.5, 13, -6.5, 6.5, 360, -900., 900.);
+    TH3D h_HVS_CrsY_Det0iy_diy("h_HVS_CrsY_Det0iy_diy", ";Det0 iy;Det1 iy - Det0 iy;cross y [mm]", nLB + 1, -0.5, nLB + 0.5, 13, -6.5, 6.5, 200, -500., 500.);
+    // Efficiency ingredients per (Det0 ix, Det1 ix): tracks with both long bars in 2..9 and |diy| <= 2
+    TH2D h_HVS_Trk_Det0ix_Det1ix("h_HVS_Trk_Det0ix_Det1ix", ";Det0 ix;Det1 ix", nSB + 1, -0.5, nSB + 0.5, nSB + 1, -0.5, nSB + 0.5);
+    TH2D h_HVS_U_Det0ix_Det1ix("h_HVS_U_Det0ix_Det1ix", ";Det0 ix;Det1 ix", nSB + 1, -0.5, nSB + 0.5, nSB + 1, -0.5, nSB + 0.5);
+    TH2D h_HVS_V_Det0ix_Det1ix("h_HVS_V_Det0ix_Det1ix", ";Det0 ix;Det1 ix", nSB + 1, -0.5, nSB + 0.5, nSB + 1, -0.5, nSB + 0.5);
+    // Hit maps per cut step: cross (x, y) for each (Det0 ix, d = Det1 - Det0) cell, Det0 ix 18..29, d -6..6,
+    // cell index = (ix0 - 18)*13 + (d + 6). Plus the same map with no ix restriction. Both need hvs_yOK.
+    TH3F h_HVS_CrsXY_cell("h_HVS_CrsXY_cell", ";cell (ix0-18)*13+d+6;cross x [mm];cross y [mm]",
+                          156, -0.5, 155.5, 70, 150., 500., 60, -300., 300.);
+    TH2D h_HVS_CrsXY_yOK("h_HVS_CrsXY_yOK", ";cross x [mm];cross y [mm]", 350, -900., 900., 60, -300., 300.);
+    // Detector response for tracks through the HV-section strip only (TOP 7-9 / BOTTOM 23-25):
+    // accepted (Det0 ix, Det1 ix) cells, U&V cross inside the detector. Same binning as the *2 histograms.
+    const char *hvsUV[2] = {"U", "V"};
+    TH1D *h_HVSel_ClSize[2], *h_HVSel_PulseIntegral[2], *h_HVSel_PulseHeight[2], *h_HVSel_SeedADC[2], *h_HVSel_StartTime[2];
+    for (int k = 0; k < 2; k++) {
+        h_HVSel_ClSize[k] = new TH1D(Form("h_HVSel_%sCl_Size", hvsUV[k]), "", 21, -0.5, 20.5);
+        h_HVSel_PulseIntegral[k] = new TH1D(Form("h_HVSel_%s_PulseIntegral", hvsUV[k]), "", 200, 0., 50000.);
+        h_HVSel_PulseHeight[k] = new TH1D(Form("h_HVSel_%s_PulseHeight", hvsUV[k]), "", 200, 0., 2500.);
+        h_HVSel_SeedADC[k] = new TH1D(Form("h_HVSel_%s_SeedADC", hvsUV[k]), "", 200, 0., 50000.);
+        h_HVSel_StartTime[k] = new TH1D(Form("h_HVSel_%s_StartTime", hvsUV[k]), "", 150, 0., 15.);
+    }
+    TH1D h_HVSel_DeltaT("h_HVSel_DeltaT_UV", "", 100, -8., 8.);
+    TH2D h_HVS_UV_Det0ix_Det1ix("h_HVS_UV_Det0ix_Det1ix", ";Det0 ix;Det1 ix", nSB + 1, -0.5, nSB + 0.5, nSB + 1, -0.5, nSB + 0.5);
 
     TH2D h_Cross_YXc_MaxIntegral1("h_Cross_YXc_MaxIntegral1", "", 1000, -900., 900., 200, -500., 500.);
     TH2D h_Cross_YXc_MaxIntegralInsideDet1("h_Cross_YXc_MaxIntegralInsideDet1", "", 1000, -900., 900., 200, -500., 500.);
@@ -258,7 +297,7 @@ int main(int argc, char **argv) {
 
             // --- We want to avoid these events where there is huge amount of hits in the uRwell.
             // --- Those are mostly caused by a bad noise, which is not direcly caused by the detector performance
-            if (MonsterEvent(n_U_Pulses, n_U_Pulses)) {continue;}
+            if (MonsterEvent(n_U_Pulses, vetoV ? n_V_Pulses : n_U_Pulses)) {continue;}
 
             if (fiducial_trk) {
                 h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
@@ -311,6 +350,15 @@ int main(int argc, char **argv) {
             bool has_V_cluster = !Max_V_PulseCluster.getPulses()->empty();
             bool has_U_AND_V_clusters =  has_U_cluster && has_V_cluster;
 
+            // ---- HV-section geometry: per (Det0 ix, Det1 ix) track counts and U / V / U&V responses
+            bool hvs_yOK = det0_LongBarID >= 2 && det0_LongBarID <= 9 && det1_LongBarID >= 2 && det1_LongBarID <= 9 &&
+                           TMath::Abs(det0_LongBarID - det1_LongBarID) <= 2;
+            if (hvs_yOK) {
+                h_HVS_Trk_Det0ix_Det1ix.Fill(det0_ShortBarID, det1_ShortBarID);
+                if (has_U_cluster) { h_HVS_U_Det0ix_Det1ix.Fill(det0_ShortBarID, det1_ShortBarID); }
+                if (has_V_cluster) { h_HVS_V_Det0ix_Det1ix.Fill(det0_ShortBarID, det1_ShortBarID); }
+            }
+
             if (fiducial_trk) {
                 if (has_U_cluster) {
                     h_UCl_Size_Fiducial1.Fill(U_ClSize);
@@ -353,6 +401,37 @@ int main(int argc, char **argv) {
                 if (!isInsiDeDetector) {continue;}
 
                 h_Cross_YXc_MaxIntegralInsideDet1.Fill(crs_X, crs_Y);
+
+                h_HVS_CrsX_vs_Det0ix.Fill(det0_ShortBarID, crs_X);
+                h_HVS_CrsX_vs_Det1ix.Fill(det1_ShortBarID, crs_X);
+                h_HVS_CrsY_vs_Det0iy.Fill(det0_LongBarID, crs_Y);
+                h_HVS_CrsY_vs_Det1iy.Fill(det1_LongBarID, crs_Y);
+                h_HVS_CrsX_Det0ix_dix.Fill(det0_ShortBarID, det1_ShortBarID - det0_ShortBarID, crs_X);
+                h_HVS_CrsY_Det0iy_diy.Fill(det0_LongBarID, det1_LongBarID - det0_LongBarID, crs_Y);
+                if (hvs_yOK) {
+                    h_HVS_UV_Det0ix_Det1ix.Fill(det0_ShortBarID, det1_ShortBarID);
+                    h_HVS_CrsXY_yOK.Fill(crs_X, crs_Y);
+                    int hvs_d = det1_ShortBarID - det0_ShortBarID;
+                    if (det0_ShortBarID >= 18 && det0_ShortBarID <= 29 && TMath::Abs(hvs_d) <= 6) {
+                        h_HVS_CrsXY_cell.Fill((det0_ShortBarID - 18)*13 + hvs_d + 6, crs_X, crs_Y);
+                    }
+                    // track through the powered strip: predicted hit >= 1 sigma (14 mm) inside x = 266.6..388.4 mm
+                    double hvs_xp = 44.53*(det0_ShortBarID + 0.427*hvs_d) - 721.6;
+                    bool hvs_sel = det0_ShortBarID >= 22 && det0_ShortBarID <= 25 && TMath::Abs(hvs_d) <= 2 &&
+                                   hvs_xp >= 266.6 + 14.0 && hvs_xp <= 388.4 - 14.0;
+                    if (hvs_sel) {
+                        uRwellTools::PulseCluster *hvsCl[2] = {&Max_U_PulseCluster, &Max_V_PulseCluster};
+                        double hvsT[2] = {startTime_U_cl, startTime_V_cl};
+                        for (int k = 0; k < 2; k++) {
+                            h_HVSel_ClSize[k]->Fill(hvsCl[k]->getPulses()->size());
+                            h_HVSel_PulseIntegral[k]->Fill(hvsCl[k]->getClusterPulseIntegral());
+                            h_HVSel_PulseHeight[k]->Fill(hvsCl[k]->getSeedPulse().pulse_A0*LandauScale);
+                            h_HVSel_SeedADC[k]->Fill(hvsCl[k]->getSeedPulseIntegral());
+                            h_HVSel_StartTime[k]->Fill(hvsT[k]);
+                        }
+                        h_HVSel_DeltaT.Fill(deltaT_StartTime);
+                    }
+                }
                 if ( fiducial_trk ) {
                     h_Cross_YXc_MaxIntegral_Fiducial1.Fill(crs_X, crs_Y);
                     if (UhasNbr) {
