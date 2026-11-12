@@ -43,7 +43,8 @@ int main(int argc, char **argv) {
 
     options.add_options()("r,Run", "Run number", cxxopts::value<int>())("f,FileNo", "File number",
                                                                         cxxopts::value<int>())
-        ("vetoV", "Noise veto on U OR V pulse count (fixes MonsterEvent(n_U, n_U)); default keeps the official U-only veto");
+        ("vetoUonly", "Old noise veto on the U pulse count only, i.e. MonsterEvent(n_U, n_U), to reproduce earlier results")
+        ("vetoV", "Kept for old scripts; does nothing (the U OR V veto is now the default)");
 
     auto parsed_options = options.parse(argc, argv);
 
@@ -64,9 +65,9 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    // Default (no flag) reproduces the official behaviour, where the V count is never checked.
-    const bool vetoV = parsed_options.count("vetoV") > 0;
-    if (vetoV) { cout << "Noise veto applied to U and V pulse counts (--vetoV)" << endl; }
+    // Noise veto: events with too many U OR V pulses are skipped. --vetoUonly restores the old U-only veto.
+    const bool vetoUonly = parsed_options.count("vetoUonly") > 0;
+    if (vetoUonly) { cout << "Noise veto on U pulse count only (--vetoUonly, old behaviour)" << endl; }
 
     sprintf(inputFile, "Skims/Skim_PulseFit_%d_%d.hipo", run, fnum);
 
@@ -300,7 +301,8 @@ int main(int argc, char **argv) {
 
             // --- We want to avoid these events where there is huge amount of hits in the uRwell.
             // --- Those are mostly caused by a bad noise, which is not direcly caused by the detector performance
-            if (MonsterEvent(n_U_Pulses, vetoV ? n_V_Pulses : n_U_Pulses)) {continue;}
+            // --- Veto on U OR V pulse count (previously MonsterEvent(n_U_Pulses, n_U_Pulses), so V was never checked)
+            if (MonsterEvent(n_U_Pulses, vetoUonly ? n_U_Pulses : n_V_Pulses)) {continue;}
 
             if (fiducial_trk) {
                 h_Det0_Occupancy_Fiducial1.Fill( det0_ShortBarID, det0_LongBarID );
